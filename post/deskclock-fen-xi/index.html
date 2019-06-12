@@ -4,7 +4,7 @@
 <meta name="description" content="" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>DeskClock 分析 | Gridea</title>
-<link rel="shortcut icon" href="http://xuwanjin.me//favicon.ico?v=1560356651054">
+<link rel="shortcut icon" href="http://xuwanjin.me//favicon.ico?v=1560383174454">
 <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
 <link rel="stylesheet" href="http://xuwanjin.me//styles/main.css">
@@ -20,7 +20,7 @@
       <div class="main-content">
         <div class="site-header">
   <a href="http://xuwanjin.me/">
-  <img class="avatar" src="http://xuwanjin.me//images/avatar.png?v=1560356651054" alt="">
+  <img class="avatar" src="http://xuwanjin.me//images/avatar.png?v=1560383174454" alt="">
   </a>
   <h1 class="site-title">
     Gridea
@@ -191,11 +191,11 @@ RingtoneManager.getActualDefaultRingtoneUri(getContext(), RingtoneManager.TYPE_A
 <h3 id="分钟和冒号变小居上的需求">分钟和冒号变小,居上的需求</h3>
 <h4 id="客户的需求">客户的需求</h4>
 <p>客户需要这样的效果</p>
-<p><img src="/img/apps/deskclock/deskclock_app_widget.png" alt="deskclock"></p>
+<p><img src="http://xuwanjin.me//post-images/1560383103652.png" alt=""></p>
 <h4 id="实现过程">实现过程</h4>
 <p>第一次是想通过布局文件实现, 想到的原因: 第一眼直觉
 类似这样的
-<img src="/img/apps/deskclock/deskclock_app_widget_analysis.png" alt="deskclock">
+<img src="http://xuwanjin.me//post-images/1560383117914.png" alt="">
 就是写一个线性的布局文件然后在里面放两三个TextView, 然后获得时间, 是一个字符串, 然后拆解字符串, 分别显示字符串
 不能实现的原因: 等到布局写好了, 发现了这个控件是TextClock, 正是一种特殊的控件, 继承与TextView, 在TextView的方法里就有一个获取时间的, 然后显示时间的, 因此他是一个专门用来显示的时间的控件, 因此这种方法是不可行的</p>
 <p>第二次: 想到上次修改bug,需要修改上午(am), 下午(pm)字体的的大小, 因此一路找到源码.
