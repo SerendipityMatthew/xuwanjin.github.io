@@ -4,7 +4,7 @@
 <meta name="description" content="" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Golang slice 数据结构 | Gridea</title>
-<link rel="shortcut icon" href="http://xuwanjin.me//favicon.ico?v=1560356377791">
+<link rel="shortcut icon" href="http://xuwanjin.me//favicon.ico?v=1560356651054">
 <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
 <link rel="stylesheet" href="http://xuwanjin.me//styles/main.css">
@@ -20,7 +20,7 @@
       <div class="main-content">
         <div class="site-header">
   <a href="http://xuwanjin.me/">
-  <img class="avatar" src="http://xuwanjin.me//images/avatar.png?v=1560356377791" alt="">
+  <img class="avatar" src="http://xuwanjin.me//images/avatar.png?v=1560356651054" alt="">
   </a>
   <h1 class="site-title">
     Gridea
@@ -95,10 +95,9 @@
               <p>Golang slice 数据结构简单使用</p>
 <!-- more -->
 <h1 id="golang-的-slice-数据结构">Golang 的 slice 数据结构</h1>
-<p>[TOC]</p>
 <p>@(Golang笔记)</p>
 <h2 id="slice-的申明">Slice 的申明</h2>
-<pre><code class="language-go">package main
+<pre><code>package main
 
 import (
     &quot;fmt&quot;
@@ -112,7 +111,7 @@ func main() {
 }
 </code></pre>
 <p>当然 slice 里面也可以放其他的元素的</p>
-<pre><code class="language-go">package main
+<pre><code>package main
 
 import (
     &quot;fmt&quot;
@@ -138,7 +137,7 @@ func main() {
 }
 </code></pre>
 <p>还可以是空接口, 里面放置各种类型的</p>
-<pre><code class="language-go">package main
+<pre><code>package main
 
 import (
     &quot;fmt&quot;
@@ -165,7 +164,7 @@ func main() {
 </code></pre>
 <h2 id="操作slice">操作Slice</h2>
 <h3 id="访问">访问</h3>
-<pre><code class="language-go">package main
+<pre><code>package main
 
 import &quot;fmt&quot;
 
@@ -200,7 +199,7 @@ func SumAndMulti(a, b int) (sum int) {
 }
 </code></pre>
 <h3 id="截取">截取</h3>
-<pre><code class="language-go">package main
+<pre><code>package main
 
 import &quot;fmt&quot;
 
@@ -213,7 +212,7 @@ func main() {
 }
 </code></pre>
 <h3 id="删除">删除</h3>
-<pre><code class="language-go">package main
+<pre><code>package main
 
 import &quot;fmt&quot;
 
@@ -232,7 +231,7 @@ func main() {
 <p>从这里可以看到, golang 是一门相当原始的语言, 删除一个数组需要自己去写一个遍历, 而不是根据他的index提供删除的方法.
 这个方法, 需要新建一个数组, 从某种程度上增加了空间</p>
 <h3 id="添加">添加</h3>
-<pre><code class="language-go">package main
+<pre><code>package main
 
 import &quot;fmt&quot;
 
@@ -243,7 +242,7 @@ func main() {
 }
 </code></pre>
 <h3 id="更新元素">更新元素</h3>
-<pre><code class="language-go">package main
+<pre><code>package main
 
 import &quot;fmt&quot;
 
