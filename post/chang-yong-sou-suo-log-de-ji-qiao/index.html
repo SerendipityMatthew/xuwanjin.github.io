@@ -1,0 +1,551 @@
+<html>
+  <head>
+    <meta charset="utf-8" />
+<meta name="description" content="" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>常用搜索log的技巧 | Gridea</title>
+<link rel="shortcut icon" href="http://xuwanjin.me//favicon.ico?v=1560354811474">
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
+<link rel="stylesheet" href="http://xuwanjin.me//styles/main.css">
+
+<script src="https://cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js"></script>
+<script src="https://cdn.bootcss.com/moment.js/2.23.0/moment.min.js"></script>
+
+
+
+  </head>
+  <body>
+    <div class="main">
+      <div class="main-content">
+        <div class="site-header">
+  <a href="http://xuwanjin.me/">
+  <img class="avatar" src="http://xuwanjin.me//images/avatar.png?v=1560354811474" alt="">
+  </a>
+  <h1 class="site-title">
+    Gridea
+  </h1>
+  <p class="site-description">
+    温故而知新
+  </p>
+  <div class="menu-container">
+    
+      
+        <a href="/" class="menu">
+          首页
+        </a>
+      
+    
+      
+        <a href="/archives" class="menu">
+          归档
+        </a>
+      
+    
+      
+        <a href="/tags" class="menu">
+          标签
+        </a>
+      
+    
+      
+        <a href="/post/about" class="menu">
+          关于
+        </a>
+      
+    
+  </div>
+  <div class="social-container">
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+  </div>
+</div>
+
+
+        <div class="post-detail">
+          <article class="post">
+            <h2 class="post-title">
+              常用搜索log的技巧
+            </h2>
+            <div class="post-info">
+              <time class="post-time">
+                · 2019-06-12 ·
+              </time>
+              
+                <a href="http://xuwanjin.me//tag/4G4hbMJei" class="post-tag">
+                  # log
+                </a>
+              
+                <a href="http://xuwanjin.me//tag/MMp-M05aE" class="post-tag">
+                  # Android
+                </a>
+              
+            </div>
+            
+            <div class="post-content">
+              <p>Android 系统常见的 log 技巧, 在此做个记录</p>
+<!-- more -->
+<h1 id="log技巧">Log技巧</h1>
+<h2 id="常用搜索log的技巧">常用搜索log的技巧</h2>
+<h3 id="通知的技巧">通知的技巧</h3>
+<ol>
+<li>通知的显示
+弹出通知必定会走的log</li>
+</ol>
+<pre><code class="language-java">//TAG 是NotificationService
+Slog.v(TAG, &quot;enqueueNotificationInternal: pkg=&quot; + pkg + &quot; id=&quot; + id
+        + &quot; notification=&quot; + notification);
+</code></pre>
+<p>典型的通知的log</p>
+<pre><code class="language-java">01-01 17:55:06.411   955  2178 V NotificationService: enqueueNotificationInternal: pkg=com.android.deskclock id=1 notification=Notification(pri=2 contentView=null vibrate=null sound=null defaults=0x0 flags=0x102 color=0x00000000 category=alarm actions=1 vis=PUBLIC)
+</code></pre>
+<p>典型通知的log的参数说明</p>
+<pre><code class="language-java">pkg: //包名
+id: //通知的id
+pri: //通知的优先级
+contentView: //通知的内容视图
+virabte: //是否震动
+sound: //声音的Uri
+defaults: //DEFAULT_SOUND DEFAULT_VIBRATE DEFAULT_LIGHTS DEFAULT_ALL 前三个的与或非, 或者是最后一个值, 表示通知是否有声音, 震动, 通知灯, 或者三者都有 
+flags: //没明白这个
+color: //通知灯的颜色, 有些机器可以通过三基色形成各种各样的颜色
+category: //通知的类别CATEGORY_CALL, CATEGORY_MESSAGE, CATEGORY_EMAIL 等类别
+actions: //通知的含有的action
+vis: //通知的可见属性, 只会取VISIBILITY_PUBLIC, VISIBILITY_PRIVATE, VISIBILITY_SECRET具体什么意思, 查看源码
+</code></pre>
+<p>Heads-up Notification 通知一定会走的log, 以及在通知栏会显示</p>
+<pre><code class="language-java">//TAG 是NotificationService
+if (DEBUG) Log.d(TAG, &quot;addNotification key=&quot; + notification.getKey());
+</code></pre>
+<ol start="2">
+<li>通知声音一定会走的log</li>
+</ol>
+<pre><code>//TAG 是NotificationService
+if (DBG) Slog.v(TAG, &quot;Playing sound &quot; + soundUri + &quot; with attributes &quot; + audioAttributes);
+
+</code></pre>
+<ol start="3">
+<li>通知SystemUI里有的log</li>
+</ol>
+<pre><code class="language-java">//TAG StatusBar
+Log.d(TAG, &quot;onNotificationPosted: &quot; + sbn);
+</code></pre>
+<ol start="4">
+<li>一定会走的log</li>
+</ol>
+<pre><code class="language-java">//TAG NotificationService
+if (DBG) Slog.d(TAG, &quot;EnqueueNotificationRunnable.run for: &quot; + n.getKey());
+</code></pre>
+<ol start="5">
+<li>移除通知的log, SystemUI一定会走的log</li>
+</ol>
+<pre><code class="language-java">//TAG StatusBar
+Log.d(TAG, &quot;onNotificationRemoved: &quot; + sbn);
+</code></pre>
+<h3 id="弹出toast的技巧">弹出Toast的技巧</h3>
+<p>弹出的Toast必定会走的log</p>
+<pre><code class="language-java">//TAG 是NotificationService
+Slog.i(TAG, &quot;enqueueToast pkg=&quot; + pkg + &quot; callback=&quot; + callback
+        + &quot; duration=&quot; + duration);
+
+</code></pre>
+<h3 id="取消toast一定会走的log">取消Toast一定会走的log</h3>
+<pre><code class="language-java">Slog.i(TAG, &quot;cancelToast pkg=&quot; + pkg + &quot; callback=&quot; + callback);
+</code></pre>
+<h3 id="app启动log">App启动Log</h3>
+<pre><code class="language-java">if (SHOW_ACTIVITY_START_TIME) {
+    Trace.asyncTraceEnd(Trace.TRACE_TAG_ACTIVITY_MANAGER, &quot;launching: &quot; + packageName, 0);
+    EventLog.writeEvent(EventLogTags.AM_ACTIVITY_LAUNCH_TIME,
+            userId, System.identityHashCode(this), shortComponentName,
+            thisTime, totalTime);
+    StringBuilder sb = service.mStringBuilder;
+    sb.setLength(0);
+    sb.append(&quot;Displayed &quot;);
+    sb.append(shortComponentName);
+    sb.append(&quot;: &quot;);
+    TimeUtils.formatDuration(thisTime, sb);
+    if (thisTime != totalTime) {
+        sb.append(&quot; (total &quot;);
+        TimeUtils.formatDuration(totalTime, sb);
+        sb.append(&quot;)&quot;);
+    }
+    Log.i(TAG, sb.toString());
+
+    /// M: Add BootEvent for profiling
+    BootEvent.addBootEvent(&quot;AP_Launch: &quot; + shortComponentName +
+            &quot; &quot; + thisTime + &quot;ms&quot;);
+}
+</code></pre>
+<h3 id="fork新进程的log">fork新进程的log</h3>
+<h4 id="新启一个android进程一定会走的log">新启一个Android进程一定会走的log</h4>
+<pre><code class="language-cpp">ALOGI(&quot;%s: Begin to fork a new process&quot;,__FUNCTION__);
+ALOGI(&quot;%s: fork is finished, pid of child process is %d &quot;, __FUNCTION__, pid);
+</code></pre>
+<pre><code class="language-cpp">Zygote  : ForkAndSpecializeCommon: fork is finished, pid of child process is 1694 
+</code></pre>
+<h3 id="按键的log">按键的log</h3>
+<p>KeyEvent</p>
+<h3 id="wifi链接的log">WIFI链接的log</h3>
+<p>大概是这个</p>
+<h3 id="亮灭屏幕一定会走的log">亮灭屏幕一定会走的log</h3>
+<pre><code class="language-java"> if (DEBUG) Log.v(TAG, &quot;onReceive: &quot; + intent);
+ PhoneStatusBar: onReceive: Intent { act=android.intent.action.SCREEN_OFF flg=0x50000010 }
+ PhoneStatusBar: onReceive: Intent { act=android.intent.action.SCREEN_ON flg=0x50000010 }
+</code></pre>
+<h3 id="闹钟一定会走的log">闹钟一定会走的log</h3>
+<h3 id="日历发通知一定会走的log">日历发通知一定会走的log</h3>
+<pre><code class="language-java">LogUtil.d(TAG, &quot;postNotification(), notify notification:&quot; + notification.mNotification + &quot;,quietUpdate:&quot;
+        + quietUpdate + &quot;,newAlert:&quot; + info.newAlert + &quot;,ringtone:&quot; + ringtone);
+</code></pre>
+<pre><code class="language-java">if (DEBUG) {
+    Log.d(TAG, &quot;Posting individual alarm notification, eventId:&quot; + info.eventId
+            + &quot;, notificationId:&quot; + notificationId
+            + (TextUtils.isEmpty(ringtone) ? &quot;, quiet&quot; : &quot;, LOUD&quot;)
+            + (highPriority ? &quot;, high-priority&quot; : &quot;&quot;));
+}
+</code></pre>
+<h3 id="未知-可能重要的log">未知,  可能重要的Log</h3>
+<pre><code class="language-java">Log.v(&quot;PhoneWindow&quot;, &quot;DecorView setVisiblity: visibility = &quot; + visibility
+    + &quot;, Parent = &quot; + getParent() + &quot;, this = &quot; + this);
+</code></pre>
+<h3 id="屏幕焦点切换的log">屏幕焦点切换的log</h3>
+<p>猜测的, 并没有验证过, 没有研究过</p>
+<pre><code class="language-java">if (DEBUG_FOCUS_LIGHT || localLOGV) Slog.v(TAG_WM, &quot;Changing focus from &quot; +
+       mCurrentFocus + &quot; to &quot; + newFocus + &quot; Callers=&quot; + Debug.getCallers(4));
+</code></pre>
+<h3 id="触摸事件">触摸事件</h3>
+<pre><code class="language-java">if (DEBUG) {
+    Slog.d(TAG, &quot;onUserActivity: event=&quot; + event + &quot;, uid=&quot; + uid);
+}
+
+
+</code></pre>
+<pre><code class="language-java">event = 2 是 触摸事件的down事件
+
+</code></pre>
+<p>触摸事件只需要down一次
+触摸事件down, up各一次的log, 这个log在InputReader.cpp文件里面</p>
+<p>触摸事件up</p>
+<pre><code class="language-cpp">{
+    ScopedTrace _l(ATRACE_TAG_INPUT|ATRACE_TAG_PERF, &quot;AppLaunch_dispatchPtr:Up&quot;);
+    ALOGD(&quot;AP_PROF:AppLaunch_dispatchPtr:Up:%lld, ID:%d, Index:%d&quot;, when/1000000, upId,
+             mLastCookedState.cookedPointerData.idToIndex);
+    ALOGD_READER(&quot;dispatchMotion POINTER UP now(ns): %lld&quot;,now);
+    dispatchMotion(when, policyFlags, mSource,
+        AMOTION_EVENT_ACTION_POINTER_UP, 0, 0, metaState, buttonState, 0,
+        mLastCookedState.cookedPointerData.pointerProperties,
+        mLastCookedState.cookedPointerData.pointerCoords,
+        mLastCookedState.cookedPointerData.idToIndex,
+        dispatchedIdBits, upId, mOrientedXPrecision, mOrientedYPrecision, mDownTime);
+    dispatchedIdBits.clearBit(upId);
+}
+
+</code></pre>
+<p>触摸事件down</p>
+<pre><code class="language-cpp">if (dispatchedIdBits.count() == 1) {
+    // First pointer is going down.  Set down time.
+    mDownTime = when;
+    {
+        ScopedTrace _l(ATRACE_TAG_INPUT, &quot;AppLaunch_dispatchPtr:Down&quot;);
+        ALOGD(&quot;AP_PROF:AppLaunch_dispatchPtr:Down:%lld, ID:%d, Index:%d&quot;, mDownTime/1000000, downId,
+                     mCurrentCookedState.cookedPointerData.idToIndex);
+	}
+}
+
+</code></pre>
+<p>不大明白里面的参数什么意思,</p>
+<pre><code class="language-java">12-21 14:45:06.067556   936  1037 D InputReader: AP_PROF:AppLaunch_dispatchPtr:Down:14956077, ID:0, Index:-1551259760
+12-21 14:45:06.113281   936  1037 D InputReader: AP_PROF:AppLaunch_dispatchPtr:Up:14956123, ID:0, Index:-1551256368
+</code></pre>
+<pre><code class="language-java">12-21 14:45:48.564368   936   936 I Tethering: StateReceiver onReceive action:android.intent.action.CONFIGURATION_CHANGED
+</code></pre>
+<h3 id="非常重要-但不知道表示什么意思的log">非常重要, 但不知道表示什么意思的log</h3>
+<p>没研究过这个BufferQueueProducer, 不大明白</p>
+<pre><code class="language-cpp">#define BQP_LOGI(x, ...) LOG_PRI(ANDROID_LOG_INFO, &quot;BufferQueueProducer&quot;, &quot;[%s](this:%p,id:%d,api:%d,p:%d,c:%d) &quot; x, mConsumerName.string(), mBq.unsafe_get(), mId, mConnectedApi, mProducerPid, mConsumerPid, ##__VA_ARGS__)
+</code></pre>
+<h3 id="屏幕被唤醒的原因">屏幕被唤醒的原因</h3>
+<pre><code class="language-java">if (DEBUG) {
+    Slog.d(TAG, &quot;onWakeUp: event=&quot; + reason + &quot;, reasonUid=&quot; + reasonUid
+            + &quot; opPackageName=&quot; + opPackageName + &quot; opUid=&quot; + opUid);
+}
+</code></pre>
+<h3 id="触摸事件被消耗的log">触摸事件被消耗的log</h3>
+<p>一直想找到点击, 触摸等事件是被那个控件消费的, 但一直没找到</p>
+<h3 id="ringtonepicker">RingtonePicker</h3>
+<pre><code class="language-java">MtkLog.d(TAG, &quot;onCreate: mHasDefaultItem = &quot; + mHasDefaultItem
+        + &quot;, mUriForDefaultItem = &quot; + mUriForDefaultItem
+        + &quot;, mHasSilentItem = &quot; + mHasSilentItem
+        + &quot;, mHasMoreRingtonesItem = &quot; + mHasMoreRingtonesItem
+        + &quot;, mType = &quot; + mType
+        + &quot;, mExistingUri = &quot; + mExistingUri);
+</code></pre>
+<p>RingtoneManager的getcursor的log</p>
+<pre><code class="language-java">Log.v(TAG, &quot;mCursor.hashCode &quot; + mCursor.hashCode());
+Log.v(TAG, &quot;getCursor with new cursor = &quot; + mCursor);
+</code></pre>
+<h3 id="启动四大组件的log">启动四大组件的log</h3>
+<h4 id="新启动一个activity的时候出现的log">新启动一个activity的时候出现的log:</h4>
+<pre><code class="language-java">if (err == ActivityManager.START_SUCCESS) {
+    Slog.i(TAG, &quot;START u&quot; + userId + &quot; {&quot; + intent.toShortString(true, true, true, false)
+            + &quot;} from uid &quot; + callingUid
+            + &quot; on display &quot; + (container == null ? (mSupervisor.mFocusedStack == null ?
+            Display.DEFAULT_DISPLAY : mSupervisor.mFocusedStack.mDisplayId) :
+            (container.mActivityDisplay == null ? Display.DEFAULT_DISPLAY :
+                    container.mActivityDisplay.mDisplayId)));
+}
+</code></pre>
+<h4 id="启动一个service一定会走的log">启动一个Service一定会走的log</h4>
+<pre><code class="language-java">// TAG ActivityThread
+Slog.v(TAG, &quot;SVC-Creating service &quot; + data);
+</code></pre>
+<h4 id="serivce启动-eng版的才会出现的log">Serivce启动, Eng版的才会出现的log</h4>
+<pre><code class="language-java">if (!IS_USER_BUILD || DEBUG_SERVICE) {
+    Slog.d(TAG, &quot;SVC-Executing service done: &quot; + token
+        + &quot;, type=&quot; + type
+        + &quot;, startId=&quot; + startId
+        + &quot;, res=&quot; + res);
+}
+</code></pre>
+<h4 id="service启动到onstartcommand">Service启动到onStartCommand</h4>
+<pre><code class="language-java">Slog.d(TAG, &quot;SVC-Calling onStartCommand: &quot; + s
+        + &quot;, flags=&quot; + data.flags
+        + &quot;, startId=&quot; + data.startId);
+
+</code></pre>
+<h4 id="service解绑-eng版才有的log">Service解绑, eng版才有的log</h4>
+<pre><code class="language-java">if (!ActivityManagerService.IS_USER_BUILD || DEBUG_SERVICE) {
+    Slog.d(TAG_SERVICE, &quot;SVC-Unbinding service: &quot; + r.binding.service
+        + &quot;, app=&quot; + r.binding.service.app);
+}
+
+</code></pre>
+<h4 id="service启动一定会走的log">Service启动一定会走的log</h4>
+<pre><code class="language-java">//TAG ActivityManager
+if (!ActivityManagerService.IS_USER_BUILD || DEBUG_SERVICE) {
+    Slog.v(TAG_SERVICE, &quot;&gt;&gt;&gt; EXECUTING &quot;
+        + why + &quot; of &quot; + r + &quot; in app &quot; + r.app);
+} else if (DEBUG_SERVICE_EXECUTING) {
+    Slog.v(TAG_SERVICE_EXECUTING, &quot;&gt;&gt;&gt; EXECUTING &quot;
+        + why + &quot; of &quot; + r.shortName);
+}
+
+</code></pre>
+<pre><code class="language-java">Slog.d(TAG, &quot;SVC-Calling onStartCommand: &quot; + s
+        + &quot;, flags=&quot; + data.flags
+        + &quot;, startId=&quot; + data.startId);
+/// @}
+</code></pre>
+<h4 id="发送广播的log">发送广播的log</h4>
+<h5 id="发送广播一定会走的log">发送广播一定会走的log</h5>
+<pre><code class="language-java">Slog.v(TAG_BROADCAST,
+        (sticky ? &quot;Broadcast sticky: &quot;: &quot;Broadcast: &quot;) + intent
+        + &quot; ordered=&quot; + ordered + &quot; userid=&quot; + userId
+        + &quot; callerApp=&quot; + callerApp);
+</code></pre>
+<h5 id="广播接收一定会走的log">广播接收一定会走的log</h5>
+<pre><code class="language-java">Slog.d(TAG, &quot;BDC-Calling onReceive&quot;
+    + &quot;: intent=&quot; +  data.intent
+    + &quot;, receiver=&quot; + receiver);
+
+</code></pre>
+<pre><code class="language-java">// Tag是 BroadcastQueue
+if (!ActivityManagerService.IS_USER_BUILD || DEBUG_BROADCAST) {
+    Slog.d(TAG_BROADCAST, &quot;BDC-Delivering broadcast: &quot; + r.intent
+        + &quot;, queue=&quot; + mQueueName
+        + &quot;, ordered=&quot; + r.ordered
+        + &quot;, app=&quot; + app
+        + &quot;, receiver=&quot; + r.receiver);
+}
+
+</code></pre>
+<h5 id="如果广播因为权限的原因传播失败">如果广播因为权限的原因传播失败</h5>
+<pre><code class="language-java">String msg = &quot;Permission Denial: not allowed to send broadcast &quot;
+        + action + &quot; to &quot;
+        + intent.getComponent().getPackageName() + &quot; from &quot;
+        + callerPackage;
+Slog.w(TAG, msg);  //不一定是这个log, 但是tag和&quot;Permission Denial:&quot;一定有
+
+</code></pre>
+<h5 id="屏幕旋转的时候发送的广播">屏幕旋转的时候发送的广播</h5>
+<p>这个是在Slog出现的</p>
+<pre><code>12-21 14:45:48.447876   936   953 V ActivityManager: Broadcast: Intent { act=android.intent.action.CONFIGURATION_CHANGED flg=0x70000010 } ordered=false userid=-1 callerApp=null
+12-21 14:45:48.571408   936   936 I AppWidgetServiceImpl: Received broadcast: android.intent.action.CONFIGURATION_CHANGED on user -10000
+12-21 14:45:48.571462   936   936 I AppWidgetServiceImpl: onConfigurationChanged()
+
+</code></pre>
+<h3 id="重启一定会走的log">重启一定会走的log</h3>
+<pre><code class="language-java">//TAG 是ShutdownThread
+Log.d(TAG, &quot;reboot&quot;);
+</code></pre>
+<pre><code class="language-java">//TAG 是ShutdownThread
+Log.d(TAG, &quot;Notifying thread to start shutdown longPressBehavior=&quot; + longPressBehavior);	
+</code></pre>
+<pre><code class="language-java">Log.d(TAG, &quot;PowerOff dialog doesn't exist. Create it first&quot;);
+</code></pre>
+<pre><code>//TAG 是ShutdownThread
+if (mSpew) {
+    StackTraceElement[] stack = new Throwable().getStackTrace();
+    for (StackTraceElement element : stack)
+    {
+        Log.d(TAG, &quot;     |----&quot; + element.toString());
+    }
+}
+</code></pre>
+<h3 id="关机动画一定会走的log">关机动画一定会走的log</h3>
+<pre><code>//TAG 是ShutdownThread
+Log.d(TAG, &quot;mIBootAnim.isCustBootAnim() is true&quot;);
+</code></pre>
+<pre><code>//TAG 是ShutdownThread
+Log.i(TAG, &quot;set service.shutanim.running to 0&quot;);
+</code></pre>
+<h3 id="mediarecorder-必走的log">MediaRecorder 必走的log</h3>
+<h4 id="mediarecorder创建的时候必走的log">MediaRecorder创建的时候必走的log</h4>
+<pre><code class="language-java">ALOGV(&quot;setup&quot;);
+ 
+</code></pre>
+<h4 id=""></h4>
+<pre><code class="language-java">ALOGV(&quot;setAudioSource(%d)&quot;, as);
+</code></pre>
+<h3 id="telephony的log">Telephony的log</h3>
+<h3 id="挂断电话的log">挂断电话的log</h3>
+<pre><code class="language-java">D AT      : AT&lt; +ECPI: 1,130,0,0,0,0,&quot;10086&quot;,129,&quot;&quot;
+3GPP specific cause values for call control  电话挂断的原因
+
+</code></pre>
+<h4 id="接电话一定会走的log">接电话一定会走的log</h4>
+<p>M平台</p>
+<pre><code class="language-java">Log.d(this, &quot;Will show \&quot;answer\&quot; action in the incoming call Notification&quot;);
+</code></pre>
+<h4 id="拒接电话一定会走的log">拒接电话一定会走的log</h4>
+<p>M平台</p>
+<pre><code class="language-java">Log.d(this, &quot;Will show \&quot;dismiss\&quot; action in the incoming call Notification&quot;);
+</code></pre>
+<h3 id="触摸事件一定会走的log">触摸事件一定会走的log</h3>
+<pre><code class="language-java">if (event.getAction() == KeyEvent.ACTION_DOWN) {
+    Log.i(VIEW_LOG_TAG, &quot;Key down dispatch to &quot; + this + &quot;, event = &quot; + event);
+} else if (event.getAction() == KeyEvent.ACTION_UP) {
+    Log.i(VIEW_LOG_TAG, &quot;Key up dispatch to &quot; + this + &quot;, event = &quot; + event);
+}
+</code></pre>
+<h3 id="listview-的log">ListView 的log</h3>
+<pre><code class="language-java">Log.d(TAG, &quot;item no. = &quot; + mItemCount + &quot;, adapter no. = &quot; + mAdapter.getCount());
+</code></pre>
+<h3 id="exchange-出现发送失败就会出现的log">Exchange 出现发送失败就会出现的log</h3>
+<pre><code class="language-java">05-04 05:19:06.336 W/Exchange( 3728): General failure sending message: 4
+05-04 05:19:06.338 E/Exchange( 3728): Generic error for operation SendMail: status 200, result -102
+05-04 05:19:06.338 W/Exchange( 3728): Aborting outbox sync for error -99
+
+</code></pre>
+<h3 id="eng版的就会出来的log">Eng版的就会出来的log</h3>
+<pre><code class="language-java">if (false == IS_USER_BUILD) {
+    Log.d(TAG, &quot;interceptKeyTq keycode=&quot; + keyCode
+        + &quot; interactive=&quot; + interactive + &quot; keyguardActive=&quot; + keyguardActive
+        + &quot; policyFlags=&quot; + Integer.toHexString(policyFlags)
+        + &quot; down =&quot; + down + &quot; canceled = &quot; + canceled
+        + &quot; isWakeKey=&quot; + isWakeKey
+        + &quot; mVolumeDownKeyTriggered =&quot; + mScreenshotChordVolumeDownKeyTriggered
+        + &quot; mVolumeUpKeyTriggered =&quot; + mScreenshotChordVolumeUpKeyTriggered
+        + &quot; result = &quot; + result
+        + &quot; useHapticFeedback = &quot; + useHapticFeedback
+        + &quot; isInjected = &quot; + isInjected);
+}
+</code></pre>
+<h3 id="系统service启动的log">系统Service启动的log</h3>
+<pre><code class="language-java">Slog.i(TAG, &quot;Starting &quot; + name);
+</code></pre>
+<h4 id="-2"></h4>
+<p>eng版的才会出现的log, 处理各种事件</p>
+<pre><code class="language-java">if (DEBUG_INPUT || DEBUG_KEY || DEBUG_MOTION || DEBUG_DEFAULT) {
+    Log.v(mTag, &quot;enqueueInputEvent: event = &quot; + event + &quot;,processImmediately = &quot;
+            + processImmediately + &quot;,mProcessInputEventsScheduled = &quot;
+            + mProcessInputEventsScheduled + &quot;, this = &quot; + this);
+}
+</code></pre>
+<p>典型的log</p>
+<pre><code>01-01 05:15:10.047 V/ViewRootImpl[Launcher]( 1598): enqueueInputEvent: event = KeyEvent { action=ACTION_DOWN, keyCode=KEYCODE_VOLUME_UP, scanCode=115, metaState=0, flags=0x8, repeatCount=0, eventTime=15110785, downTime=15110785, deviceId=7, source=0x101 },processImmediately = true,mProcessInputEventsScheduled = false, this = ViewRoot{eb23f95 com.android.launcher3/com.android.launcher3.Launcher,ident = 0}
+//[]里面的表示当前是哪个模块, 或者app, 相应的参数稍后再详细说明
+</code></pre>
+<pre><code class="language-java">Log.d(&quot;WindowClient&quot;, &quot;Add to mViews: &quot; + view + &quot;, this = &quot; + this);
+</code></pre>
+<h3 id="cell-broadcast-广播">Cell Broadcast 广播</h3>
+<p>在CellBroadcastHandler.java类里面</p>
+<pre><code class="language-java">//紧急的小区广播
+log(&quot;Dispatching emergency SMS CB, SmsCbMessage is: &quot; + message);
+
+</code></pre>
+<pre><code class="language-java">// 普通的小区广播
+log(&quot;Dispatching SMS CB, SmsCbMessage is: &quot; + message);
+</code></pre>
+<p>CellBroadcastHandler的父类是WakeLockStateMachine. 默认在Radio log里面</p>
+<pre><code class="language-java">protected void log(String s) {
+    Rlog.d(getName(), s);
+}
+</code></pre>
+<h3 id="命令行打开log">命令行打开log</h3>
+<p>命令行动态打开</p>
+<p>简写
+命令含义
+命令行</p>
+<pre><code>x	打开所有的开关	adb shell dumpsys activity log x on
+a	activity相关	adb shell dumpsys activity log a on
+da	查看OOM_ADJ等，一般用于Debug Memory问题时用	adb shell dumpsys activity log da on
+br	Broadcast相关	adb shell dumpsys activity log br on
+s	Service相关	adb shell dumpsys activity log s on
+cp	ContentProvider相关	adb shell dumpsys activity log cp on
+p	Permission相关	adb shell dumpsys activity log p on
+lp	打开某个进程的looper	adb shell dumpsys activity log lp 进程名
+anr	ANR相关	adb shell dumpsys activity log anr 2
+ 修改代码的方式打开(一般用于分析开机慢或进入launcher慢等问题)
+
+/frameworks/base/services/core/java/com/android/server/am/ActivityManagerDebugConfig.java
+</code></pre>
+<p>打开所有的：
+46 /// M: Dynamically enable AMS logs @{
+47 // Enable all debug log categories.
+48 static boolean DEBUG_ALL = false;  //change to true</p>
+<p>打开某一个debug开关，则单独修改对应的debug开关</p>
+<p>最后build frameworks/base/services 模块即可</p>
+<p>Contacts 打开log</p>
+<pre><code class="language-java"> public static final boolean FORCE_DEBUG =
+            (SystemProperties.getInt(PROP_FORCE_DEBUG_KEY, 0) == 1);
+</code></pre>
+
+            </div>
+          </article>
+        </div>
+
+        
+          <div class="next-post">
+            <div class="next">下一篇</div>
+            <a href="http://xuwanjin.me//post/java-ming-ling-yi">
+              <h3 class="post-title">
+                Java 命令（一）
+              </h3>
+            </a>
+          </div>
+        
+
+        
+
+        <div class="site-footer">
+  Powered by <a href="https://github.com/getgridea/gridea" target="_blank">Gridea</a> | 
+  <a class="rss" href="http://xuwanjin.me//atom.xml" target="_blank">RSS</a>
+</div>
+
+<script>
+  hljs.initHighlightingOnLoad()
+</script>
+
+      </div>
+    </div>
+  </body>
+</html>
