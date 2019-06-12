@@ -1,0 +1,1366 @@
+<html>
+  <head>
+    <meta charset="utf-8" />
+<meta name="description" content="" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Notification分析 | Gridea</title>
+<link rel="shortcut icon" href="http://xuwanjin.me//favicon.ico?v=1560355067735">
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
+<link rel="stylesheet" href="http://xuwanjin.me//styles/main.css">
+
+<script src="https://cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js"></script>
+<script src="https://cdn.bootcss.com/moment.js/2.23.0/moment.min.js"></script>
+
+
+
+  </head>
+  <body>
+    <div class="main">
+      <div class="main-content">
+        <div class="site-header">
+  <a href="http://xuwanjin.me/">
+  <img class="avatar" src="http://xuwanjin.me//images/avatar.png?v=1560355067735" alt="">
+  </a>
+  <h1 class="site-title">
+    Gridea
+  </h1>
+  <p class="site-description">
+    温故而知新
+  </p>
+  <div class="menu-container">
+    
+      
+        <a href="/" class="menu">
+          首页
+        </a>
+      
+    
+      
+        <a href="/archives" class="menu">
+          归档
+        </a>
+      
+    
+      
+        <a href="/tags" class="menu">
+          标签
+        </a>
+      
+    
+      
+        <a href="/post/about" class="menu">
+          关于
+        </a>
+      
+    
+  </div>
+  <div class="social-container">
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+  </div>
+</div>
+
+
+        <div class="post-detail">
+          <article class="post">
+            <h2 class="post-title">
+              Notification分析
+            </h2>
+            <div class="post-info">
+              <time class="post-time">
+                · 2019-06-12 ·
+              </time>
+              
+                <a href="http://xuwanjin.me//tag/7TohWAVK4" class="post-tag">
+                  # Notification
+                </a>
+              
+                <a href="http://xuwanjin.me//tag/MMp-M05aE" class="post-tag">
+                  # Android
+                </a>
+              
+            </div>
+            
+            <div class="post-content">
+              <p>Android 系统的 Notification 的源代码分析, 主要分析 NotificationManagerService</p>
+<!-- more -->
+<h1 id="notification分析">Notification分析</h1>
+<p>[TOC]</p>
+<p>虽然网络上很大神对Android 的Notification都介绍了， 写的很详细, 很深入. 在Android N上Google对Notification进行了非常大的改造(同时有相关的中文和英文<a href="https://developer.android.com/guide/topics/ui/notifiers/notifications.html">文档</a>) 但是我还是想以我的方式, 以我的理解来解读一下Android N 上面的Notification. 我会从以下几个方面来讲解Notification.</p>
+<h2 id="从界面上认识notification">从界面上认识Notification</h2>
+<p>首先 Notification是分种类的, 一共有以下几个种类浮动通知(Heads-up Notifications), 锁屏通知Lock Screen Notifications, Bundling Notifications, Peeking Notifications.
+第二 Notification是分优先级(priority)的一共有五个等级; 分别是PRIORITY_LOW， PRIORITY_MIN, PRIORITY_DEFAULT, PRIORITY_HIGH, PRIORITY_MAX, 依次是-2， -1， 0， 1， 2. 一般不指定优先级的话, 默认的是为零, 在Notification的运行当中, 会被封装成其他的类, 同样优先级会被转换成其他的数字.
+第三 Notification有不同的样式. 有</p>
+<pre><code>BigPictureStyle
+BigTextStyle
+DecoratedCustomViewStyle
+DecoratedMediaCustomViewStyle
+InboxStyle
+MediaStyle
+MessagingStyle
+</code></pre>
+<p>第四: Notification 的有一个defaults属性,可以设置Notification的通知灯, 震动, 声音. 默认情况是所有的都包含</p>
+<p>第五: Notification的color属性将会给通知的small icon染上颜色</p>
+<pre><code>.
+|-- CalendarTracker.java
+|-- ConditionProviders.java
+|-- CountdownConditionProvider.java
+|-- EventConditionProvider.java
+|-- GlobalSortKeyComparator.java
+|-- ImportanceExtractor.java
+|-- ManagedServices.java
+|-- NotificationComparator.java
+|-- NotificationDelegate.java
+|-- NotificationIntrusivenessExtractor.java
+|-- NotificationManagerInternal.java
+|-- NotificationManagerService.java
+|-- NotificationRecord.java
+|-- NotificationSignalExtractor.java
+|-- NotificationUsageStats.java
+|-- PriorityExtractor.java
+|-- PropConfig.java
+|-- RankingConfig.java
+|-- RankingHandler.java
+|-- RankingHelper.java
+|-- RankingReconsideration.java
+|-- RateEstimator.java
+|-- ScheduleCalendar.java
+|-- ScheduleConditionProvider.java
+|-- SystemConditionProviderService.java
+|-- ValidateNotificationPeople.java
+|-- VisibilityExtractor.java
+|-- ZenLog.java
+|-- ZenModeConditions.java
+|-- ZenModeFiltering.java
+`-- ZenModeHelper.java
+
+0 directories, 31 files
+</code></pre>
+<pre><code>Notification.aidl
+Notification.java
+NotificationManager.aidl
+NotificationManager.java
+
+</code></pre>
+<pre><code>.
+|-- MediaProjectionPermissionActivity.java
+|-- NotificationPlayer.java
+`-- RingtonePlayer.java
+</code></pre>
+<h2 id="从代码上认识notification">从代码上认识Notification</h2>
+<pre><code class="language-java">public void notify(int id, Notification notification)
+</code></pre>
+<pre><code class="language-java">public void notify(String tag, int id, Notification notification)
+</code></pre>
+<pre><code class="language-java">public void notifyAsUser(String tag, int id, Notification notification, UserHandle user)
+</code></pre>
+<pre><code class="language-java">public void notifyAsUser(String tag, int id, Notification notification, UserHandle user)
+{
+    int[] idOut = new int[1];
+    INotificationManager service = getService(); //获取NotificationManagerService
+    String pkg = mContext.getPackageName();
+    // Fix the notification as best we can.
+    Notification.addFieldsFromContext(mContext, notification);  //主要是向notification加入应用信息和用户ID
+    if (notification.sound != null) {
+        notification.sound = notification.sound.getCanonicalUri(); //获取通知声音的实际地址
+        if (StrictMode.vmFileUriExposureEnabled()) {
+            notification.sound.checkFileUriExposed(&quot;Notification.sound&quot;);
+        }
+    }
+    fixLegacySmallIcon(notification, pkg); //修复一些icon问题,如果没有就给他指定一个
+    if (mContext.getApplicationInfo().targetSdkVersion &gt; Build.VERSION_CODES.LOLLIPOP_MR1) {
+        if (notification.getSmallIcon() == null) {
+            throw new IllegalArgumentException(&quot;Invalid notification (no valid small icon): &quot;
+                    + notification);
+        }
+    }
+    if (localLOGV) Log.v(TAG, pkg + &quot;: notify(&quot; + id + &quot;, &quot; + notification + &quot;)&quot;);
+    final Notification copy = Builder.maybeCloneStrippedForDelivery(notification);
+    try {
+        service.enqueueNotificationWithTag(pkg, mContext.getOpPackageName(), tag, id,
+                copy, idOut, user.getIdentifier());
+        if (id != idOut[0]) {
+            Log.w(TAG, &quot;notify: id corrupted: sent &quot; + id + &quot;, got back &quot; + idOut[0]);
+        }
+    } catch (RemoteException e) {
+        throw e.rethrowFromSystemServer();
+    }
+}
+</code></pre>
+<pre><code class="language-java">public static Notification maybeCloneStrippedForDelivery(Notification n) {
+    String templateClass = n.extras.getString(EXTRA_TEMPLATE);
+
+    // Only strip views for known Styles because we won't know how to
+    // re-create them otherwise.
+    if (!TextUtils.isEmpty(templateClass)
+            &amp;&amp; getNotificationStyleClass(templateClass) == null) {
+        return n;
+    }
+
+    // Only strip unmodified BuilderRemoteViews.
+    boolean stripContentView = n.contentView instanceof BuilderRemoteViews &amp;&amp;
+            n.extras.getInt(EXTRA_REBUILD_CONTENT_VIEW_ACTION_COUNT, -1) ==
+                    n.contentView.getSequenceNumber();
+    boolean stripBigContentView = n.bigContentView instanceof BuilderRemoteViews &amp;&amp;
+            n.extras.getInt(EXTRA_REBUILD_BIG_CONTENT_VIEW_ACTION_COUNT, -1) ==
+                    n.bigContentView.getSequenceNumber();
+    boolean stripHeadsUpContentView = n.headsUpContentView instanceof BuilderRemoteViews &amp;&amp;
+            n.extras.getInt(EXTRA_REBUILD_HEADS_UP_CONTENT_VIEW_ACTION_COUNT, -1) ==
+                    n.headsUpContentView.getSequenceNumber();
+
+    // Nothing to do here, no need to clone.
+    if (!stripContentView &amp;&amp; !stripBigContentView &amp;&amp; !stripHeadsUpContentView) {
+        return n;
+    }
+
+    Notification clone = n.clone();
+    if (stripContentView) {
+        clone.contentView = null;
+        clone.extras.remove(EXTRA_REBUILD_CONTENT_VIEW_ACTION_COUNT);
+    }
+    if (stripBigContentView) {
+        clone.bigContentView = null;
+        clone.extras.remove(EXTRA_REBUILD_BIG_CONTENT_VIEW_ACTION_COUNT);
+    }
+    if (stripHeadsUpContentView) {
+        clone.headsUpContentView = null;
+        clone.extras.remove(EXTRA_REBUILD_HEADS_UP_CONTENT_VIEW_ACTION_COUNT);
+    }
+    return clone;
+}
+</code></pre>
+<pre><code class="language-java">void enqueueNotificationInternal(final String pkg, final String opPkg, final int callingUid,
+        final int callingPid, final String tag, final int id, final Notification  notification,
+        int[] idOut, int incomingUserId) {
+    if (DBG) {
+        Slog.v(TAG, &quot;enqueueNotificationInternal: pkg=&quot; + pkg + &quot; id=&quot; + id
+                + &quot; notification=&quot; + notification);
+    }
+    checkCallerIsSystemOrSameApp(pkg); //检查一下通知是否由系统发送过来的还是同一个通知发送过来的
+    //是否系统发送过来的主要是通过Linux分配给进程的UID来判断
+    final boolean isSystemNotification = isUidSystem(callingUid) || (&quot;android&quot;.equals(pkg)); //是否是系统的通知
+    final boolean isNotificationFromListener = mListeners.isListenerPackage(pkg);
+
+    final int userId = ActivityManager.handleIncomingUser(callingPid,
+            callingUid, incomingUserId, true, false, &quot;enqueueNotification&quot;, pkg);// 获取当前的用户id
+    final UserHandle user = new UserHandle(userId);
+
+    // Fix the notification as best we can.
+    try {
+        final ApplicationInfo ai = getContext().getPackageManager().getApplicationInfoAsUser(
+                pkg, PackageManager.MATCH_DEBUG_TRIAGED_MISSING,
+                (userId == UserHandle.USER_ALL) ? UserHandle.USER_SYSTEM : userId);
+        Notification.addFieldsFromContext(ai, userId, notification); //向notification里添加应用信息, 和当前用户的信息
+    } catch (NameNotFoundException e) {
+        Slog.e(TAG, &quot;Cannot create a context for sending app&quot;, e);
+        return;
+    }
+
+    mUsageStats.registerEnqueuedByApp(pkg);
+
+    // Limit the number of notifications that any given package except the android
+    // package or a registered listener can enqueue.  Prevents DOS attacks and deals with leaks.
+    //除了系统的通知或者是来自于注册监听的通知, 限制所有的通知数量, 防止DOS攻击和处理泄露
+    if (!isSystemNotification &amp;&amp; !isNotificationFromListener) {
+        synchronized (mNotificationList) {
+            final float appEnqueueRate = mUsageStats.getAppEnqueueRate(pkg); //统计当前包所有的通知的数量
+            if (appEnqueueRate &gt; mMaxPackageEnqueueRate) {
+                mUsageStats.registerOverRateQuota(pkg);
+                final long now = SystemClock.elapsedRealtime();
+                if ((now - mLastOverRateLogTime) &gt; MIN_PACKAGE_OVERRATE_LOG_INTERVAL) {
+                    Slog.e(TAG, &quot;Package enqueue rate is &quot; + appEnqueueRate
+                            + &quot;. Shedding events. package=&quot; + pkg);
+                    mLastOverRateLogTime = now;
+                }
+                return;
+            }
+
+            int count = 0;
+            final int N = mNotificationList.size();
+            for (int i=0; i&lt;N; i++) {
+                final NotificationRecord r = mNotificationList.get(i);
+                if (r.sbn.getPackageName().equals(pkg) &amp;&amp; r.sbn.getUserId() == userId) {
+                    if (r.sbn.getId() == id &amp;&amp; TextUtils.equals(r.sbn.getTag(), tag)) {
+                        break;  // Allow updating existing notification
+                    }
+                    count++;
+                    if (count &gt;= MAX_PACKAGE_NOTIFICATIONS) {
+                        mUsageStats.registerOverCountQuota(pkg);
+                        Slog.e(TAG, &quot;Package has already posted &quot; + count
+                                + &quot; notifications.  Not showing more.  package=&quot; + pkg);
+                        return;
+                    }
+                }
+            }
+        }
+    }
+
+    if (pkg == null || notification == null) {
+        throw new IllegalArgumentException(&quot;null not allowed: pkg=&quot; + pkg
+                + &quot; id=&quot; + id + &quot; notification=&quot; + notification);
+    }
+
+    // Whitelist pending intents.
+    if (notification.allPendingIntents != null) {
+        final int intentCount = notification.allPendingIntents.size();
+        if (intentCount &gt; 0) {
+            final ActivityManagerInternal am = LocalServices
+                    .getService(ActivityManagerInternal.class);
+            final long duration = LocalServices.getService(
+                    DeviceIdleController.LocalService.class).getNotificationWhitelistDuration();
+            for (int i = 0; i &lt; intentCount; i++) {
+                PendingIntent pendingIntent = notification.allPendingIntents.valueAt(i);
+                if (pendingIntent != null) {
+                    am.setPendingIntentWhitelistDuration(pendingIntent.getTarget(), duration);
+                }
+            }
+        }
+    }
+
+    // Sanitize inputs
+    //审查一下当前通知的优先级, 如果当前优先级小于通知的最小优先级则赋予最小的优先级, 如果当前通知的优先级大于通知的最大优先级则赋予他最大的优先级
+    notification.priority = clamp(notification.priority, Notification.PRIORITY_MIN,
+            Notification.PRIORITY_MAX);
+
+    // setup local book-keeping
+    //将一个Notification封装成成一个StatusBarNotification.
+    final StatusBarNotification n = new StatusBarNotification(
+            pkg, opPkg, id, tag, callingUid, callingPid, 0, notification,
+            user);
+    //同时将StatusBarNotication记录下来
+    final NotificationRecord r = new NotificationRecord(getContext(), n);
+    //最后以Handler的post形式执行一个线程
+    mHandler.post(new EnqueueNotificationRunnable(userId, r));
+
+    idOut[0] = id;
+}
+</code></pre>
+<pre><code class="language-java">{
+    synchronized (mNotificationList) {
+        final StatusBarNotification n = r.sbn;
+        if (DBG) Slog.d(TAG, &quot;EnqueueNotificationRunnable.run for: &quot; + n.getKey());
+        NotificationRecord old = mNotificationsByKey.get(n.getKey());
+        if (old != null) {
+            // Retain ranking information from previous record
+            r.copyRankingInformation(old);
+        }
+
+        final int callingUid = n.getUid();
+        final int callingPid = n.getInitialPid();
+        final Notification notification = n.getNotification();
+        final String pkg = n.getPackageName();
+        final int id = n.getId();
+        final String tag = n.getTag();
+        final boolean isSystemNotification = isUidSystem(callingUid) ||
+                (&quot;android&quot;.equals(pkg));
+
+        // Handle grouped notifications and bail out early if we
+        // can to avoid extracting signals.
+        //Notification以群组的方式显示, 就是Android N的Bundled notifications
+        handleGroupedNotificationLocked(r, old, callingUid, callingPid);
+
+        // This conditional is a dirty hack to limit the logging done on
+        //     behalf of the download manager without affecting other apps.
+        //这段解释见Dirty Hack参考文献
+        //主要是为了防止DownloadManager影响其他的应用, 这是临时的方法解决这个问题. 
+        //那么DownloadManager是怎么影响其他的应用呢？
+        if (!pkg.equals(&quot;com.android.providers.downloads&quot;)
+                || Log.isLoggable(&quot;DownloadManager&quot;, Log.VERBOSE)) {
+            int enqueueStatus = EVENTLOG_ENQUEUE_STATUS_NEW;
+            if (old != null) {
+                enqueueStatus = EVENTLOG_ENQUEUE_STATUS_UPDATE;
+            }
+            EventLogTags.writeNotificationEnqueue(callingUid, callingPid,
+                    pkg, id, tag, userId, notification.toString(),
+                    enqueueStatus);
+        }
+
+        mRankingHelper.extractSignals(r);
+
+        final boolean isPackageSuspended = isPackageSuspendedForUser(pkg, callingUid);
+
+        // blocked apps
+        //阻止某些app的通知, 如果的通知的重要性为NONE, 当前应用不被允许弹出通知, 或者当前的应用没有权限, 
+        //同时不是系统的通知
+        if (r.getImportance() == NotificationListenerService.Ranking.IMPORTANCE_NONE
+                || !noteNotificationOp(pkg, callingUid) || isPackageSuspended) {
+            if (!isSystemNotification) {
+                if (isPackageSuspended) {
+                    Slog.e(TAG, &quot;Suppressing notification from package due to package &quot;
+                            + &quot;suspended by administrator.&quot;);
+                    mUsageStats.registerSuspendedByAdmin(r);
+                } else {
+                    Slog.e(TAG, &quot;Suppressing notification from package by user request.&quot;);
+                    mUsageStats.registerBlocked(r);
+                }
+                return;
+            }
+        }
+
+        // tell the ranker service about the notification
+        if (mRankerServices.isEnabled()) {
+            mRankerServices.onNotificationEnqueued(r);
+            // TODO delay the code below here for 100ms or until there is an answer
+        }
+
+
+        int index = indexOfNotificationLocked(n.getKey());
+        if (index &lt; 0) {
+            mNotificationList.add(r);
+            mUsageStats.registerPostedByApp(r);
+        } else {
+            old = mNotificationList.get(index);
+            mNotificationList.set(index, r);
+            mUsageStats.registerUpdatedByApp(r, old);
+            // Make sure we don't lose the foreground service state.
+            notification.flags |=
+                    old.getNotification().flags &amp; Notification.FLAG_FOREGROUND_SERVICE;
+            r.isUpdate = true;
+        }
+
+        mNotificationsByKey.put(n.getKey(), r);
+
+        // Ensure if this is a foreground service that the proper additional
+        // flags are set.
+        if ((notification.flags &amp; Notification.FLAG_FOREGROUND_SERVICE) != 0) {
+            notification.flags |= Notification.FLAG_ONGOING_EVENT
+                    | Notification.FLAG_NO_CLEAR;
+        }
+
+        applyZenModeLocked(r);
+        mRankingHelper.sort(mNotificationList);
+
+        if (notification.getSmallIcon() != null) {
+            StatusBarNotification oldSbn = (old != null) ? old.sbn : null;
+            mListeners.notifyPostedLocked(n, oldSbn);
+        } else {
+            Slog.e(TAG, &quot;Not posting notification without small icon: &quot; + notification);
+            if (old != null &amp;&amp; !old.isCanceled) {
+                mListeners.notifyRemovedLocked(n);
+            }
+            // ATTENTION: in a future release we will bail out here
+            // so that we do not play sounds, show lights, etc. for invalid
+            // notifications
+            Slog.e(TAG, &quot;WARNING: In a future release this will crash the app: &quot;
+                    + n.getPackageName());
+        }
+
+        buzzBeepBlinkLocked(r);
+    }
+}
+
+</code></pre>
+<pre><code class="language-java">void buzzBeepBlinkLocked(NotificationRecord record) {
+    boolean buzz = false;
+    boolean beep = false;
+    boolean blink = false;
+
+    final Notification notification = record.sbn.getNotification();
+    final String key = record.getKey();
+
+    // Should this notification make noise, vibe, or use the LED?
+    final boolean aboveThreshold = record.getImportance() &gt;= IMPORTANCE_DEFAULT;
+    final boolean canInterrupt = aboveThreshold &amp;&amp; !record.isIntercepted();
+    if (DBG || record.isIntercepted())
+        Slog.v(TAG,
+                &quot;pkg=&quot; + record.sbn.getPackageName() + &quot; canInterrupt=&quot; + canInterrupt +
+                        &quot; intercept=&quot; + record.isIntercepted()
+        );
+
+    final int currentUser;
+    final long token = Binder.clearCallingIdentity();
+    try {
+        currentUser = ActivityManager.getCurrentUser();
+    } finally {
+        Binder.restoreCallingIdentity(token);
+    }
+
+    // If we're not supposed to beep, vibrate, etc. then don't.
+    final String disableEffects = disableNotificationEffects(record);
+    if (disableEffects != null) {
+        ZenLog.traceDisableEffects(record, disableEffects);
+    }
+
+    // Remember if this notification already owns the notification channels.
+    boolean wasBeep = key != null &amp;&amp; key.equals(mSoundNotificationKey);
+    boolean wasBuzz = key != null &amp;&amp; key.equals(mVibrateNotificationKey);
+
+    // These are set inside the conditional if the notification is allowed to make noise.
+    boolean hasValidVibrate = false;
+    boolean hasValidSound = false;
+    if (disableEffects == null
+            &amp;&amp; (record.getUserId() == UserHandle.USER_ALL ||
+                record.getUserId() == currentUser ||
+                mUserProfiles.isCurrentProfile(record.getUserId()))
+            &amp;&amp; canInterrupt
+            &amp;&amp; mSystemReady
+            &amp;&amp; mAudioManager != null) {
+        if (DBG) Slog.v(TAG, &quot;Interrupting!&quot;);
+
+        // should we use the default notification sound? (indicated either by
+        // DEFAULT_SOUND or because notification.sound is pointing at
+        // Settings.System.NOTIFICATION_SOUND)
+        final boolean useDefaultSound =
+               (notification.defaults &amp; Notification.DEFAULT_SOUND) != 0 ||
+                       Settings.System.DEFAULT_NOTIFICATION_URI
+                               .equals(notification.sound);
+
+        Uri soundUri = null;
+        if (useDefaultSound) {
+            soundUri = Settings.System.DEFAULT_NOTIFICATION_URI;
+
+            // check to see if the default notification sound is silent
+            ContentResolver resolver = getContext().getContentResolver();
+            hasValidSound = Settings.System.getString(resolver,
+                   Settings.System.NOTIFICATION_SOUND) != null;
+        } else if (notification.sound != null) {
+            soundUri = notification.sound;
+            hasValidSound = (soundUri != null);
+        }
+
+        // Does the notification want to specify its own vibration?
+        final boolean hasCustomVibrate = notification.vibrate != null;
+
+        // new in 4.2: if there was supposed to be a sound and we're in vibrate
+        // mode, and no other vibration is specified, we fall back to vibration
+        final boolean convertSoundToVibration =
+                !hasCustomVibrate
+                        &amp;&amp; hasValidSound
+                        &amp;&amp; (mAudioManager.getRingerModeInternal() == AudioManager.RINGER_MODE_VIBRATE);
+
+        // The DEFAULT_VIBRATE flag trumps any custom vibration AND the fallback.
+        final boolean useDefaultVibrate =
+                (notification.defaults &amp; Notification.DEFAULT_VIBRATE) != 0;
+
+        hasValidVibrate = useDefaultVibrate || convertSoundToVibration ||
+                hasCustomVibrate;
+
+        // We can alert, and we're allowed to alert, but if the developer asked us to only do
+        // it once, and we already have, then don't.
+        if (!(record.isUpdate
+                &amp;&amp; (notification.flags &amp; Notification.FLAG_ONLY_ALERT_ONCE) != 0)) {
+
+            sendAccessibilityEvent(notification, record.sbn.getPackageName());
+
+            if (hasValidSound) {
+                boolean looping =
+                        (notification.flags &amp; Notification.FLAG_INSISTENT) != 0;
+                AudioAttributes audioAttributes = audioAttributesForNotification(notification);
+                mSoundNotificationKey = key;
+                // do not play notifications if stream volume is 0 (typically because
+                // ringer mode is silent) or if there is a user of exclusive audio focus
+                if ((mAudioManager.getStreamVolume(
+                        AudioAttributes.toLegacyStreamType(audioAttributes)) != 0)
+                        &amp;&amp; !mAudioManager.isAudioFocusExclusive()) {
+                    final long identity = Binder.clearCallingIdentity();
+                    try {
+                        final IRingtonePlayer player =
+                                mAudioManager.getRingtonePlayer();
+                        if (player != null) {
+                            if (DBG) Slog.v(TAG, &quot;Playing sound &quot; + soundUri
+                                    + &quot; with attributes &quot; + audioAttributes);
+                            player.playAsync(soundUri, record.sbn.getUser(), looping,
+                                    audioAttributes);
+                            beep = true;
+                        }
+                    } catch (RemoteException e) {
+                    } finally {
+                        Binder.restoreCallingIdentity(identity);
+                    }
+                }
+            }
+
+            if (hasValidVibrate &amp;&amp; !(mAudioManager.getRingerModeInternal()
+                    == AudioManager.RINGER_MODE_SILENT)) {
+                mVibrateNotificationKey = key;
+
+                if (useDefaultVibrate || convertSoundToVibration) {
+                    // Escalate privileges so we can use the vibrator even if the
+                    // notifying app does not have the VIBRATE permission.
+                    long identity = Binder.clearCallingIdentity();
+                    try {
+                        mVibrator.vibrate(record.sbn.getUid(), record.sbn.getOpPkg(),
+                                useDefaultVibrate ? mDefaultVibrationPattern
+                                        : mFallbackVibrationPattern,
+                                ((notification.flags &amp; Notification.FLAG_INSISTENT) != 0)
+                                        ? 0: -1, audioAttributesForNotification(notification));
+                        buzz = true;
+                    } finally {
+                        Binder.restoreCallingIdentity(identity);
+                    }
+                } else if (notification.vibrate.length &gt; 1) {
+                    // If you want your own vibration pattern, you need the VIBRATE
+                    // permission
+                    mVibrator.vibrate(record.sbn.getUid(), record.sbn.getOpPkg(),
+                            notification.vibrate,
+                            ((notification.flags &amp; Notification.FLAG_INSISTENT) != 0)
+                                    ? 0: -1, audioAttributesForNotification(notification));
+                    buzz = true;
+                }
+            }
+        }
+
+    }
+    // If a notification is updated to remove the actively playing sound or vibrate,
+    // cancel that feedback now
+    if (wasBeep &amp;&amp; !hasValidSound) {
+        clearSoundLocked();
+    }
+    if (wasBuzz &amp;&amp; !hasValidVibrate) {
+        clearVibrateLocked();
+    }
+
+    // light
+    // release the light
+    boolean wasShowLights = mLights.remove(key);
+    if ((notification.flags &amp; Notification.FLAG_SHOW_LIGHTS) != 0 &amp;&amp; aboveThreshold
+            &amp;&amp; ((record.getSuppressedVisualEffects()
+            &amp; NotificationListenerService.SUPPRESSED_EFFECT_SCREEN_OFF) == 0)) {
+        mLights.add(key);
+        updateLightsLocked();
+        if (mUseAttentionLight) {
+            mAttentionLight.pulse();
+        }
+        blink = true;
+    } else if (wasShowLights) {
+        updateLightsLocked();
+    }
+    if (buzz || beep || blink) {
+        if (((record.getSuppressedVisualEffects()
+                &amp; NotificationListenerService.SUPPRESSED_EFFECT_SCREEN_OFF) != 0)) {
+            if (DBG) Slog.v(TAG, &quot;Suppressed SystemUI from triggering screen on&quot;);
+        } else {
+            EventLogTags.writeNotificationAlert(key,
+                    buzz ? 1 : 0, beep ? 1 : 0, blink ? 1 : 0);
+            mHandler.post(mBuzzBeepBlinked);
+        }
+    }
+}
+
+
+</code></pre>
+<pre><code class="language-java">void buzzBeepBlinkLocked(NotificationRecord record) 
+</code></pre>
+<pre><code class="language-java">mHandler.post(mBuzzBeepBlinked)
+</code></pre>
+<pre><code class="language-java">NotificationManagerService.java
+private final Runnable mBuzzBeepBlinked = new Runnable() {
+    @Override
+    public void run() {
+        if (mStatusBar != null) {
+            mStatusBar.buzzBeepBlinked();
+        }
+    }
+};
+</code></pre>
+<pre><code class="language-java">StatusBarManagerInternal.java
+void buzzBeepBlinked();
+</code></pre>
+<pre><code class="language-java">StatusBarManagerService.java
+public void buzzBeepBlinked() {
+    if (mBar != null) {
+        try {
+            mBar.buzzBeepBlinked();
+        } catch (RemoteException ex) {
+        }
+    }
+}
+
+</code></pre>
+<p>负责通知灯闪烁的方法</p>
+<pre><code class="language-java">IStatusBar.aidl
+void buzzBeepBlinked();
+
+</code></pre>
+<pre><code class="language-java">CommandQueue.java
+public void buzzBeepBlinked() 
+
+</code></pre>
+<pre><code class="language-java">CommandQueue.java CallBacks
+void buzzBeepBlinked();
+
+</code></pre>
+<pre><code class="language-java">PhoneStatusBar.java
+public void buzzBeepBlinked()
+</code></pre>
+<pre><code class="language-java">PhoneStatusBar.java
+public void fireBuzzBeepBlinked()
+</code></pre>
+<pre><code class="language-java">DozeHost.java
+void onBuzzBeepBlinked()
+
+</code></pre>
+<pre><code class="language-java">DozeService.java
+public void onBuzzBeepBlinked() {
+    if (DEBUG) Log.d(mTag, &quot;onBuzzBeepBlinked&quot;);
+    updateNotificationPulse(System.currentTimeMillis());
+}
+
+</code></pre>
+<pre><code class="language-java">DozeService.java
+private void updateNotificationPulse(long notificationTimeMs)
+</code></pre>
+<p>通知灯闪烁的地方, 不太确定?????</p>
+<pre><code class="language-java">DozeService.java
+private void rescheduleNotificationPulse(boolean predicate) 
+</code></pre>
+<pre><code class="language-java">AlarmManager.java
+public void setExact(int type, long triggerAtMillis, PendingIntent operation)
+</code></pre>
+<pre><code class="language-java">AlarmManager.java
+private void setImpl(int type, long triggerAtMillis, long windowMillis, long intervalMillis,
+        int flags, PendingIntent operation, final OnAlarmListener listener, String listenerTag,
+        Handler targetHandler, WorkSource workSource, AlarmClockInfo alarmClock) 
+</code></pre>
+<pre><code class="language-java">IAlarmManager.aidl
+void set(String callingPackage, int type, long triggerAtTime, long windowLength,
+            long interval, int flags, in PendingIntent operation, in IAlarmListener listener,
+            String listenerTag, in WorkSource workSource, in AlarmManager.AlarmClockInfo alarmClock)
+</code></pre>
+<h3 id="播放声音的地方">播放声音的地方</h3>
+<pre><code class="language-java">if (hasValidSound) { //确定设置了声音, 如果是静音模式就不必播放呻吟了
+    boolean looping =
+            (notification.flags &amp; Notification.FLAG_INSISTENT) != 0;
+    AudioAttributes audioAttributes = audioAttributesForNotification(notification);
+    mSoundNotificationKey = key;
+    // do not play notifications if stream volume is 0 (typically because
+    // ringer mode is silent) or if there is a user of exclusive audio focus
+    if ((mAudioManager.getStreamVolume(
+            AudioAttributes.toLegacyStreamType(audioAttributes)) != 0)
+            &amp;&amp; !mAudioManager.isAudioFocusExclusive()) {
+        final long identity = Binder.clearCallingIdentity();
+        try {
+            final IRingtonePlayer player =
+                    mAudioManager.getRingtonePlayer(); //获取RingtonePlayer对象
+            if (player != null) {
+                if (DBG) Slog.v(TAG, &quot;Playing sound &quot; + soundUri
+                        + &quot; with attributes &quot; + audioAttributes);
+                player.playAsync(soundUri, record.sbn.getUser(), looping,
+                        audioAttributes); //转至SystemUI里的RingtonePlayer播放声音
+                beep = true;
+            }
+        } catch (RemoteException e) {
+        } finally {
+            Binder.restoreCallingIdentity(identity);
+        }
+    }
+}
+</code></pre>
+<pre><code class="language-java">public void playAsync(Uri uri, UserHandle user, boolean looping, AudioAttributes aa) 
+
+</code></pre>
+<pre><code class="language-java">public void play(Context context, Uri uri, boolean looping, AudioAttributes attributes)
+</code></pre>
+<pre><code class="language-java">private void enqueueLocked(Command cmd)
+</code></pre>
+<pre><code class="language-java"> public void run()
+</code></pre>
+<pre><code class="language-java">private void startSound(Command cmd)
+</code></pre>
+<pre><code class="language-java">CreationAndCompletionThread.java
+public void run()
+
+</code></pre>
+<h3 id="震动的地方">震动的地方</h3>
+<pre><code class="language-java">if (hasValidVibrate &amp;&amp; !(mAudioManager.getRingerModeInternal()
+        == AudioManager.RINGER_MODE_SILENT)) {
+    mVibrateNotificationKey = key;
+
+    if (useDefaultVibrate || convertSoundToVibration) {
+        // Escalate privileges so we can use the vibrator even if the
+        // notifying app does not have the VIBRATE permission.
+        long identity = Binder.clearCallingIdentity();
+        try {
+            mVibrator.vibrate(record.sbn.getUid(), record.sbn.getOpPkg(),
+                    useDefaultVibrate ? mDefaultVibrationPattern
+                            : mFallbackVibrationPattern,
+                    ((notification.flags &amp; Notification.FLAG_INSISTENT) != 0)
+                            ? 0: -1, audioAttributesForNotification(notification));
+            buzz = true;
+        } finally {
+            Binder.restoreCallingIdentity(identity);
+        }
+    } else if (notification.vibrate.length &gt; 1) {
+        // If you want your own vibration pattern, you need the VIBRATE
+        // permission
+        mVibrator.vibrate(record.sbn.getUid(), record.sbn.getOpPkg(),
+                notification.vibrate,
+                ((notification.flags &amp; Notification.FLAG_INSISTENT) != 0)
+                        ? 0: -1, audioAttributesForNotification(notification));
+        buzz = true;
+    }
+}
+</code></pre>
+<pre><code class="language-java">Vibrator.java
+public abstract void vibrate(int uid, String opPkg, long[] pattern, int repeat,
+        AudioAttributes attributes)
+
+</code></pre>
+<pre><code class="language-java">SystemVibrator.java
+public void vibrate(int uid, String opPkg, long[] pattern, int repeat,
+        AudioAttributes attributes)
+
+</code></pre>
+<h3 id="通知灯亮的地方">通知灯亮的地方</h3>
+<pre><code class="language-java">NotificationManagerService.java
+void updateLightsLocked()
+</code></pre>
+<pre><code class="language-java">Light.java
+public abstract void setFlashing(int color, int mode, int onMS, int offMS);
+</code></pre>
+<pre><code class="language-java">LightsService.java
+public void setFlashing(int color, int mode, int onMS, int offMS)
+</code></pre>
+<pre><code class="language-java">LightsService.java
+private void setLightLocked(int color, int mode, int onMS, int offMS, int brightnessMode)
+</code></pre>
+<pre><code class="language-java">LightsService.java
+static native void setLight_native(long ptr, int light, int color, int mode,
+            int onMS, int offMS, int brightnessMode)
+</code></pre>
+<pre><code class="language-java">StatusBarManagerInternal.java
+void notificationLightPulse(int argb, int onMillis, int offMillis)
+</code></pre>
+<pre><code class="language-java">StatusBarManagerService.java
+public void notificationLightPulse(int argb, int onMillis, int offMillis)
+</code></pre>
+<pre><code class="language-java">IStatusBar.aidl
+void notificationLightPulse(int argb, int millisOn, int millisOff);
+</code></pre>
+<pre><code class="language-java">CommandQueue.java
+public void notificationLightPulse(int argb, int onMillis, int offMillis)
+</code></pre>
+<pre><code class="language-java">CommandQueue.java
+void notificationLightPulse(int argb, int onMillis, int offMillis);
+</code></pre>
+<pre><code class="language-java">PhoneStatusBar.java
+public void notificationLightPulse(int argb, int onMillis, int offMillis)
+</code></pre>
+<pre><code class="language-java">PhoneStatusBar.java
+public void fireNotificationLight(boolean on)
+</code></pre>
+<pre><code class="language-java">DozeHost.java
+void onNotificationLight(boolean on)
+</code></pre>
+<pre><code class="language-java">DozeSerivce.java
+public void onNotificationLight(boolean on)
+</code></pre>
+<pre><code class="language-java">DozeSerivce.java
+private void updateNotificationPulseDueToLight()
+</code></pre>
+<pre><code class="language-java">DozeSerivce.java
+private void updateNotificationPulse(long notificationTimeMs)
+</code></pre>
+<pre><code class="language-java">DozeSerivce.java
+private void rescheduleNotificationPulse(boolean predicate) {
+</code></pre>
+<pre><code class="language-java">AlarmManager.java
+ public void setExact(int type, long triggerAtMillis, PendingIntent operation) {
+        setImpl(type, triggerAtMillis, WINDOW_EXACT, 0, 0, operation, null, null, null,
+                null, null);
+    }
+</code></pre>
+<h3 id="通知的显示">通知的显示</h3>
+<pre><code class="language-java">NotificationManagerService.java
+EnqueueNotificationRunnable
+public void run() 
+</code></pre>
+<pre><code class="language-java">NotificationManagerService.java
+public void notifyPostedLocked(StatusBarNotification sbn, StatusBarNotification oldSbn)
+</code></pre>
+<pre><code class="language-java">NotificationManagerService.java
+private void notifyPosted(final ManagedServiceInfo info,
+                final StatusBarNotification sbn, NotificationRankingUpdate rankingUpdate)
+</code></pre>
+<pre><code class="language-java">INotificationListener.aidl
+void onNotificationPosted(in IStatusBarNotificationHolder notificationHolder,
+        in NotificationRankingUpdate update
+</code></pre>
+<pre><code class="language-java">NotificationListenerService.java
+public void onNotificationPosted(IStatusBarNotificationHolder sbnHolder,
+                NotificationRankingUpdate update)
+</code></pre>
+<pre><code class="language-java">NotificationListenerService.java
+public void handleMessage(Message msg);
+</code></pre>
+<pre><code class="language-java">NotificationListenerService.java
+public void onNotificationPosted(StatusBarNotification sbn, RankingMap rankingMap)
+</code></pre>
+<pre><code class="language-java">NotificationListenerService.java
+public void onNotificationPosted(StatusBarNotification sbn)
+</code></pre>
+<pre><code class="language-java">BaseStatusBar.java
+public void onNotificationPosted(final StatusBarNotification sbn,
+                final RankingMap rankingMap)
+
+</code></pre>
+<pre><code class="language-java">PhoneStatusBar.java
+public void addNotification(StatusBarNotification notification, RankingMap ranking,
+            Entry oldEntry) 
+</code></pre>
+<pre><code class="language-java">PhoneStatusBar.java
+protected void addNotificationViews(Entry entry, RankingMap ranking) 
+//决定这通知是否下拉时在StatusBar上显示, 以及是否以弹出式的方式显示通知
+</code></pre>
+<pre><code class="language-java">protected void updateNotifications()
+</code></pre>
+<pre><code class="language-java">private void updateNotificationShade()
+</code></pre>
+<pre><code class="language-java">StatusBarIconController.java
+public void updateNotificationIcons(NotificationData notificationData)
+</code></pre>
+<pre><code class="language-java">public void updateNotificationIcons(NotificationData notificationData)
+//Updates the notifications with the given list of notifications to display.
+</code></pre>
+<pre><code class="language-java">NotificationIconAreaController.java
+private void applyNotificationIconsTint() 
+</code></pre>
+<pre><code class="language-java">protected void setAreThereNotifications() //允许浮动式通知弹出
+</code></pre>
+<pre><code class="language-java">PhoneStatusBar.java
+public void findAndUpdateMediaNotifications()
+</code></pre>
+<pre><code class="language-java">PhoneStatusBar.java
+public void updateMediaMetaData(boolean metaDataChanged, boolean allowEnterAnimation) 
+//更新或者是移除来自于媒体元数据的锁屏艺术封面或者锁屏壁纸
+//Refresh or remove lockscreen artwork from media metadata or the lockscreen wallpaper.
+</code></pre>
+<h3 id="通知的更新">通知的更新</h3>
+<pre><code class="language-java">BaseStatusBar.java
+boolean isUpdate = mNotificationData.get(key) != null  //通过这个条件来决定是否更新
+</code></pre>
+<pre><code class="language-java">BaseStatusBar.java
+public void updateNotification(StatusBarNotification notification, RankingMap ranking)
+</code></pre>
+<pre><code class="language-java">BaseStatusBar.java
+private void updateNotificationViews(Entry entry, StatusBarNotification sbn)
+</code></pre>
+<h3 id="通知的取消">通知的取消</h3>
+<pre><code class="language-java">NotificationManager.java
+public void cancel(int id)
+</code></pre>
+<pre><code class="language-java">NotificationManager.java
+public void cancel(String tag, int id)
+</code></pre>
+<pre><code class="language-java">NotificationManager.java
+public void cancelAsUser(String tag, int id, UserHandle user)
+</code></pre>
+<pre><code class="language-java">NotificationManagerService.java
+public void cancelNotificationWithTag(String pkg, String tag, int id, int userId)
+</code></pre>
+<pre><code class="language-java">NotificationManagerService.java
+void cancelNotification(final int callingUid, final int callingPid,
+            final String pkg, final String tag, final int id,
+            final int mustHaveFlags, final int mustNotHaveFlags, final boolean sendDelete,
+            final int userId, final int reason, final ManagedServiceInfo listener)
+</code></pre>
+<pre><code class="language-java">NotificationManagerService.java
+private void cancelNotificationLocked(NotificationRecord r, boolean sendDelete, int reason)
+</code></pre>
+<pre><code class="language-java">PendingIntent.java
+public void send() throws CanceledException
+</code></pre>
+<pre><code class="language-java">PendingIntent.java
+public void send(Context context, int code, @Nullable Intent intent,
+            @Nullable OnFinished onFinished, @Nullable Handler handler,
+            @Nullable String requiredPermission, @Nullable Bundle options)
+            throws CanceledException
+
+</code></pre>
+<pre><code class="language-java">public int sendIntentSender(IIntentSender target, int code, Intent intent, String resolvedType,
+        IIntentReceiver finishedReceiver, String requiredPermission, Bundle options)
+        throws RemoteException 
+</code></pre>
+<h3 id="notification-duck">Notification Duck</h3>
+<h3 id="notificationusagestats">NotificationUsageStats</h3>
+<pre><code class="language-java">NotificationUsageStats.java
+public synchronized void registerEnqueuedByApp(String packageName)
+</code></pre>
+<pre><code class="language-java">NotificationUsageStats.java
+private AggregatedStats[] getAggregatedStatsLocked(String packageName)
+</code></pre>
+<pre><code class="language-java">NotificationUsageStats.java
+private AggregatedStats getOrCreateAggregatedStatsLocked(String key)
+</code></pre>
+<pre><code class="language-java">NotificationUsageStats.java
+public AggregatedStats(Context context, String key)
+</code></pre>
+<h3 id="notification点击跳转">Notification点击跳转</h3>
+<pre><code class="language-java">private final class NotificationClicker implements View.OnClickListener {
+    public void onClick(final View v) {
+        Log.d(TAG, &quot;BaseStatusBar: NotificationClicker: onClick: &quot;);
+        if (!(v instanceof ExpandableNotificationRow)) {
+            Log.e(TAG, &quot;NotificationClicker called on a view that is not a notification row.&quot;);
+            return;
+        }
+
+        final ExpandableNotificationRow row = (ExpandableNotificationRow) v;
+        final StatusBarNotification sbn = row.getStatusBarNotification();
+        if (sbn == null) {
+            Log.e(TAG, &quot;NotificationClicker called on an unclickable notification,&quot;);
+            return;
+        }
+
+        // Check if the notification is displaying the gear, if so slide notification back
+        if (row.getSettingsRow() != null &amp;&amp; row.getSettingsRow().isVisible()) {
+            row.animateTranslateNotification(0);
+            return;
+        }
+
+        Notification notification = sbn.getNotification();
+        final PendingIntent intent = notification.contentIntent != null
+                ? notification.contentIntent
+                : notification.fullScreenIntent;
+        final String notificationKey = sbn.getKey();
+
+        // Mark notification for one frame.
+        row.setJustClicked(true);
+        DejankUtils.postAfterTraversal(new Runnable() {
+            @Override
+            public void run() {
+                row.setJustClicked(false);
+            }
+        });
+
+        final boolean keyguardShowing = mStatusBarKeyguardViewManager.isShowing();
+        final boolean afterKeyguardGone = intent.isActivity()
+                &amp;&amp; PreviewInflater.wouldLaunchResolverActivity(mContext, intent.getIntent(),
+                        mCurrentUserId);
+        dismissKeyguardThenExecute(new OnDismissAction() {
+            public boolean onDismiss() {
+                if (mHeadsUpManager != null &amp;&amp; mHeadsUpManager.isHeadsUp(notificationKey)) {
+                    // Release the HUN notification to the shade.
+
+                    if (isPanelFullyCollapsed()) {
+                        HeadsUpManager.setIsClickedNotification(row, true);
+                    }
+                    //
+                    // In most cases, when FLAG_AUTO_CANCEL is set, the notification will
+                    // become canceled shortly by NoMan, but we can't assume that.
+                    mHeadsUpManager.releaseImmediately(notificationKey);
+                }
+                StatusBarNotification parentToCancel = null;
+                if (shouldAutoCancel(sbn) &amp;&amp; mGroupManager.isOnlyChildInGroup(sbn)) {
+                    StatusBarNotification summarySbn = mGroupManager.getLogicalGroupSummary(sbn)
+                                    .getStatusBarNotification();
+                    if (shouldAutoCancel(summarySbn)) {
+                        parentToCancel = summarySbn;
+                    }
+                }
+                final StatusBarNotification parentToCancelFinal = parentToCancel;
+                new Thread() {
+                    @Override
+                    public void run() {
+                        try {
+                            if (keyguardShowing &amp;&amp; !afterKeyguardGone) {
+                                ActivityManagerNative.getDefault()
+                                        .keyguardWaitingForActivityDrawn();
+                            }
+
+                            // The intent we are sending is for the application, which
+                            // won't have permission to immediately start an activity after
+                            // the user switches to home.  We know it is safe to do at this
+                            // point, so make sure new activity switches are now allowed.
+                            ActivityManagerNative.getDefault().resumeAppSwitches();
+                        } catch (RemoteException e) {
+                        }
+                        if (intent != null) {
+                            // If we are launching a work activity and require to launch
+                            // separate work challenge, we defer the activity action and cancel
+                            // notification until work challenge is unlocked.
+                            if (intent.isActivity()) {
+                                final int userId = intent.getCreatorUserHandle()
+                                        .getIdentifier();
+                                if (mLockPatternUtils.isSeparateProfileChallengeEnabled(userId)
+                                        &amp;&amp; mKeyguardManager.isDeviceLocked(userId)) {
+                                    if (startWorkChallengeIfNecessary(userId,
+                                            intent.getIntentSender(), notificationKey)) {
+                                        // Show work challenge, do not run pendingintent and
+                                        // remove notification
+                                        return;
+                                    }
+                                }
+                            }
+                            try {
+                                intent.send(null, 0, null, null, null, null,
+                                        getActivityOptions());
+                            } catch (PendingIntent.CanceledException e) {
+                                // the stack trace isn't very helpful here.
+                                // Just log the exception message.
+                                Log.w(TAG, &quot;Sending contentIntent failed: &quot; + e);
+
+                                // TODO: Dismiss Keyguard.
+                            }
+                            if (intent.isActivity()) {
+                                mAssistManager.hideAssist();
+                                overrideActivityPendingAppTransition(keyguardShowing
+                                        &amp;&amp; !afterKeyguardGone);
+                            }
+                        }
+
+                        try {
+                            mBarService.onNotificationClick(notificationKey);
+                        } catch (RemoteException ex) {
+                            // system process is dead if we're here.
+                        }
+                        if (parentToCancelFinal != null) {
+                            // We have to post it to the UI thread for synchronization
+                            mHandler.post(new Runnable() {
+                                @Override
+                                public void run() {
+                                    Runnable removeRunnable = new Runnable() {
+                                        @Override
+                                        public void run() {
+                                            performRemoveNotification(parentToCancelFinal,
+                                                    true);
+                                        }
+                                    };
+                                    if (isCollapsing()) {
+                                        // To avoid lags we're only performing the remove
+                                        // after the shade was collapsed
+                                        addPostCollapseAction(removeRunnable);
+                                    } else {
+                                        removeRunnable.run();
+                                    }
+                                }
+                            });
+                        }
+                    }
+                }.start();
+
+                // close the shade if it was open
+                animateCollapsePanels(CommandQueue.FLAG_EXCLUDE_RECENTS_PANEL,
+                        true /* force */, true /* delayed */);
+                visibilityChanged(false);
+
+                return true;
+            }
+        }, afterKeyguardGone);
+    }
+
+    private boolean shouldAutoCancel(StatusBarNotification sbn) {
+        int flags = sbn.getNotification().flags;
+        if ((flags &amp; Notification.FLAG_AUTO_CANCEL) != Notification.FLAG_AUTO_CANCEL) {
+            return false;
+        }
+        if ((flags &amp; Notification.FLAG_FOREGROUND_SERVICE) != 0) {
+            return false;
+        }
+        return true;
+    }
+
+    public void register(ExpandableNotificationRow row, StatusBarNotification sbn) {
+        Notification notification = sbn.getNotification();
+        if (notification.contentIntent != null || notification.fullScreenIntent != null) {
+            row.setOnClickListener(this);
+        } else {
+            row.setOnClickListener(null);
+        }
+    }
+}
+
+</code></pre>
+<h3 id="notification没有小图标">Notification没有小图标</h3>
+<pre><code class="language-java">public void notifyRemovedLocked(StatusBarNotification sbn)
+</code></pre>
+<pre><code class="language-java">private void notifyRemoved(ManagedServiceInfo info, StatusBarNotification sbn,
+        NotificationRankingUpdate rankingUpdate)
+</code></pre>
+<h3 id="record思考">Record思考</h3>
+<pre><code>am/ActivityRecord.java
+am/AppBindRecord.java
+am/BackupRecord.java
+am/BroadcastRecord.java
+am/ConnectionRecord.java
+am/ContentProviderRecord.java
+am/IntentBindRecord.java
+am/PendingIntentRecord.java
+am/ProcessRecord.java
+am/ServiceRecord.java
+am/TaskRecord.java
+UidRecord.java
+media/MediaSessionRecord.java
+notification/NotificationRecord.java
+</code></pre>
+<h2 id="从架构上了解notification">从架构上了解Notification</h2>
+<pre><code>1. 查看notification经过了几个进程
+2. 各个进程之间使用了哪些AIDL 来通讯
+3. 通讯之间使用了哪些类作为参数
+4. 
+
+</code></pre>
+<p>Notification经过的进程</p>
+<pre><code>1. CallerPID: 调用了Notificationmanager 的notify方法, 这个仍属于调用的所在的进程, 跨进程使用了INotificationManager.aidl
+2. system_server: NotificationManagerService 所在的进程是system_server, 在这里进行了逻辑的处理, 跨进程采用了INotificationListener.aidl
+3. com.android.systemui: SystemUI进行界面处理. 是com.android.systemui 进程
+4. com.android.systemui: SystemUI 播放铃声, 是com.android.systemui 进程. 跨进程使用了IRingtonePlayer.aidl
+5. com.android.systemui: SystemUI Notification灯亮, 是com.android.systemui 进程. 跨进程使用了IStatusBar.aidl
+6. 
+
+</code></pre>
+<p>涉及到的AIDL, 因为AIDL是进程间的通信,一次可能涉及到多个进程</p>
+<pre><code>IStatusBar.aidl
+IStatusBarNotificationHolder.aidl
+IStatusBarService.aidl
+Notification.aidl
+INotificationManager
+IRingtonePlayer.aidl
+INotificationListener.aidl
+IStatusBarService.aidl
+IStatusBarNotificationHolder.aidl
+
+</code></pre>
+<h3 id="相关问题">相关问题</h3>
+<pre><code>1. 通知是如何发出去的
+2. 通知是如何播放铃声的
+3. 发通知的方式
+4. 发完通知没看通知, 通知灯的闪烁
+5. android的framework生成的几个进程, system_process, com.android.systemui, android.ext.services, android.process_acore, android.process.media
+6. 通知是如何更新的
+7. 通知是如何显示的
+8. 同一个应用的多个通知是如何被组织到一起的
+9. Notification的架构
+10. StatusBarIconView的显示, 被包围在IconMerger里面
+11. 通知更新的条件是什么
+12. 通知以组的形式显示的条件是什么
+13. 通知的种类
+14. Notification Duck
+15. NotificationRecord的作用
+16. NotificationListenerService的作用
+17. 认识Notification
+18. PendingIntent是如何添加button的
+19. Notification的样式
+
+</code></pre>
+<pre><code>NotificationRecord  在NotificationManagerService里用此类来记录Notification
+Notification  
+Ranking 存储着当前正在活跃的notification的等级信息
+NotificationListenerService  
+NotificationRankerService 继承于NotificationListenerService
+
+</code></pre>
+<p>涉及到的模块</p>
+<pre><code>SystemUI
+services.core
+
+</code></pre>
+<pre><code class="language-java">mNotificationData.add(entry, ranking);  //注释掉来通知的时候， 出现两个StatusBar， 下拉没有通知
+updateNotifications();  //注释没有下拉通知， 重启SystemUI通知会出来
+</code></pre>
+<pre><code class="language-java">final ArrayList&lt;NotificationRecord&gt; mNotificationList =
+    new ArrayList&lt;NotificationRecord&gt;();
+final ArrayMap&lt;String, NotificationRecord&gt; mNotificationsByKey =
+    new ArrayMap&lt;String, NotificationRecord&gt;();
+final ArrayMap&lt;Integer, ArrayMap&lt;String, String&gt;&gt; mAutobundledSummaries = new ArrayMap&lt;&gt;();
+final ArrayList&lt;ToastRecord&gt; mToastQueue = new ArrayList&lt;ToastRecord&gt;();
+final ArrayMap&lt;String, NotificationRecord&gt; mSummaryByGroupKey = new ArrayMap&lt;&gt;();
+final PolicyAccess mPolicyAccess = new PolicyAccess();
+
+// The last key in this list owns the hardware.
+ArrayList&lt;String&gt; mLights = new ArrayList&lt;&gt;();
+
+
+</code></pre>
+<h3 id="锁屏通知布局">锁屏通知布局</h3>
+<pre><code>StatusBarWindowView  //整个下拉通知,包括状态栏, 锁屏通知
+NotificationPanelView //包含所有的显示的通知, 包含状态栏
+NotificationsQuickSettingsContainer//包含所有的显示的通知, 包含状态栏, 不包含底部的锁屏KeyGuradBottom
+NotificationStackScrollLayout //只包含所有的通知ExpandableNotificationRow以及过多的通知显示栏OverflowContainer,
+ExpandableNotificationRow
+NotificationBackgroundView// 一个normal状态， 一个dimmed状态
+NotificationContentView
+
+
+</code></pre>
+<p>文档有待整理</p>
+<h2 id="参考文献">参考文献</h2>
+<ol>
+<li><a href="https://developer.android.com/reference/android/app/Notification.html">Notification</a></li>
+<li><a href="https://developer.android.com/design/patterns/notifications_k.html">Notifications, Android 4.4 and Lower</a></li>
+<li><a href="http://blog.csdn.net/yihongyuelan/article/details/40977323">Android 4.4 KitKat NotificationManagerService使用详解与原理分析(一)__使用详解</a></li>
+<li><a href="http://blog.csdn.net/yihongyuelan/article/details/41084165"> Android 4.4 KitKat NotificationManagerService使用详解与原理分析(二)__原理分析</a></li>
+<li><a href="http://www.jianshu.com/p/d9fbcb0db013">Android N 通知概览及example</a></li>
+<li><a href="https://gank.io/post/56e0b83c67765963436fcb94">从开发者角度解析 Android N 新特性！</a></li>
+<li><a href="https://gold.xitu.io/entry/577a27e76be3ff006a1ef870">译探寻 Android N 中通知的新变化</a></li>
+<li><a href="http://blog.csdn.net/elder_sword/article/details/50809642">Android5.1应用统计源码分析</a></li>
+<li><a href="http://blog.csdn.net/yihongyuelan/article/details/7751013"> Android 4.0 ICS SystemUI浅析——StatusBar加载流程之Notification</a></li>
+<li><a href="http://blog.csdn.net/vipzjyno1/article/details/25248021"> Android 通知栏Notification的整合 全面学习 </a></li>
+<li><a href="https://segunfamisa.com/posts/notifications-direct-reply-android-nougat">Improved notifications with Direct reply in Android N</a></li>
+<li><a href="http://connorlin.github.io/2016/04/21/%E4%BD%A0%E7%9C%9F%E7%9A%84%E4%BA%86%E8%A7%A3Android-Notification%E5%90%97/">你真的了解Android Notification吗?</a></li>
+<li><a href="http://glgjing.github.io/blog/2015/11/18/android-kai-fa-zhi-notification-xiang-jie/">Android 开发之 Notification 详解</a></li>
+<li><a href="http://yuweiguocn.github.io/android-basic-notification/">Android基础——Notification</a></li>
+<li><a href="http://mahong978.top/2016/09/08/Android-DRN/">Android N新特性：direct reply notification</a></li>
+<li><a href="https://shoewann0402.github.io/2016/05/12/Android-Notification-%E9%80%9A%E7%9F%A5%E6%A0%B7%E5%BC%8F%E6%80%BB%E7%BB%93/">Android Notification 通知样式总结</a></li>
+<li><a href="http://canglangwenyue.com/2014/12/08/android-notification%E5%AE%8C%E5%85%A8%E8%A7%A3%E6%9E%90/">android notification完全解析</a></li>
+<li><a href="http://haoxiqiang.github.io/blog/20150129-AndroidNotification.html">Android的Notification</a></li>
+<li><a href="http://lovenight.github.io/2015/12/10/Android%E7%AC%94%E8%AE%B0%E4%B9%8BNotification/">Android笔记之Notification</a></li>
+<li><a href="http://ghvn7777.github.io/2016/05/27/Notification/">Notification通知</a></li>
+<li><a href="http://wn398.github.io/2015/03/16/android/android%E9%80%9A%E7%9F%A5%E3%80%81PendingIntent%E3%80%81%E5%AE%9A%E6%97%B6%E6%9C%BA%E5%88%B6/">android通知、PendingIntent、定时机制</a></li>
+<li><a href="http://chendd.com/blog/2013/03/25/android_study_21/">Android学习日记21--消息提示之Toast和Notification</a></li>
+<li><a href="http://blog.csdn.net/jdsjlzx/article/details/6916533">Android的StatusBar分析</a></li>
+<li><a href="http://light3moon.com/2015/02/06/Android%20SystemUI%20%E5%88%86%E6%9E%90%E2%80%94%E2%80%94%E9%80%9A%E7%9F%A5/">Android SystemUI 分析——通知</a></li>
+<li><a href="http://blog.csdn.net/jamikabin/article/details/22950735">Notification数据结构和功能处理流程分析</a></li>
+<li><a href="http://blog.csdn.net/yueqian_scut/article/details/51417547"> Android NotificationListenerService原理简介</a></li>
+<li><a href="https://www.zhihu.com/question/20372589">什么是 Dirty hack</a></li>
+<li><a href="http://blog.csdn.net/self_study/article/details/51055769">android 特殊用户通知用法汇总--Notification源码分析</a></li>
+<li><a href="http://blog.csdn.net/thinkingword/article/details/7769621">Notification的显示过程</a></li>
+<li><a href="https://yq.aliyun.com/ziliao/98493">Notification与NotificationManager详细 _Android</a></li>
+<li><a href="http://blog.csdn.net/itachi85/article/details/50096609"> Android5.x Notification应用解析 </a></li>
+<li><a href="http://www.jianshu.com/p/3ed68162e1f5">Notification机制浅析（基于SDK23）</a></li>
+<li><a href="http://blog.csdn.net/guoqifa29/article/details/44133905"> NotificationManagerService笔记</a></li>
+<li><a href="https://www.zybuluo.com/coder-pig/note/183026">Android基础入门教程——2.5.2 Notification(状态栏通知)详解</a></li>
+<li><a href="http://blog.csdn.net/qq_31530015/article/details/53507968">Android 7.0 SystemUI 之启动和状态栏和导航栏简介</a></li>
+<li><a href="http://fortianwei.iteye.com/blog/1180020">Notification framework层的处理流程分析</a></li>
+<li><a href="http://iluhcm.com/2017/03/12/experience-of-adapting-to-android-notifications/">Android通知栏介绍与适配总结</a>
+<a href=""></a>
+<a href=""></a>
+<a href=""></a>
+<a href=""></a>
+<a href=""></a>
+<a href=""></a>
+<a href=""></a>
+<a href=""></a>
+<a href=""></a>
+<a href=""></a></li>
+</ol>
+
+            </div>
+          </article>
+        </div>
+
+        
+          <div class="next-post">
+            <div class="next">下一篇</div>
+            <a href="http://xuwanjin.me//post/activity-fen-xi">
+              <h3 class="post-title">
+                Activity 分析
+              </h3>
+            </a>
+          </div>
+        
+
+        
+
+        <div class="site-footer">
+  Powered by <a href="https://github.com/getgridea/gridea" target="_blank">Gridea</a> | 
+  <a class="rss" href="http://xuwanjin.me//atom.xml" target="_blank">RSS</a>
+</div>
+
+<script>
+  hljs.initHighlightingOnLoad()
+</script>
+
+      </div>
+    </div>
+  </body>
+</html>
