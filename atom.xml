@@ -2,7 +2,7 @@
 <feed xmlns="http://www.w3.org/2005/Atom">
     <id>http://xuwanjin.me/</id>
     <title>Gridea</title>
-    <updated>2019-06-16T03:30:49.891Z</updated>
+    <updated>2019-06-26T12:10:26.579Z</updated>
     <generator>https://github.com/jpmonette/feed</generator>
     <link rel="alternate" href="http://xuwanjin.me/"/>
     <link rel="self" href="http://xuwanjin.me//atom.xml"/>
@@ -10,6 +10,17 @@
     <logo>http://xuwanjin.me//images/avatar.png</logo>
     <icon>http://xuwanjin.me//favicon.ico</icon>
     <rights>All rights reserved 2019, Gridea</rights>
+    <entry>
+        <title type="html"><![CDATA[记一次pos机无法灭屏的bug]]></title>
+        <id>http://xuwanjin.me//post/ji-yi-ci-pos-ji-wu-fa-mie-ping-de-bug</id>
+        <link href="http://xuwanjin.me//post/ji-yi-ci-pos-ji-wu-fa-mie-ping-de-bug">
+        </link>
+        <updated>2019-06-26T12:06:11.000Z</updated>
+        <summary type="html"><![CDATA[<p>记录一次的 bug 的解决过程, 这个比较复杂, 涉及的东西比较多.</p>
+]]></summary>
+        <content type="html"><![CDATA[<p>记录一次的 bug 的解决过程, 这个比较复杂, 涉及的东西比较多.</p>
+]]></content>
+    </entry>
     <entry>
         <title type="html"><![CDATA[Builder 设计模式]]></title>
         <id>http://xuwanjin.me//post/builder-she-ji-mo-shi</id>
@@ -103,19 +114,6 @@
         <summary type="html"><![CDATA[<p>记录一次 Android 系统 OTA 包升级报错, 了解一下大概原理</p>
 ]]></summary>
         <content type="html"><![CDATA[<p>记录一次 Android 系统 OTA 包升级报错, 了解一下大概原理</p>
-]]></content>
-    </entry>
-    <entry>
-        <title type="html"><![CDATA[Hello Gridea]]></title>
-        <id>http://xuwanjin.me//post/hello-gridea</id>
-        <link href="http://xuwanjin.me//post/hello-gridea">
-        </link>
-        <updated>2018-12-11T16:00:00.000Z</updated>
-        <summary type="html"><![CDATA[<p>👏  欢迎使用 <strong>Gridea</strong> ！<br>
-✍️  <strong>Gridea</strong> 一个静态博客写作客户端。你可以用它来记录你的生活、心情、知识、笔记、创意... ...</p>
-]]></summary>
-        <content type="html"><![CDATA[<p>👏  欢迎使用 <strong>Gridea</strong> ！<br>
-✍️  <strong>Gridea</strong> 一个静态博客写作客户端。你可以用它来记录你的生活、心情、知识、笔记、创意... ...</p>
 ]]></content>
     </entry>
 </feed>
