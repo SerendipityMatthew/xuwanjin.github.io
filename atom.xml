@@ -2,7 +2,7 @@
 <feed xmlns="http://www.w3.org/2005/Atom">
     <id>http://xuwanjin.me/</id>
     <title>Gridea</title>
-    <updated>2019-06-26T12:49:53.590Z</updated>
+    <updated>2019-07-20T00:56:13.121Z</updated>
     <generator>https://github.com/jpmonette/feed</generator>
     <link rel="alternate" href="http://xuwanjin.me/"/>
     <link rel="self" href="http://xuwanjin.me//atom.xml"/>
@@ -10,6 +10,17 @@
     <logo>http://xuwanjin.me//images/avatar.png</logo>
     <icon>http://xuwanjin.me//favicon.ico</icon>
     <rights>All rights reserved 2019, Gridea</rights>
+    <entry>
+        <title type="html"><![CDATA[OTA 升级测试的一些错误]]></title>
+        <id>http://xuwanjin.me//post/ota-sheng-ji-ce-shi-de-yi-xie-cuo-wu</id>
+        <link href="http://xuwanjin.me//post/ota-sheng-ji-ce-shi-de-yi-xie-cuo-wu">
+        </link>
+        <updated>2019-07-20T00:52:54.000Z</updated>
+        <summary type="html"><![CDATA[<p>Android MTK 9.0 平台升级的一些错误</p>
+]]></summary>
+        <content type="html"><![CDATA[<p>Android MTK 9.0 平台升级的一些错误</p>
+]]></content>
+    </entry>
     <entry>
         <title type="html"><![CDATA[记一次pos机无法灭屏的bug]]></title>
         <id>http://xuwanjin.me//post/ji-yi-ci-pos-ji-wu-fa-mie-ping-de-bug</id>
@@ -103,17 +114,6 @@
         <summary type="html"><![CDATA[<p>经常使用 ripgrep 来在 aosp 代码库里搜索代码, 已经不在使用 grep, grep 效率低下. 偶尔也会替换时掉 mangrep, jgrep, cgrep, mgrep感觉到了 riggrep 的确很强大, 速度很快.</p>
 ]]></summary>
         <content type="html"><![CDATA[<p>经常使用 ripgrep 来在 aosp 代码库里搜索代码, 已经不在使用 grep, grep 效率低下. 偶尔也会替换时掉 mangrep, jgrep, cgrep, mgrep感觉到了 riggrep 的确很强大, 速度很快.</p>
-]]></content>
-    </entry>
-    <entry>
-        <title type="html"><![CDATA[Android Wear OTA 升级]]></title>
-        <id>http://xuwanjin.me//post/android-wear-ota-sheng-ji</id>
-        <link href="http://xuwanjin.me//post/android-wear-ota-sheng-ji">
-        </link>
-        <updated>2019-06-12T15:19:12.000Z</updated>
-        <summary type="html"><![CDATA[<p>记录一次 Android 系统 OTA 包升级报错, 了解一下大概原理</p>
-]]></summary>
-        <content type="html"><![CDATA[<p>记录一次 Android 系统 OTA 包升级报错, 了解一下大概原理</p>
 ]]></content>
     </entry>
 </feed>

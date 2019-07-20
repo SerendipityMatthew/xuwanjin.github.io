@@ -1,0 +1,440 @@
+<html>
+  <head>
+    <meta charset="utf-8" />
+<meta name="description" content="" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>OTA 升级测试的一些错误 | Gridea</title>
+<link rel="shortcut icon" href="http://xuwanjin.me//favicon.ico?v=1563584168768">
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
+<link rel="stylesheet" href="http://xuwanjin.me//styles/main.css">
+
+<script src="https://cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js"></script>
+<script src="https://cdn.bootcss.com/moment.js/2.23.0/moment.min.js"></script>
+
+
+
+  </head>
+  <body>
+    <div class="main">
+      <div class="main-content">
+        <div class="site-header">
+  <a href="http://xuwanjin.me/">
+  <img class="avatar" src="http://xuwanjin.me//images/avatar.png?v=1563584168768" alt="">
+  </a>
+  <h1 class="site-title">
+    Gridea
+  </h1>
+  <p class="site-description">
+    温故而知新
+  </p>
+  <div class="menu-container">
+    
+      
+        <a href="/" class="menu">
+          首页
+        </a>
+      
+    
+      
+        <a href="/archives" class="menu">
+          归档
+        </a>
+      
+    
+      
+        <a href="/tags" class="menu">
+          标签
+        </a>
+      
+    
+      
+        <a href="/post/about" class="menu">
+          关于
+        </a>
+      
+    
+  </div>
+  <div class="social-container">
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+  </div>
+</div>
+
+
+        <div class="post-detail">
+          <article class="post">
+            <h2 class="post-title">
+              OTA 升级测试的一些错误
+            </h2>
+            <div class="post-info">
+              <time class="post-time">
+                · 2019-07-20 ·
+              </time>
+              
+                <a href="http://xuwanjin.me//tag/YawxDLvkG" class="post-tag">
+                  # Android 9.0
+                </a>
+              
+                <a href="http://xuwanjin.me//tag/kW4v0aZy6" class="post-tag">
+                  # MTK
+                </a>
+              
+                <a href="http://xuwanjin.me//tag/041L29w_D" class="post-tag">
+                  # OTA
+                </a>
+              
+            </div>
+            
+              <div class="post-feature-image" style="background-image: url('http://xuwanjin.me//post-images/ota-sheng-ji-ce-shi-de-yi-xie-cuo-wu.png')">
+              </div>
+            
+            <div class="post-content">
+              <p>Android MTK 9.0 平台升级的一些错误</p>
+<!-- more -->
+<h1 id="ota-升级测试的一些错误">OTA 升级测试的一些错误</h1>
+<p>一下是基于 MTK 9.0 的平台的</p>
+<h3 id="ota升级分区错误">OTA升级分区错误</h3>
+<pre><code>[    0.260325] persist.vendor.radio.fd.off.counter=50
+[    0.260353] persist.vendor.radio.fd.counter=150
+[    0.260374] persist.vendor.radio.smart.data.switch=1
+[    0.260396] persist.vendor.radio.msimmode=dsds
+[    0.260423] persist.vendor.radio.mtk_ps2_rat=L/W/G
+[    0.260444] persist.vendor.radio.mtk_ps3_rat=G
+[    0.260543] ro.vendor.build.security_patch=2019-04-05
+[    0.260681] persist.vendor.vt.rotate_delay=500
+[    0.260711] persist.vendor.vt.data_simulate=0
+[    0.260773] ro.crypto.volume.filenames_mode=aes-256-cts
+[    0.260912] vendor.connsys.driver.ready=no
+[    0.260936] persist.vendor.connsys.patch.version=-1
+[    0.260963] persist.vendor.connsys.chipid=-1
+[    0.260985] persist.vendor.connsys.dynamic.dump=0
+[    0.261007]
+[    0.261040] Supported API: 3
+[    0.284857] charge_status 3, charged 0, status SUCCESS, capacity 70
+[    0.306455] I:current maximum temperature: 39400
+[    0.331195] Finding update package...
+[    0.393675] I:Update location: @/cache/recovery/block.map
+[    0.393758] Opening update package...
+[    0.424583] I:mmapped 8 ranges
+[    0.424785] I:read key e=3 hash=20
+[    0.424828] I:1 key(s) loaded from /res/keys
+[    0.424854] Verifying update package...
+[    0.457780] I:comment is 1738 bytes; signature is 1720 bytes from end
+[    5.096395] I:signature (offset: 2acb34d0, length: 6b2): 308206ae06092a864886f70d010702a082069f3082069b020101310b300906052b0e03021a0500300b06092a864886f70d010701a08204ac308204a830820390a003020102020900936eacbe07f201df300d06092a864886f70d0101050500308194310b3009060355040613025553311330110603550408130a43616c69666f726e6961311630140603550407130d4d6f756e7461696e20566965773110300e060355040a1307416e64726f69643110300e060355040b1307416e64726f69643110300e06035504031307416e64726f69643122302006092a864886f70d0109011613616e64726f696440616e64726f69642e636f6d301e170d3038303232393031333334365a170d3335303731373031333334365a308194310b3009060355040613025553311330110603550408130a43616c69666f726e6961311630140603550407130d4d6f756e7461696e20566965773110300e060355040a1307416e64726f69643110300e060355040b1307416e64726f69643110300e06035504031307416e64726f69643122302006092a864886f70d0109011613616e64726f696440616e64726f69642e636f6d30820120300d06092a864886f70d01010105000382010d00308201080282010100d6931904dec60b24b1edc762e0d9d8253e3ecd6ceb1de2ff068ca8e8bca8cd6bd3786ea70aa76ce60ebb0f993559ffd93e77a943e7e83d4b64b8e4fea2d3e656f1e267a81bbfb230b578c20443be4c7218b846f5211586f038a14e89c2be387f8ebecf8fcac3da1ee330c9ea93d0a7c3dc4af350220d50080732e0809717ee6a053359e6a694ec2cb3f284a0a466c87a94d83b31093a67372e2f6412c06e6d42f15818dffe0381cc0cd444da6cddc3b82458194801b32564134fbfde98c9287748dbf5676a540d8154c8bbca07b9e247553311c46b9af76fdeeccc8e69e7c8a2d08e782620943f99727d3c04fe72991d99df9bae38a0b2177fa31d5b6afee91f020103a381fc3081f9301d0603551d0e04160414485900563d272c46ae118605a47419ac09ca8c113081c90603551d230481c13081be8014485900563d272c46ae118605a47419ac09ca8c11a1819aa48197308194310b3009060355040613025553311330110603550408130a43616c69666f726e6961311630140603550407130d4d6f756e7461696e20566965773110300e060355040a1307416e64726f69643110300e060355040b1307416e64726f69643110300e06035504031307416e64726f69643122302006092a864886f70d0109011613616e64726f696440616e64726f69642e636f6d820900936eacbe07f201df300c0603551d13040530030101ff300d06092a864886f70d010105050003820101007aaf968ceb50c441055118d0daabaf015b8a765a27a715a2c2b44f221415ffdace03095abfa42df70708726c2069e5c36eddae0400be29452c084bc27eb6a17eac9dbe182c204eb15311f455d824b656dbe4dc2240912d7586fe88951d01a8feb5ae5a4260535df83431052422468c36e22c2a5ef994d61dd7306ae4c9f6951ba3c12f1d1914ddc61f1a62da2df827f603fea5603b2c540dbd7c019c36bab29a4271c117df523cdbc5f3817a49e0efa60cbd7f74177e7a4f193d43f4220772666e4c4d83e1bd5a86087cf34f2dec21e245ca6c2bb016e683638050d2c430eea7c26a1c49d3760a58ab7f1a82cc938b4831384324bd0401fa12163a50570e684d318201ca308201c60201013081a2308194310b3009060355040613025553311330110603550408130a43616c69666f726e6961311630140603550407130d4d6f756e7461696e20566965773110300e060355040a1307416e64726f69643110300e060355040b1307416e64726f69643110300e06035504031307416e64726f69643122302006092a864886f70d0109011613616e64726f696440616e64726f69642e636f6d020900936eacbe07f201df300906052b0e03021a0500300d06092a864886f70d0101010500048201002e426e55d0ad511c9c60f3bcec4e66fbd6d0a699da501691730857dc8f0e5e524c8af8fdbe27e6ebab495f4618528959da9ae088adbd0046cea27c4e690df49944043880c8f38cf4f2efedecf6d3b9642de0abbf55247b282a794cda2dd959560b247e61fa14ede997da04e73aeaf4990d75681069cbc6b75add3b050775fa164914941736ca3a883c0a2e1bca825c36fedb882821a611f1a9280242b8b51d571aa87d6cd713e785721d2917780606d3f5f88a04c300e9e65152e0221234d9ccc7d2e8a7428904b20b361c25ec7a0da317f62168907ae1720d09fe169f44d3963e15f183809f2c398d34f6595d59cf42df6c5256e0653b32e68039c76433a811
+[    5.097219] I:whole-file signature verified against RSA key 0
+[    5.097253] Update package verification took 4.7 s (result 0).
+[    5.113926] ====== Scatter File:
+[    5.113977] preloader 0x0
+[    5.114011] pgpt 0x0
+[    5.114033] boot_para 0x8000
+[    5.114063] recovery 0x108000
+[    5.114087] para 0x2108000
+[    5.114110] expdb 0x2188000
+[    5.114140] frp 0x3588000
+[    5.114164] nvcfg 0x3688000
+[    5.114187] nvdata 0x5688000
+[    5.114218] metadata 0x9688000
+[    5.114241] protect1 0xb688000
+[    5.114268] protect2 0xbe88000
+[    5.114338] seccfg 0xc800000
+[    5.114364] sec1 0xd000000
+[    5.114388] proinfo 0xd200000
+[    5.114411] md1img 0xd500000
+[    5.114440] spmfw 0x13900000
+[    5.114463] scp1 0x13a00000
+[    5.114486] scp2 0x13b00000
+[    5.114518] sspm_1 0x13c00000
+[    5.114542] sspm_2 0x13d00000
+[    5.114570] gz1 0x13e00000
+[    5.114594] gz2 0x14e00000
+[    5.114617] nvram 0x15e00000
+[    5.114644] lk 0x19e00000
+[    5.114668] lk2 0x19f00000
+[    5.114691] boot 0x1a000000
+[    5.114720] logo 0x1c000000
+[    5.114743] dtbo 0x1c800000
+[    5.114766] tee1 0x1d000000
+[    5.114795] tee2 0x1d500000
+[    5.114818] vendor 0x1e000000
+[    5.114845] system 0x50000000
+[    5.114870] vbmeta 0x110000000
+[    5.114893] cache 0x110800000
+[    5.114922] userdata 0x12b800000
+[    5.114996] mt_is_support_gpt gpt prefix is /dev/block/platform/bootdevice/by-name
+[    5.115057] is_gpt = 1
+[    5.115080] gpt prefix is /dev/block/platform/bootdevice/by-name
+[    5.119407] Parse Partition sucessfully
+[    5.119463] Error: Partition table not match
+[    5.127948] Partition scatter 34
+[    5.161316] Partition device 35
+[    5.375948] I:current maximum temperature: 39400
+[    5.376099] I:@/cache/recovery/block.map
+[    5.376124] I:0
+[    5.376147] I:time_total: 5
+[    5.376168] I:retry: 0
+[    5.376190] I:uncrypt_time: 9
+[    5.376212] I:temperature_start: 39400
+[    5.376234] I:temperature_end: 39400
+[    5.376255] I:temperature_max: 39400
+</code></pre>
+<pre><code>if(ret) {
+    ui-&gt;Print(&quot;Error: get_partition_info from device fail\n&quot;);
+    goto check_fail;
+}
+
+/* 3. Compare partition info between scatter and device */
+if(part_num_scatter != part_num_device) {
+    ui-&gt;Print(&quot;Error: Partition table not match\n&quot;);
+    ui-&gt;Print(&quot;Partition scatter %d\n&quot;, part_num_scatter);
+    ui-&gt;Print(&quot;Partition device %d\n&quot;, part_num_device);
+    ret = 1;
+    goto check_fail;
+}
+
+</code></pre>
+<p>上面的是读取整包里的scatter.txt文件， 然后将它和刷机的 platform_XXX_Android_scatter文件做一下对比， 就可以查到设备和整包里哪个分区不一样了。</p>
+<h3 id="ota升级-devmem错误">OTA升级 devmem错误</h3>
+<pre><code>[    0.289442] Supported API: 3
+[    0.311902] charge_status 3, charged 0, status SUCCESS, capacity 70
+[    0.332832] I:current maximum temperature: 41000
+[    0.358236] Finding update package...
+[    0.419726] I:Update location: @/cache/recovery/block.map
+[    0.419809] Opening update package...
+[    0.452271] I:mmapped 8 ranges
+[    0.452478] I:read key e=3 hash=20
+[    0.452516] I:1 key(s) loaded from /res/keys
+[    0.452549] Verifying update package...
+[    0.482808] I:comment is 1738 bytes; signature is 1720 bytes from end
+[    5.070175] I:signature (offset: 2a976303, length: 6b2): 308206ae06092a864886f70d010702a082069f3082069b020101310b300906052b0e03021a0500300b06092a864886f70d010701a08204ac308204a830820390a003020102020900936eacbe07f201df300d06092a864886f70d0101050500308194310b3009060355040613025553311330110603550408130a43616c69666f726e6961311630140603550407130d4d6f756e7461696e20566965773110300e060355040a1307416e64726f69643110300e060355040b1307416e64726f69643110300e06035504031307416e64726f69643122302006092a864886f70d0109011613616e64726f696440616e64726f69642e636f6d301e170d3038303232393031333334365a170d3335303731373031333334365a308194310b3009060355040613025553311330110603550408130a43616c69666f726e6961311630140603550407130d4d6f756e7461696e20566965773110300e060355040a1307416e64726f69643110300e060355040b1307416e64726f69643110300e06035504031307416e64726f69643122302006092a864886f70d0109011613616e64726f696440616e64726f69642e636f6d30820120300d06092a864886f70d01010105000382010d00308201080282010100d6931904dec60b24b1edc762e0d9d8253e3ecd6ceb1de2ff068ca8e8bca8cd6bd3786ea70aa76ce60ebb0f993559ffd93e77a943e7e83d4b64b8e4fea2d3e656f1e267a81bbfb230b578c20443be4c7218b846f5211586f038a14e89c2be387f8ebecf8fcac3da1ee330c9ea93d0a7c3dc4af350220d50080732e0809717ee6a053359e6a694ec2cb3f284a0a466c87a94d83b31093a67372e2f6412c06e6d42f15818dffe0381cc0cd444da6cddc3b82458194801b32564134fbfde98c9287748dbf5676a540d8154c8bbca07b9e247553311c46b9af76fdeeccc8e69e7c8a2d08e782620943f99727d3c04fe72991d99df9bae38a0b2177fa31d5b6afee91f020103a381fc3081f9301d0603551d0e04160414485900563d272c46ae118605a47419ac09ca8c113081c90603551d230481c13081be8014485900563d272c46ae118605a47419ac09ca8c11a1819aa48197308194310b3009060355040613025553311330110603550408130a43616c69666f726e6961311630140603550407130d4d6f756e7461696e20566965773110300e060355040a1307416e64726f69643110300e060355040b1307416e64726f69643110300e06035504031307416e64726f69643122302006092a864886f70d0109011613616e64726f696440616e64726f69642e636f6d820900936eacbe07f201df300c0603551d13040530030101ff300d06092a864886f70d010105050003820101007aaf968ceb50c441055118d0daabaf015b8a765a27a715a2c2b44f221415ffdace03095abfa42df70708726c2069e5c36eddae0400be29452c084bc27eb6a17eac9dbe182c204eb15311f455d824b656dbe4dc2240912d7586fe88951d01a8feb5ae5a4260535df83431052422468c36e22c2a5ef994d61dd7306ae4c9f6951ba3c12f1d1914ddc61f1a62da2df827f603fea5603b2c540dbd7c019c36bab29a4271c117df523cdbc5f3817a49e0efa60cbd7f74177e7a4f193d43f4220772666e4c4d83e1bd5a86087cf34f2dec21e245ca6c2bb016e683638050d2c430eea7c26a1c49d3760a58ab7f1a82cc938b4831384324bd0401fa12163a50570e684d318201ca308201c60201013081a2308194310b3009060355040613025553311330110603550408130a43616c69666f726e6961311630140603550407130d4d6f756e7461696e20566965773110300e060355040a1307416e64726f69643110300e060355040b1307416e64726f69643110300e06035504031307416e64726f69643122302006092a864886f70d0109011613616e64726f696440616e64726f69642e636f6d020900936eacbe07f201df300906052b0e03021a0500300d06092a864886f70d01010105000482010084191a098208b9167cd65f4a4514ba4d4df5609076c30a43dad407069935ca43a344641b220e22a72f6f3ad3930e41614adb9a0b3833b42f871ad10f2f099901f3e34e1f775be3781eb4053e437178a76d1a6f03952b186212d2cceb4fd2f65fac016bd854b0fe7351025a407be6ba36b7356097bca91ca2527deb03d75523cec84bba750fc9a036f5628644e4ef3820068f66e805edb5268715090a8492e4c8a8587c1a198d3ecddc229f65d08606da3e1f62279bb88d926b80db1c0f8500aaad35155716fd9c0f277fdf9ea6f493279c6faa5c5a88e6e7155136f9a85a54d77289b4e30c847d0f0ad62744172713554811b41945dd22a060fa24d03a13ff92
+[    5.070995] I:whole-file signature verified against RSA key 0
+[    5.071028] Update package verification took 4.6 s (result 0).
+[    5.077340] ====== Scatter File:
+[    5.077395] preloader 0x0
+[    5.077430] pgpt 0x0
+[    5.077453] boot_para 0x8000
+[    5.077477] recovery 0x108000
+[    5.077506] para 0x2108000
+[    5.077530] expdb 0x2188000
+[    5.077557] frp 0x3588000
+[    5.077583] nvcfg 0x3688000
+[    5.077606] nvdata 0x5688000
+[    5.077635] metadata 0x9688000
+[    5.077658] protect1 0xb688000
+[    5.077681] protect2 0xbe88000
+[    5.077710] seccfg 0xc800000
+[    5.077734] persist 0xd000000
+[    5.077761] sec1 0x10000000
+[    5.077785] proinfo 0x10200000
+[    5.077808] md1img 0x10500000
+[    5.077837] spmfw 0x16900000
+[    5.077860] scp1 0x16a00000
+[    5.077886] scp2 0x16b00000
+[    5.077919] sspm_1 0x16c00000
+[    5.077942] sspm_2 0x16d00000
+[    5.077969] gz1 0x16e00000
+[    5.077993] gz2 0x17e00000
+[    5.078016] nvram 0x18e00000
+[    5.078045] lk 0x1ce00000
+[    5.078068] lk2 0x1cf00000
+[    5.078091] boot 0x1d000000
+[    5.078120] logo 0x1f000000
+[    5.078143] dtbo 0x1f800000
+[    5.078166] tee1 0x20000000
+[    5.078195] tee2 0x20500000
+[    5.078218] vendor 0x21000000
+[    5.078245] system 0x53000000
+[    5.078270] vbmeta 0x113000000
+[    5.078293] cache 0x113800000
+[    5.078321] userdata 0x12e800000
+[    5.078394] mt_is_support_gpt gpt prefix is /dev/block/platform/bootdevice/by-name
+[    5.078456] is_gpt = 1
+[    5.078478] gpt prefix is /dev/block/platform/bootdevice/by-name
+[    5.082808] Parse Partition sucessfully
+[    5.082900] I:Verifying package compatibility...
+[    5.120808] E:Failed to verify package compatibility (result 1): Runtime info and framework compatibility matrix are incompatible: For config CONFIG_DEVMEM, value = y but required n
+[    5.334062] I:current maximum temperature: 41700
+[    5.334282] I:@/cache/recovery/block.map
+[    5.334310] I:0
+[    5.334339] I:time_total: 4
+[    5.334361] I:retry: 0
+[    5.334383] I:error: 24
+[    5.334406] I:uncrypt_time: 13
+[    5.334429] I:temperature_start: 41000
+[    5.334450] I:temperature_end: 41700
+[    5.334477] I:temperature_max: 41700
+</code></pre>
+<p>在系统里 system 目录下或者system/etc/vintf/目录下，的xml文件里查看CONFIG_DEVMEM和kernel里的的开关是否一致。
+compatibility_matrix.xml 或者compatibility_matrix.X.xml 文件。</p>
+<pre><code class="language-cpp">bool verify_package_compatibility(ZipArchiveHandle package_zip) {
+  LOG(INFO) &lt;&lt; &quot;Verifying package compatibility...&quot;;
+
+  static constexpr const char* COMPATIBILITY_ZIP_ENTRY = &quot;compatibility.zip&quot;;
+  ZipString compatibility_entry_name(COMPATIBILITY_ZIP_ENTRY);
+  ZipEntry compatibility_entry;
+  if (FindEntry(package_zip, compatibility_entry_name, &amp;compatibility_entry) != 0) {
+    LOG(INFO) &lt;&lt; &quot;Package doesn't contain &quot; &lt;&lt; COMPATIBILITY_ZIP_ENTRY &lt;&lt; &quot; entry&quot;;
+    return true;
+  }
+
+  std::string zip_content(compatibility_entry.uncompressed_length, '\0');
+  int32_t ret;
+  if ((ret = ExtractToMemory(package_zip, &amp;compatibility_entry,
+                             reinterpret_cast&lt;uint8_t*&gt;(&amp;zip_content[0]),
+                             compatibility_entry.uncompressed_length)) != 0) {
+    LOG(ERROR) &lt;&lt; &quot;Failed to read &quot; &lt;&lt; COMPATIBILITY_ZIP_ENTRY &lt;&lt; &quot;: &quot; &lt;&lt; ErrorCodeString(ret);
+    return false;
+  }
+
+  ZipArchiveHandle zip_handle;
+  ret = OpenArchiveFromMemory(static_cast&lt;void*&gt;(const_cast&lt;char*&gt;(zip_content.data())),
+                              zip_content.size(), COMPATIBILITY_ZIP_ENTRY, &amp;zip_handle);
+  if (ret != 0) {
+    LOG(ERROR) &lt;&lt; &quot;Failed to OpenArchiveFromMemory: &quot; &lt;&lt; ErrorCodeString(ret);
+    return false;
+  }
+
+  // Iterate all the entries inside COMPATIBILITY_ZIP_ENTRY and read the contents.
+  void* cookie;
+  ret = StartIteration(zip_handle, &amp;cookie, nullptr, nullptr);
+  if (ret != 0) {
+    LOG(ERROR) &lt;&lt; &quot;Failed to start iterating zip entries: &quot; &lt;&lt; ErrorCodeString(ret);
+    CloseArchive(zip_handle);
+    return false;
+  }
+  std::unique_ptr&lt;void, decltype(&amp;EndIteration)&gt; guard(cookie, EndIteration);
+
+  std::vector&lt;std::string&gt; compatibility_info;
+  ZipEntry info_entry;
+  ZipString info_name;
+  while (Next(cookie, &amp;info_entry, &amp;info_name) == 0) {
+    std::string content(info_entry.uncompressed_length, '\0');
+    int32_t ret = ExtractToMemory(zip_handle, &amp;info_entry, reinterpret_cast&lt;uint8_t*&gt;(&amp;content[0]),
+                                  info_entry.uncompressed_length);
+    if (ret != 0) {
+      LOG(ERROR) &lt;&lt; &quot;Failed to read &quot; &lt;&lt; info_name.name &lt;&lt; &quot;: &quot; &lt;&lt; ErrorCodeString(ret);
+      CloseArchive(zip_handle);
+      return false;
+    }
+    compatibility_info.emplace_back(std::move(content));
+  }
+  CloseArchive(zip_handle);
+
+  // VintfObjectRecovery::CheckCompatibility returns zero on success.
+  std::string err;
+  int result = android::vintf::VintfObjectRecovery::CheckCompatibility(compatibility_info, &amp;err);
+  if (result == 0) {
+    return true;
+  }
+
+  LOG(ERROR) &lt;&lt; &quot;Failed to verify package compatibility (result &quot; &lt;&lt; result &lt;&lt; &quot;): &quot; &lt;&lt; err;
+  return false;
+}
+
+</code></pre>
+<pre><code class="language-cpp">// system/libvintf/RuntimeInfo.cpp
+bool RuntimeInfo::matchKernelConfigs(const std::vector&lt;KernelConfig&gt;&amp; matrixConfigs,
+                                     std::string* error) const {
+    for (const KernelConfig&amp; matrixConfig : matrixConfigs) {
+        const std::string&amp; key = matrixConfig.first;
+        auto it = this-&gt;mKernelConfigs.find(key);
+        if (it == this-&gt;mKernelConfigs.end()) {
+            // special case: &lt;value type=&quot;tristate&quot;&gt;n&lt;/value&gt; matches if the config doesn't exist.
+            if (matrixConfig.second == KernelConfigTypedValue::gMissingConfig) {
+                continue;
+            }
+            if (error != nullptr) {
+                *error = &quot;Missing config &quot; + key;
+            }
+            return false;
+        }
+        const std::string&amp; kernelValue = it-&gt;second;
+        if (!matrixConfig.second.matchValue(kernelValue)) {
+            if (error != nullptr) {
+                *error = &quot;For config &quot; + key + &quot;, value = &quot; + kernelValue + &quot; but required &quot; +
+                         to_string(matrixConfig.second);
+            }
+            return false;
+        }
+    }
+    return true;
+}
+</code></pre>
+<h3 id="data分区加密">data分区加密</h3>
+<pre><code>[    0.336963] persist.vendor.vt.data_simulate=0
+[    0.337026] ro.crypto.volume.filenames_mode=aes-256-cts
+[    0.337209] vendor.connsys.driver.ready=no
+[    0.337235] persist.vendor.connsys.patch.version=-1
+[    0.337258] persist.vendor.connsys.chipid=-1
+[    0.337285] persist.vendor.connsys.dynamic.dump=0
+[    0.337307]
+[    0.337333] Supported API: 3
+[    0.356779] charge_status 3, charged 0, status SUCCESS, capacity 70
+[    0.378932] I:current maximum temperature: 43600
+[    0.403950] Finding update package...
+[    0.466428] I:Update location: /data/data/full_ax2129-ota-eng.ubuntu14.zip
+[    0.466510] Opening update package...
+[    0.498467] E:Failed to mount /data; formatting: Invalid argument
+[    0.511293] E:[libfs_mgr]fs_mgr_do_format: Format /dev/block/platform/bootdevice/by-name/userdata as 'ext4'
+[    0.547589] E:[libfs_mgr]mke2fs returned 255
+[    0.573802] E:Failed to format /data: No such file or directory
+[    0.590532] E:Unable to open '/data/data/full_ax2129-ota-eng.ubuntu14.zip': No such file or directory
+[    0.621822] E:failed to map file
+[    0.635796] W:failed to read uncrypt status: No such file or directory
+[    0.638725] I:current maximum temperature: 42500
+[    0.639010] I:/data/data/full_ax2129-ota-eng.ubuntu14.zip
+[    0.639054] I:0
+[    0.639092] I:time_total: 0
+[    0.639127] I:retry: 0
+[    0.639163] I:error: 26
+[    0.639198] I:temperature_start: 43600
+[    0.639233] I:temperature_end: 42500
+[    0.639267] I:temperature_max: 43600
+</code></pre>
+<p>data 分区加密导致的. 可以按照一下方案手动的就行解密
+1、在系统正常启动的情况下先把升级包(update.zip) push 到data分区目，比如/data/data/update.zip.
+2、adb shell 下执行：/system/bin/uncrypt /data/update.zip /cache/recovery/block.map
+注意：要等待一段时间，直到命令执行退出…，然后在执行如下命令；
+3、adb shell 下执行：echo &quot;--update_package=@/cache/recovery/block.map&quot; &gt; /cache/recovery/command
+4、reboot recovery</p>
+<p>通过 installPackage的方式升级， 系统会自动的解密data分区</p>
+
+            </div>
+          </article>
+        </div>
+
+        
+          <div class="next-post">
+            <div class="next">下一篇</div>
+            <a href="http://xuwanjin.me//post/ji-yi-ci-pos-ji-wu-fa-mie-ping-de-bug">
+              <h3 class="post-title">
+                记一次pos机无法灭屏的bug
+              </h3>
+            </a>
+          </div>
+        
+
+        
+
+        <div class="site-footer">
+  Powered by <a href="https://github.com/getgridea/gridea" target="_blank">Gridea</a> | 
+  <a class="rss" href="http://xuwanjin.me//atom.xml" target="_blank">RSS</a>
+</div>
+
+<script>
+  hljs.initHighlightingOnLoad()
+</script>
+
+      </div>
+    </div>
+  </body>
+</html>
