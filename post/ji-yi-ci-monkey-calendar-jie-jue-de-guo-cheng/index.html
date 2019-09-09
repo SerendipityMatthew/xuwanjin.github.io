@@ -4,7 +4,7 @@
 <meta name="description" content="" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>记一次 Monkey Calendar  解决的过程 | Gridea</title>
-<link rel="shortcut icon" href="http://xuwanjin.me//favicon.ico?v=1565739635695">
+<link rel="shortcut icon" href="http://xuwanjin.me//favicon.ico?v=1568043243147">
 <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
 <link rel="stylesheet" href="http://xuwanjin.me//styles/main.css">
@@ -20,7 +20,7 @@
       <div class="main-content">
         <div class="site-header">
   <a href="http://xuwanjin.me/">
-  <img class="avatar" src="http://xuwanjin.me//images/avatar.png?v=1565739635695" alt="">
+  <img class="avatar" src="http://xuwanjin.me//images/avatar.png?v=1568043243147" alt="">
   </a>
   <h1 class="site-title">
     Gridea
@@ -766,7 +766,7 @@ public void onReceive(Context context, Intent intent) {
 </code></pre>
 <p>修改好, 继续按照上次的操作流程操作之后, 就没有出现此类的问题了. 至此, 完美的解决了问题了.</p>
 <h2 id="总结">总结:</h2>
-<p>对于Monkey类的问题, 要明确一下发生错误之前, Monkey 操作了些什么
+<p>对于Monkey类的问题, 要明确一下发生错误之前, Monkey 操作了些什么:
 1. 操作了哪Activity的. 这点可以从 am_focused_activity 和 am_resume_activity确定 是哪一个. 这是因为Monkey主要是靠发送事件, 模拟点击的效果.
 2. 操作的界面的操作改变了什么.  比如这里的系统的时间, 时区, 日期. 而这些东西是如何影响其他的. 比如这里的是通过发送广播方式.
 3. 进程死亡了前后, 系统哪些log, 总是伴随着发生的. 比如这里的时间, 权限. 对于和权限有关系的. 关闭权限, 打开权限的情况要试试
