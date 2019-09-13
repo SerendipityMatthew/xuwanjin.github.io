@@ -4,7 +4,7 @@
 <meta name="description" content="" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>MTK 9.0 平台添加一个分区 | Gridea</title>
-<link rel="shortcut icon" href="http://xuwanjin.me//favicon.ico?v=1568043336085">
+<link rel="shortcut icon" href="http://xuwanjin.me//favicon.ico?v=1568354289640">
 <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
 <link rel="stylesheet" href="http://xuwanjin.me//styles/main.css">
@@ -20,7 +20,7 @@
       <div class="main-content">
         <div class="site-header">
   <a href="http://xuwanjin.me/">
-  <img class="avatar" src="http://xuwanjin.me//images/avatar.png?v=1568043336085" alt="">
+  <img class="avatar" src="http://xuwanjin.me//images/avatar.png?v=1568354289640" alt="">
   </a>
   <h1 class="site-title">
     Gridea
@@ -106,8 +106,8 @@
               <p>最近要在 MTK Android P 的平台, 添加一个 A/B 分区. 这其中踩了很多的坑. 以下是在添加新的分区当中遇到的问题进行的记录.</p>
 <!-- more -->
 <h1 id="mtk-90-平台添加一个分区">MTK 9.0 平台添加一个分区</h1>
-<p>最近要在 MTK Android P 的平台, 添加一个 A/B 分区. 这其中踩了很多的坑. 以下是在添加新的分区当中遇到的问题进行的记录..</p>
-<h2 id=""></h2>
+<p>最近要在 MTK Android P 的平台, 添加一个 A/B 分区. 这其中踩了很多的坑. 以下是在添加新的分区当中遇到的问题进行的记录.</p>
+<p>##修改操作</p>
 <p>添加一个AB分区, 并且添加相应的 image 文件
 涉及到的文件</p>
 <pre><code>build/core/Makefile　　// ②　命令行之前需要有一个TAB, ⑧编译出现了failed with exit 4,  未知原因；　③导致生成的image文件出现错误； 　 ④生成了相关的image 但是没有放在　target_files_package下的　IMAGES　文件夹下
@@ -132,7 +132,270 @@ vendor/mediatek/proprietary/hardware/fstab/mt6765/fstab.in.mt6761　　　//⑤�
 vendor/mediatek/proprietary/scripts/releasetools/mt_ota_preprocess.py
 vendor/mediatek/proprietary/scripts/releasetools/replace_img_from_target_files.py
 </code></pre>
-<h3 id="出现的错误">出现的错误</h3>
+<h3 id="修改分区表">修改分区表</h3>
+<pre><code>persist,EXT4,49152.0,,EMMC_USER,N,N,NONE,N,N,N,,N,,PROTECTED
+antcommon,EXT4,102400,,EMMC_USER,N,Y,antcommon.img,N,N,N,,N,,AUTO
+secos,EXT4,45120.0,,EMMC_USER,N,Y,secos.img,N,N,Y,,Y,,AUTO
+sec1,Raw data,2048.0,,EMMC_USER,N,N,NONE,N,N,N,,N,,AUTO
+proinfo,Raw data,3072.0,,EMMC_USER,N,N,NONE,N,N,N,,N,,PROTECTED
+</code></pre>
+<h3 id="initrc-创建目录">init.rc 创建目录</h3>
+<pre><code>device/mediatek/mt6761/init.mt6761.rc
+</code></pre>
+<pre><code>
+# Create CIP mount point
+    mkdir /custom
+
+    mkdir /mnt/cd-rom 0000 system system
+
+    mkdir /mnt/vendor/secos 0777 root root
+
+# change lk_env permission
+    chown root system /proc/lk_env
+    chmod 0660 /proc/lk_env
+</code></pre>
+<pre><code>    chown radio system /proc/freqhopping/dumpregs
+    chown radio system /proc/freqhopping/freqhopping_debug
+    chown radio system /proc/freqhopping/status
+    chown radio system /proc/freqhopping/userdef
+    chown system system /mnt/vendor/antcommon
+    chmod 0777 /mnt/vendor/antcommon
+    restorecon_recursive /mnt/vendor/antcommon
+
+    chown root root /mnt/vendor/secos
+    chmod 0777 /mnt/vendor/secos
+    restorecon_recursive /mnt/vendor/secos
+
+# change owner
+    chown system system /proc/bootprof
+    chmod 0664 /proc/bootprof
+    chown root system /proc/mtprof/cputime
+    chown root system /proc/mtprof/reboot_pid
+
+</code></pre>
+<h3 id="挂载分区的-fstab-文件">挂载分区的 fstab 文件</h3>
+<p>vendor/mediatek/proprietary/hardware/fstab/mt6765/fstab.in.mt6761</p>
+<pre><code>DEVPATH(protect1)   /mnt/vendor/protect_f   ext4   FS_FLAG_COMMIT   FSMGR_FLAG_FMT
+DEVPATH(protect2)   /mnt/vendor/protect_s   ext4   FS_FLAG_COMMIT   FSMGR_FLAG_FMT
+DEVPATH(nvdata)     /mnt/vendor/nvdata      ext4   FS_FLAG_DISCARD  FSMGR_FLAG_FMT
+DEVPATH(nvcfg)      /mnt/vendor/nvcfg       ext4   FS_FLAG_COMMIT   FSMGR_FLAG_FMT
+DEVPATH(antcommon)  /mnt/vendor/antcommon   ext4   FS_FLAG_COMMIT   FSMGR_FLAG_FMT
+
+DEVPATH(secos)      /mnt/vendor/secos   __MTK_DATAIMG_FSTYPE   defaults   FSMGR_FLAG_SYSTEM
+
+#ifdef __PERSIST_PARTITION_SUPPORT
+DEVPATH(persist)    /mnt/vendor/persist     ext4   FS_FLAG_COMMIT  FSMGR_FLAG_FMT
+#endif
+
+</code></pre>
+<p>DEVPATH 是一个变量，关于路径的变量
+#define DEVPATH(_part) /dev/block/platform/BOOTDEV/by-name/_part
+defaults　是一个默认的参数集
+__MTK_DATAIMG_FSTYPE　在上面定义为　ext4 格式的</p>
+<p>#define FSMGR_FLAG_FMT  wait,check,formattable</p>
+<h3 id="添加分区的-selinux-权限">添加分区的 selinux 权限</h3>
+<p>需要在 device/mediatek/sepolicy/basic/non_plat 路径下添加相关的 selinux 权限。</p>
+<p>device/mediatek/sepolicy/basic/non_plat/device.te</p>
+<pre><code>type secos_block_device, dev_type;
+</code></pre>
+<p>device/mediatek/sepolicy/basic/non_plat/file.te</p>
+<pre><code>type secos_file, file_type, data_file_type;
+</code></pre>
+<p>device/mediatek/sepolicy/basic/non_plat/file_contexts</p>
+<pre><code>#############################
+# secos files
+/secos(/.*)?		u:object_r:secos_file:s0
+/dev/block/platform/mtk-msdc\.0/[0-9]+\.(msdc|MSDC)0/by-name/secos	u:object_r:secos_block_device:s0
+</code></pre>
+<p>在这里我在这里踩得坑，因为我一开始要挂在 /mnt/vendor/ 目录下面的。 因此，我在这里把
+/secos(/.<em>)? 写成了 /mnt/vendor/secos(/.</em>)? 。因此老是出现了编译错误: failed with error code 4 的错误。
+一开始并没有意识到这个错误。 导致在这里花费了很长的时间。这个将在随后说。
+device/mediatek/sepolicy/basic/non_plat/fsck.te</p>
+<pre><code>allow fsck secos_block_device:blk_file rw_file_perms;
+</code></pre>
+<p>device/mediatek/sepolicy/basic/non_plat/init.te</p>
+<pre><code>allow init secos_block_device:blk_file { write read };
+allow init secos_block_device:blk_file relabelto;
+</code></pre>
+<h3 id="添加分区的-image-文件">添加分区的 IMAGE 文件</h3>
+<pre><code class="language-makefile">$(if $(BOARD_OEMIMAGE_PARTITION_SIZE),$(hide) echo &quot;oem_size=$(BOARD_OEMIMAGE_PARTITION_SIZE)&quot; &gt;&gt; $(1))
+$(if $(BOARD_OEMIMAGE_JOURNAL_SIZE),$(hide) echo &quot;oem_journal_size=$(BOARD_OEMIMAGE_JOURNAL_SIZE)&quot; &gt;&gt; $(1))
+$(if $(BOARD_OEMIMAGE_EXTFS_INODE_COUNT),$(hide) echo &quot;oem_extfs_inode_count=$(BOARD_OEMIMAGE_EXTFS_INODE_COUNT)&quot; &gt;&gt; $(1))
+$(if $(BOARD_OEMIMAGE_EXTFS_RSV_PCT),$(hide) echo &quot;oem_extfs_rsv_pct=$(BOARD_OEMIMAGE_EXTFS_RSV_PCT)&quot; &gt;&gt; $(1))
+$(if $(BOARD_ANTCOMMONIMAGE_PARTITION_SIZE),$(hide) echo &quot;antcommon_size=$(BOARD_ANTCOMMONIMAGE_PARTITION_SIZE)&quot; &gt;&gt; $(1))
+$(if $(BOARD_SECOSIMAGE_PARTITION_SIZE),$(hide) echo &quot;secos_size=$(BOARD_SECOSIMAGE_PARTITION_SIZE)&quot; &gt;&gt; $(1))
+$(if $(INTERNAL_USERIMAGES_SPARSE_EXT_FLAG),$(hide) echo &quot;extfs_sparse_flag=$(INTERNAL_USERIMAGES_SPARSE_EXT_FLAG)&quot; &gt;&gt; $(1))
+</code></pre>
+<p>即使你设置了　BOARD_SECOSIMAGE_PARTITION_SIZE， 但是 BOARD_SECOSIMAGE_PARTITION_SIZE 不一定是你设置的的大小．</p>
+<p>device/mediatek/build/build/tools/ptgen/MT6761/ptgen.pl　里会根据分区的大小， 各自对齐一下. 所以他的大小会改变．
+比如我我这里给的大小时 45120 KB, 单丝实际上得到的是　52 MB.</p>
+<pre><code class="language-perl">if ($part-&gt;{Type} eq &quot;EXT4&quot; || $part-&gt;{Type} eq &quot;FAT&quot;)
+{
+	$temp = $part-&gt;{Size_KB} * 1024;
+	my $raw_name = GetABPartBaseName($part-&gt;{Partition_Name});
+	if ($part-&gt;{Partition_Name} ne &quot;${raw_name}_b&quot;)   # do not print for _b partition, its redundant setting
+	{
+		printf $part_size_fh (&quot;BOARD_%sIMAGE_PARTITION_SIZE:=%d\n&quot;,uc($raw_name),$temp);
+		if (exists $mountPointMapList{$raw_name})
+		{
+			if ($mountPointMapList{$raw_name} ne &quot;&quot;)
+			{
+				printf $part_size_fh (&quot;MTK_BOARD_ROOT_EXTRA_SYMLINKS += /mnt/vendor/%s:%s\n&quot;, $mountPointMapList{$raw_name}, $mountPointMapList{$raw_name});
+			}
+		}
+		else
+		{
+			printf $part_size_fh (&quot;MTK_BOARD_ROOT_EXTRA_SYMLINKS += /mnt/vendor/%s:%s\n&quot;, $raw_name, $raw_name);
+		}
+	}
+}
+if ($ArgList{MTK_BOARD_AVB_ENABLE} eq &quot;true&quot;)
+{
+	if ($part-&gt;{Partition_Name} =~ /^boot(_a)?$/i || $part-&gt;{Partition_Name} =~ /^recovery?$/i)
+	{
+		$temp = $part-&gt;{Size_KB} * 1024;
+		my $raw_name = GetABPartBaseName($part-&gt;{Partition_Name});
+		printf $part_size_fh (&quot;BOARD_%sIMAGE_PARTITION_SIZE:=%d\n&quot;,uc($raw_name),$temp);
+	}
+	if ($part-&gt;{Partition_Name} =~ /^dtbo(1|_a)?$/i)
+	{
+		$temp = $part-&gt;{Size_KB} * 1024;
+		my $raw_name = GetPartBaseName($part-&gt;{Partition_Name});
+		printf $part_size_fh (&quot;BOARD_%sIMG_PARTITION_SIZE:=%d\n&quot;,uc($raw_name),$temp);
+	}
+}
+
+
+</code></pre>
+<pre><code class="language-makefile">#　建立　target files 与　secos.img 文件
+# Depending on the various images guarantees that the underlying
+# directories are up-to-date.
+$(BUILT_TARGET_FILES_PACKAGE): \
+		$(INSTALLED_BOOTIMAGE_TARGET) \
+		$(MTK_BOOTIMAGE_TARGET) \
+		$(INSTALLED_RADIOIMAGE_TARGET) \
+		$(INSTALLED_RECOVERYIMAGE_TARGET) \
+		$(FULL_SYSTEMIMAGE_DEPS) \
+		$(INSTALLED_USERDATAIMAGE_TARGET) \
+		$(INSTALLED_CACHEIMAGE_TARGET) \
+		$(INSTALLED_SECOSIMAGE_TARGET) \
+		$(INSTALLED_VENDORIMAGE_TARGET) \
+		$(INSTALLED_PRODUCTIMAGE_TARGET) \
+		$(INSTALLED_VBMETAIMAGE_TARGET) \
+		$(INSTALLED_DTBOIMAGE_TARGET) \
+		$(INTERNAL_SYSTEMOTHERIMAGE_FILES) \
+		$(INSTALLED_ANDROID_INFO_TXT_TARGET) \
+		$(INSTALLED_KERNEL_TARGET) \
+		$(INSTALLED_2NDBOOTLOADER_TARGET) \
+
+</code></pre>
+<pre><code class="language-makefile"># -----------------------------------------------------------------
+# secos image , 编译生成相关的 image 文件
+INTERNAL_SECOSIMAGE_FILES := \
+	$(filter $(TARGET_OUT_SECOS)/%,$(ALL_DEFAULT_INSTALLED_MODULES))
+
+secosimage_intermediates := \
+	$(call intermediates-dir-for,PACKAGING,secos)
+BUILT_SECOSIMAGE_TARGET := $(PRODUCT_OUT)/secos.img
+
+define build-secosimage-target
+	$(call pretty,&quot;Target secos fs image: $(INSTALLED_SECOSIMAGE_TARGET)&quot;)
+	@mkdir -p $(TARGET_OUT_SECOS)
+	@mkdir -p $(secosimage_intermediates) &amp;&amp; rm -rf $(secosimage_intermediates)/secos_image_info.txt
+	$(call generate-userimage-prop-dictionary, $(secosimage_intermediates)/secos_image_info.txt, skip_fsck=true)
+	$(hide) PATH=$(foreach p,$(INTERNAL_USERIMAGES_BINARY_PATHS),$(p):)$$PATH \
+	./build/tools/releasetools/build_image.py \
+	$(TARGET_OUT_SECOS) $(secosimage_intermediates)/secos_image_info.txt $(INSTALLED_SECOSIMAGE_TARGET) $(TARGET_OUT)
+	$(hide) $(call assert-max-image-size,$(INSTALLED_SECOSIMAGE_TARGET),$(BOARD_SECOSIMAGE_PARTITION_SIZE))
+endef
+
+# We just build this directly to the install location.
+INSTALLED_SECOSIMAGE_TARGET := $(BUILT_SECOSIMAGE_TARGET)
+$(INSTALLED_SECOSIMAGE_TARGET): $(INTERNAL_USERIMAGES_DEPS) $(INTERNAL_SECOSIMAGE_FILES)
+	$(build-secosimage-target)
+
+.PHONY: secosimage-nodeps
+secosimage-nodeps: | $(INTERNAL_USERIMAGES_DEPS)
+	$(build-secosimage-target)
+
+
+</code></pre>
+<pre><code class="language-makefile">ifdef BOARD_PREBUILT_VENDORIMAGE
+	$(hide) mkdir -p $(zip_root)/IMAGES
+	$(hide) cp $(INSTALLED_VENDORIMAGE_TARGET) $(zip_root)/IMAGES/
+endif
+# 生成的　image 文件放置　target_file 的IMAGES路径下面
+ifdef BOARD_SECOSIMAGE_FILE_SYSTEM_TYPE
+	$(hide) mkdir -p $(zip_root)/IMAGES
+	$(hide) cp $(INSTALLED_SECOSIMAGE_TARGET) $(zip_root)/IMAGES/
+endif
+ifdef BOARD_PREBUILT_PRODUCTIMAGE
+	$(hide) mkdir -p $(zip_root)/IMAGES
+	$(hide) cp $(INSTALLED_PRODUCTIMAGE_TARGET) $(zip_root)/IMAGES/
+endif
+</code></pre>
+<pre><code class="language-makefile"># 编译整个刷机包的
+# Build files and then package it into the rom formats
+.PHONY: droidcore
+droidcore: files \
+	systemimage \
+	$(INSTALLED_BOOTIMAGE_TARGET) \
+	$(MTK_BOOTIMAGE_TARGET) \
+	$(INSTALLED_RECOVERYIMAGE_TARGET) \
+	$(INSTALLED_VBMETAIMAGE_TARGET) \
+	$(INSTALLED_USERDATAIMAGE_TARGET) \
+	$(INSTALLED_CACHEIMAGE_TARGET) \
+	$(INSTALLED_ANTCOMMONIMAGE_TARGET) \
+	$(INSTALLED_SECOSIMAGE_TARGET) \
+	$(INSTALLED_BPTIMAGE_TARGET) \
+	$(INSTALLED_VENDORIMAGE_TARGET) \
+	$(INSTALLED_PRODUCTIMAGE_TARGET) \
+	$(INSTALLED_SYSTEMOTHERIMAGE_TARGET) \
+	$(INSTALLED_FILES_FILE) \
+	$(INSTALLED_FILES_FILE_VENDOR) \
+	$(INSTALLED_FILES_FILE_PRODUCT) \
+	$(INSTALLED_FILES_FILE_SYSTEMOTHER) \
+	soong_docs
+
+</code></pre>
+<pre><code class="language-makefile">.PHONY: cacheimage
+cacheimage: $(INSTALLED_CACHEIMAGE_TARGET)
+
+# 添加单独编译的代码
+.PHONY: secosimage
+secosimage: $(INSTALLED_SECOSIMAGE_TARGET)
+
+.PHONY: bptimage
+bptimage: $(INSTALLED_BPTIMAGE_TARGET)
+
+</code></pre>
+<p>build/tools/releasetools/build_image.py</p>
+<pre><code class="language-py">  elif mount_point == &quot;oem&quot;:
+    copy_prop(&quot;fs_type&quot;, &quot;fs_type&quot;)
+    copy_prop(&quot;oem_size&quot;, &quot;partition_size&quot;)
+    if not copy_prop(&quot;oem_journal_size&quot;, &quot;journal_size&quot;):
+      d[&quot;journal_size&quot;] = &quot;0&quot;
+    copy_prop(&quot;oem_extfs_inode_count&quot;, &quot;extfs_inode_count&quot;)
+    if not copy_prop(&quot;oem_extfs_rsv_pct&quot;, &quot;extfs_rsv_pct&quot;):
+      d[&quot;extfs_rsv_pct&quot;] = &quot;0&quot;
+  elif mount_point == &quot;secos&quot;:
+    # out/target/product/ax2129/obj/PACKAGING/secos_intermediates/secos_image_info.txt 读取的是这个文件
+    copy_prop(&quot;fs_type&quot;, &quot;fs_type&quot;)
+    copy_prop(&quot;secos_size&quot;, &quot;partition_size&quot;)
+    copy_prop(&quot;secos_verity_block_device&quot;, &quot;verity_block_device&quot;)
+  d[&quot;partition_name&quot;] = mount_point
+  return d
+
+</code></pre>
+<pre><code class="language-py">    elif image_filename == &quot;product.img&quot;:
+      mount_point = &quot;product&quot;
+    elif image_filename == &quot;secos.img&quot;:
+      mount_point = &quot;secos&quot;
+    else:
+      print(&quot;error: unknown image file name &quot;, image_filename, file=sys.stderr)
+      sys.exit(1)
+</code></pre>
+<h2 id="出现的错误">出现的错误</h2>
 <h4 id="错误索引">错误索引</h4>
 <pre><code>相关配置项的注意，Type，Download_File，Download，OTA_Update，FastBoot_Download, 
 命令行之前需要有一个TAB,
@@ -158,6 +421,7 @@ build/make/core/Makefile:2920: error: missing separator.
   end android build
 ***************************************************
 </code></pre>
+<p>这个是因为Makefile 里使用命令行之前，需要空出TAB键</p>
 <h4 id="failed-with-exit-code-4">failed with exit code 4</h4>
 <pre><code>img-1 size:0x5c0
 add index1 image, this is final image
@@ -222,11 +486,61 @@ $(if $(2), \
 endef
 </code></pre>
 <p>但是经过详细的计算，得出还是没超过．所以这个也不似root cause．</p>
-<p>随后，请教别人，　出现错误的地方是后面的 linux相关的．</p>
-<pre><code>
-e2fsdroid -p out/target/product/ax2129/system -S out/target/product/ax2129/obj/ETC/file_contexts.bin_intermediates/file_contexts.bin -f out/target/product/ax2129/secos -a /secos out/target/product/ax2129/secos.img
+<p>随后，请教别人, 出现错误的地方是后面的 selinux相关的．</p>
+<pre><code>e2fsdroid -p out/target/product/ax2129/system -S out/target/product/ax2129/obj/ETC/file_contexts.bin_intermediates/file_contexts.bin -f out/target/product/ax2129/secos -a /secos out/target/product/ax2129/secos.img
 set_selinux_xattr: Unknown code ____ 255 searching for label &quot;/secos&quot;
 </code></pre>
+<p>e2fsdroid 是一个命令。他的源码在 external/e2fsprogs 下面。</p>
+<pre><code>// external/e2fsprogs/contrib/android/perms.c
+static errcode_t set_selinux_xattr(ext2_filsys fs, ext2_ino_t ino,
+				   struct inode_params *params)
+{
+	errcode_t retval;
+	char *secontext = NULL;
+	struct ext2_inode inode;
+
+	if (params-&gt;sehnd == NULL)
+		return 0;
+
+	retval = ext2fs_read_inode(fs, ino, &amp;inode);
+	if (retval) {
+		com_err(__func__, retval,
+			_(&quot;while reading inode %u&quot;), ino);
+		return retval;
+	}
+
+	retval = selabel_lookup(params-&gt;sehnd, &amp;secontext, params-&gt;filename,
+				inode.i_mode);
+	if (retval &lt; 0) {
+		com_err(__func__, retval,
+			_(&quot;searching for label \&quot;%s\&quot;&quot;), params-&gt;filename);
+		exit(1);
+	}
+
+	retval = ino_add_xattr(fs, ino,  &quot;security.&quot; XATTR_SELINUX_SUFFIX,
+			       secontext, strlen(secontext) + 1);
+
+	freecon(secontext);
+	return retval;
+}
+
+</code></pre>
+<p>有此可以知道他进入了 selabel_lookup 函数</p>
+<pre><code>// external/selinux/libselinux/src/label.c
+int selabel_lookup(struct selabel_handle *rec, char **con,
+		   const char *key, int type)
+{
+	struct selabel_lookup_rec *lr;
+
+	lr = selabel_lookup_common(rec, 1, key, type);
+	if (!lr)
+		return -1;
+
+	*con = strdup(lr-&gt;ctx_trans);
+	return *con ? 0 : -1;
+}
+</code></pre>
+<p>这个错误的主要原因是 /secos(/.<em>)? 写成了 /mnt/vendor/secos(/.</em>)? 还不太理解为什么不能这么写</p>
 <pre><code>sig:out/target/product/ax2129/sig/tee.sig
 output path:out/target/product/ax2129/tee-verified.img
 [  0% 46/50745] Export includes file: out/target/product/ax2129/obj/STATIC_LIBRARIES/libcam.halsensor.custom_intermediates/custgen.config_metadata.h -- out/target/product/ax2129/obj_arm/STATIC_LIBRARIES/libcam.halsensor.custom_intermediates/export_includes
@@ -246,20 +560,6 @@ Usage:  build_image.py input_directory properties_file output_image \
 [  0% 51/50743] build /mnt/code/huaqin/AX2129_D/out/target/product/ax2129/obj/BOOTLOADER_OBJ/build-ax2129/lk.img
 make: Entering directory `/mnt/code/huaqin/AX2129_D/vendor/mediatek/proprietary/bootable/bootloader/lk'
 
-
-</code></pre>
-<p>添加一个AB分区的时候
-未添加　slotselect 参数导致的无法挂载, Skipping</p>
-<pre><code>[   23.075795] .(3)[273:wdtk-3][wdk-c] cpu=3,lbit=0x9,cbit=0xf,0,1,2930432545,[23075790516,19999990,43072185]
-[   23.075804] .(3)[273:wdtk-3][thread:273][RT:23075799901] 2019-09-05 12:52:45.905161 UTC;android time 2019-09-05 12:52:45.905161
-[   23.084361] .(2)[272:wdtk-2][wdk-c] cpu=2,lbit=0xd,cbit=0xf,0,1,2930432545,[23084350593,19991430,43072185]
-[   23.140353] .(1)[271:wdtk-1][wdk-k] cpu=1,lbit=0xf,cbit=0xf,0,1,2930432545,[23140341209,19935439,43072185]
-[   24.294772] .(1)[303:init]init: [libfs_mgr]Skipping '/dev/block/platform/bootdevice/by-name/secos' during mount_all
-[   24.299752] .(2)[303:init]init: [libfs_mgr]superblock s_max_mnt_count:65535,/dev/block/platform/bootdevice/by-name/persist
-[   24.301783] .(2)[303:init]EXT4-fs (mmcblk0p11): Ignoring removed nomblk_io_submit option
-[   24.304515] .(2)[303:init]EXT4-fs (mmcblk0p11): mounted filesystem with ordered data mode. Opts: errors=remount-ro,nomblk_io_submit
-[   24.306406] .(2)[303:init]init: [libfs_mgr]check_fs(): mount(/dev/block/platform/bootdevice/by-name/persist,/mnt/vendor/persist,ext4)=0: Success
-[   24.309307] .(2)[303:init]init: [libfs_mgr]check_fs(): unmount(/mnt/vendor/persist) succeeded
 
 </code></pre>
 <pre><code class="language-cpp">int fs_mgr_mount_all(struct fstab *fstab, int mount_mode)
@@ -477,6 +777,20 @@ make: Entering directory `/mnt/code/huaqin/AX2129_D/vendor/mediatek/proprietary/
     }
 }
 </code></pre>
+<p>添加一个AB分区的时候
+未添加　slotselect 参数导致的无法挂载, Skipping</p>
+<pre><code>[   23.075795] .(3)[273:wdtk-3][wdk-c] cpu=3,lbit=0x9,cbit=0xf,0,1,2930432545,[23075790516,19999990,43072185]
+[   23.075804] .(3)[273:wdtk-3][thread:273][RT:23075799901] 2019-09-05 12:52:45.905161 UTC;android time 2019-09-05 12:52:45.905161
+[   23.084361] .(2)[272:wdtk-2][wdk-c] cpu=2,lbit=0xd,cbit=0xf,0,1,2930432545,[23084350593,19991430,43072185]
+[   23.140353] .(1)[271:wdtk-1][wdk-k] cpu=1,lbit=0xf,cbit=0xf,0,1,2930432545,[23140341209,19935439,43072185]
+[   24.294772] .(1)[303:init]init: [libfs_mgr]Skipping '/dev/block/platform/bootdevice/by-name/secos' during mount_all
+[   24.299752] .(2)[303:init]init: [libfs_mgr]superblock s_max_mnt_count:65535,/dev/block/platform/bootdevice/by-name/persist
+[   24.301783] .(2)[303:init]EXT4-fs (mmcblk0p11): Ignoring removed nomblk_io_submit option
+[   24.304515] .(2)[303:init]EXT4-fs (mmcblk0p11): mounted filesystem with ordered data mode. Opts: errors=remount-ro,nomblk_io_submit
+[   24.306406] .(2)[303:init]init: [libfs_mgr]check_fs(): mount(/dev/block/platform/bootdevice/by-name/persist,/mnt/vendor/persist,ext4)=0: Success
+[   24.309307] .(2)[303:init]init: [libfs_mgr]check_fs(): unmount(/mnt/vendor/persist) succeeded
+
+</code></pre>
 <p>开机只到bootlogo 阶段，　出现了 hwcomposer 错误， 导致无法开机， 这个是因为挂载参数的错误</p>
 <pre><code>01-01 00:23:45.730   379   496 W SpeechMessengerNormal: formatShareMemoryThread(), #13 checkModemReady fail...
 01-01 00:23:45.810   435   435 I ccci_mdinit: (1):check_nvram_ready(), property_get(&quot;vendor.service.nvram_init&quot;) = , read_nvram_ready_retry = 5
@@ -511,10 +825,32 @@ make: Entering directory `/mnt/code/huaqin/AX2129_D/vendor/mediatek/proprietary/
 
 
 </code></pre>
+<p>一般情况是这个是第四个或者第五个参数有问题。</p>
 <p>#define DEVPATH(_part) /dev/block/platform/BOOTDEV/by-name/_part
 DEVPATH(secos)      /mnt/vendor/secos   __MTK_DATAIMG_FSTYPE   defaults   FSMGR_FLAG_SYSTEM</p>
-<p>/dev/block/platform/bootdevice/by-name/</p>
-<p>lrwxrwxrwx 1 root root   21 2019-09-06 10:52 boot_a -&gt; /dev/block/mmcblk0p23
+<h4 id="无法挂载在根目录">无法挂载在根目录</h4>
+<p>系统启动的时候，找不到/secos目录</p>
+<pre><code>01-01 00:00:57.039   379  2678 D vold    : Starting trim of /mnt/vendor/protect_f
+01-01 00:00:57.039   379  2678 W vold    : Failed to open /mnt/vendor/protect_f: Permission denied
+01-01 00:00:57.039   379  2678 D vold    : Starting trim of /mnt/vendor/protect_s
+01-01 00:00:57.039   379  2678 W vold    : Failed to open /mnt/vendor/protect_s: Permission denied
+01-01 00:00:57.040   379  2678 D vold    : Starting trim of /mnt/vendor/nvdata
+01-01 00:00:57.040   379  2678 W vold    : Failed to open /mnt/vendor/nvdata: Permission denied
+01-01 00:00:57.040   379  2678 D vold    : Starting trim of /mnt/vendor/nvcfg
+01-01 00:00:57.040   379  2678 W vold    : Failed to open /mnt/vendor/nvcfg: Permission denied
+01-01 00:00:57.040   379  2678 D vold    : Starting trim of /secos
+01-01 00:00:57.040   379  2678 W vold    : Failed to open /secos: No such file or directory
+01-01 00:00:57.040   379  2678 D vold    : Starting trim of /mnt/vendor/persist
+01-01 00:00:57.040   379  2678 W vold    : Failed to open /mnt/vendor/persist: Permission denied
+01-01 00:00:57.045   429   553 D MDP     : DpAsyncBlitStream: rot(0) flip(0) padding(c)
+</code></pre>
+<p>这个是因为， 系统启动的时候并没有创建 /secos 目录， 无法打开根目录。
+不知道为什么总是无法创建根目录下的secos目录。</p>
+<h2 id="验证方案">验证方案</h2>
+<p>系统中验证是否已经添加好一个分区， 这个分区是否挂载上，挂载参数是否正确的的验证方法</p>
+<pre><code>/dev/block/platform/bootdevice/by-name/
+
+lrwxrwxrwx 1 root root   21 2019-09-06 10:52 boot_a -&gt; /dev/block/mmcblk0p23
 lrwxrwxrwx 1 root root   21 2019-09-06 10:52 boot_b -&gt; /dev/block/mmcblk0p36
 lrwxrwxrwx 1 root root   20 2019-09-06 10:52 boot_para -&gt; /dev/block/mmcblk0p1
 lrwxrwxrwx 1 root root   21 2019-09-06 10:52 dtbo_a -&gt; /dev/block/mmcblk0p24
@@ -545,8 +881,8 @@ lrwxrwxrwx 1 root root   21 2019-09-06 10:52 scp_a -&gt; /dev/block/mmcblk0p19
 lrwxrwxrwx 1 root root   21 2019-09-06 10:52 scp_b -&gt; /dev/block/mmcblk0p31
 lrwxrwxrwx 1 root root   21 2019-09-06 10:52 sec1 -&gt; /dev/block/mmcblk0p13
 lrwxrwxrwx 1 root root   21 2019-09-06 10:52 seccfg -&gt; /dev/block/mmcblk0p10
-lrwxrwxrwx 1 root root   21 2019-09-06 10:52 secos_a -&gt; /dev/block/mmcblk0p12
-lrwxrwxrwx 1 root root   21 2019-09-06 10:52 secos_b -&gt; /dev/block/mmcblk0p33
+lrwxrwxrwx 1 root root   21 2019-09-06 10:52 secos_a -&gt; /dev/block/mmcblk0p12 // 实际上的块设备, 这个块设备需要当做关键词在log中搜索
+lrwxrwxrwx 1 root root   21 2019-09-06 10:52 secos_b -&gt; /dev/block/mmcblk0p33 // 实际上的块设备
 lrwxrwxrwx 1 root root   21 2019-09-06 10:52 spmfw_a -&gt; /dev/block/mmcblk0p18
 lrwxrwxrwx 1 root root   21 2019-09-06 10:52 spmfw_b -&gt; /dev/block/mmcblk0p30
 lrwxrwxrwx 1 root root   21 2019-09-06 10:52 sspm_a -&gt; /dev/block/mmcblk0p20
@@ -559,26 +895,12 @@ lrwxrwxrwx 1 root root   21 2019-09-06 10:52 userdata -&gt; /dev/block/mmcblk0p4
 lrwxrwxrwx 1 root root   21 2019-09-06 10:52 vbmeta_a -&gt; /dev/block/mmcblk0p28
 lrwxrwxrwx 1 root root   21 2019-09-06 10:52 vbmeta_b -&gt; /dev/block/mmcblk0p41
 lrwxrwxrwx 1 root root   21 2019-09-06 10:52 vendor_a -&gt; /dev/block/mmcblk0p26
-lrwxrwxrwx 1 root root   21 2019-09-06 10:52 vendor_b -&gt; /dev/block/mmcblk0p39</p>
-<p>/vendor/etc/fstab.mt6761
-/vendor/etc/fstab.mt8766
-vendor/secos -&gt; /mnt/vendor/secos</p>
-<h4 id="无法挂载在根目录">无法挂载在根目录</h4>
-<pre><code>01-01 00:00:57.039   379  2678 D vold    : Starting trim of /mnt/vendor/protect_f
-01-01 00:00:57.039   379  2678 W vold    : Failed to open /mnt/vendor/protect_f: Permission denied
-01-01 00:00:57.039   379  2678 D vold    : Starting trim of /mnt/vendor/protect_s
-01-01 00:00:57.039   379  2678 W vold    : Failed to open /mnt/vendor/protect_s: Permission denied
-01-01 00:00:57.040   379  2678 D vold    : Starting trim of /mnt/vendor/nvdata
-01-01 00:00:57.040   379  2678 W vold    : Failed to open /mnt/vendor/nvdata: Permission denied
-01-01 00:00:57.040   379  2678 D vold    : Starting trim of /mnt/vendor/nvcfg
-01-01 00:00:57.040   379  2678 W vold    : Failed to open /mnt/vendor/nvcfg: Permission denied
-01-01 00:00:57.040   379  2678 D vold    : Starting trim of /secos
-01-01 00:00:57.040   379  2678 W vold    : Failed to open /secos: No such file or directory
-01-01 00:00:57.040   379  2678 D vold    : Starting trim of /mnt/vendor/persist
-01-01 00:00:57.040   379  2678 W vold    : Failed to open /mnt/vendor/persist: Permission denied
-01-01 00:00:57.045   429   553 D MDP     : DpAsyncBlitStream: rot(0) flip(0) padding(c)
+lrwxrwxrwx 1 root root   21 2019-09-06 10:52 vendor_b -&gt; /dev/block/mmcblk0p39
+
+/vendor/etc/fstab.mt6761  // 挂载的fstab文件
+/vendor/etc/fstab.mt8766  // 挂载的fstab文件
+vendor/secos -&gt; /mnt/vendor/secos 
 </code></pre>
-<p>系统启动的时候，找不到/secos目录</p>
 
             </div>
           </article>
