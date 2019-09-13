@@ -4,7 +4,7 @@
 <meta name="description" content="" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>MTK 9.0 平台添加一个分区 | Gridea</title>
-<link rel="shortcut icon" href="http://xuwanjin.me//favicon.ico?v=1568354289640">
+<link rel="shortcut icon" href="http://xuwanjin.me//favicon.ico?v=1568356195180">
 <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
 <link rel="stylesheet" href="http://xuwanjin.me//styles/main.css">
@@ -20,7 +20,7 @@
       <div class="main-content">
         <div class="site-header">
   <a href="http://xuwanjin.me/">
-  <img class="avatar" src="http://xuwanjin.me//images/avatar.png?v=1568354289640" alt="">
+  <img class="avatar" src="http://xuwanjin.me//images/avatar.png?v=1568356195180" alt="">
   </a>
   <h1 class="site-title">
     Gridea
@@ -104,12 +104,12 @@
             
             <div class="post-content">
               <p>最近要在 MTK Android P 的平台, 添加一个 A/B 分区. 这其中踩了很多的坑. 以下是在添加新的分区当中遇到的问题进行的记录.</p>
-<!-- more -->
+<!-- more --> 
 <h1 id="mtk-90-平台添加一个分区">MTK 9.0 平台添加一个分区</h1>
 <p>最近要在 MTK Android P 的平台, 添加一个 A/B 分区. 这其中踩了很多的坑. 以下是在添加新的分区当中遇到的问题进行的记录.</p>
 <p>##修改操作</p>
 <p>添加一个AB分区, 并且添加相应的 image 文件
-涉及到的文件</p>
+涉及到的文件. 已经设计的到的问题的总结:</p>
 <pre><code>build/core/Makefile　　// ②　命令行之前需要有一个TAB, ⑧编译出现了failed with exit 4,  未知原因；　③导致生成的image文件出现错误； 　 ④生成了相关的image 但是没有放在　target_files_package下的　IMAGES　文件夹下
 build/core/config.mk
 build/core/config.mk
@@ -133,13 +133,24 @@ vendor/mediatek/proprietary/scripts/releasetools/mt_ota_preprocess.py
 vendor/mediatek/proprietary/scripts/releasetools/replace_img_from_target_files.py
 </code></pre>
 <h3 id="修改分区表">修改分区表</h3>
+<p>修改的分区表的内容, 其中分区的大小的单位是 KB,</p>
 <pre><code>persist,EXT4,49152.0,,EMMC_USER,N,N,NONE,N,N,N,,N,,PROTECTED
 antcommon,EXT4,102400,,EMMC_USER,N,Y,antcommon.img,N,N,N,,N,,AUTO
 secos,EXT4,45120.0,,EMMC_USER,N,Y,secos.img,N,N,Y,,Y,,AUTO
 sec1,Raw data,2048.0,,EMMC_USER,N,N,NONE,N,N,N,,N,,AUTO
 proinfo,Raw data,3072.0,,EMMC_USER,N,N,NONE,N,N,N,,N,,PROTECTED
 </code></pre>
+<p>下面是对各个字段的说明:
+Type，　　文件的分区格式　有Raw data 和 EXT4
+Download_File， 刷机的时的文件的文件名称，比如system.img, 注意前面的文件和未前面的文件
+Download，　　　　是否通过刷机的方式，应该和 Download_File 保持一致
+OTA_Update，　　　是否通过OTA升级的方式升级该分区，如果加入的不是AB分区，建议写N
+FastBoot_Download,  是否通过FastBoot的方式下载
+EMMC  指的是内存的
+MTK 的代码, 会根据 这个 CSV 文件, 生辰一个 Android_Scatter.txt 文件, 里面会包含分区的各种信息,
+比如是否可以升级,1 刷机的文件名称, 其实的物理地址, 分区的大小, 分区的格式, 都是根据这个 csv 文件得来的.</p>
 <h3 id="initrc-创建目录">init.rc 创建目录</h3>
+<p>需要修改的 init.rc 文件.</p>
 <pre><code>device/mediatek/mt6761/init.mt6761.rc
 </code></pre>
 <pre><code>
@@ -161,7 +172,7 @@ proinfo,Raw data,3072.0,,EMMC_USER,N,N,NONE,N,N,N,,N,,PROTECTED
     chown system system /mnt/vendor/antcommon
     chmod 0777 /mnt/vendor/antcommon
     restorecon_recursive /mnt/vendor/antcommon
-
+	# 改变路径的权限和用户以及用户组
     chown root root /mnt/vendor/secos
     chmod 0777 /mnt/vendor/secos
     restorecon_recursive /mnt/vendor/secos
@@ -173,6 +184,7 @@ proinfo,Raw data,3072.0,,EMMC_USER,N,N,NONE,N,N,N,,N,,PROTECTED
     chown root system /proc/mtprof/reboot_pid
 
 </code></pre>
+<p>在这里, 我一开始想把这个分区挂载根目录下面, 也就是 /secos. 但是尝试了很多次, 都没有成功,</p>
 <h3 id="挂载分区的-fstab-文件">挂载分区的 fstab 文件</h3>
 <p>vendor/mediatek/proprietary/hardware/fstab/mt6765/fstab.in.mt6761</p>
 <pre><code>DEVPATH(protect1)   /mnt/vendor/protect_f   ext4   FS_FLAG_COMMIT   FSMGR_FLAG_FMT
@@ -188,11 +200,13 @@ DEVPATH(persist)    /mnt/vendor/persist     ext4   FS_FLAG_COMMIT  FSMGR_FLAG_FM
 #endif
 
 </code></pre>
-<p>DEVPATH 是一个变量，关于路径的变量
-#define DEVPATH(_part) /dev/block/platform/BOOTDEV/by-name/_part
-defaults　是一个默认的参数集
-__MTK_DATAIMG_FSTYPE　在上面定义为　ext4 格式的</p>
-<p>#define FSMGR_FLAG_FMT  wait,check,formattable</p>
+<p>DEVPATH 是一个变量，关于路径的变量</p>
+<pre><code>#define DEVPATH(_part) /dev/block/platform/BOOTDEV/by-name/_part
+</code></pre>
+<p>defaults　是一个默认的参数集
+__MTK_DATAIMG_FSTYPE　在上面定义为 ext4 格式的</p>
+<pre><code>#define FSMGR_FLAG_FMT  wait,check,formattable
+</code></pre>
 <h3 id="添加分区的-selinux-权限">添加分区的 selinux 权限</h3>
 <p>需要在 device/mediatek/sepolicy/basic/non_plat 路径下添加相关的 selinux 权限。</p>
 <p>device/mediatek/sepolicy/basic/non_plat/device.te</p>
@@ -218,6 +232,7 @@ device/mediatek/sepolicy/basic/non_plat/fsck.te</p>
 allow init secos_block_device:blk_file relabelto;
 </code></pre>
 <h3 id="添加分区的-image-文件">添加分区的 IMAGE 文件</h3>
+<p>添加分区的大小信息到一个 txt 文件中. 创建image 文件的时候, 需要用的到.</p>
 <pre><code class="language-makefile">$(if $(BOARD_OEMIMAGE_PARTITION_SIZE),$(hide) echo &quot;oem_size=$(BOARD_OEMIMAGE_PARTITION_SIZE)&quot; &gt;&gt; $(1))
 $(if $(BOARD_OEMIMAGE_JOURNAL_SIZE),$(hide) echo &quot;oem_journal_size=$(BOARD_OEMIMAGE_JOURNAL_SIZE)&quot; &gt;&gt; $(1))
 $(if $(BOARD_OEMIMAGE_EXTFS_INODE_COUNT),$(hide) echo &quot;oem_extfs_inode_count=$(BOARD_OEMIMAGE_EXTFS_INODE_COUNT)&quot; &gt;&gt; $(1))
@@ -226,9 +241,9 @@ $(if $(BOARD_ANTCOMMONIMAGE_PARTITION_SIZE),$(hide) echo &quot;antcommon_size=$(
 $(if $(BOARD_SECOSIMAGE_PARTITION_SIZE),$(hide) echo &quot;secos_size=$(BOARD_SECOSIMAGE_PARTITION_SIZE)&quot; &gt;&gt; $(1))
 $(if $(INTERNAL_USERIMAGES_SPARSE_EXT_FLAG),$(hide) echo &quot;extfs_sparse_flag=$(INTERNAL_USERIMAGES_SPARSE_EXT_FLAG)&quot; &gt;&gt; $(1))
 </code></pre>
-<p>即使你设置了　BOARD_SECOSIMAGE_PARTITION_SIZE， 但是 BOARD_SECOSIMAGE_PARTITION_SIZE 不一定是你设置的的大小．</p>
-<p>device/mediatek/build/build/tools/ptgen/MT6761/ptgen.pl　里会根据分区的大小， 各自对齐一下. 所以他的大小会改变．
-比如我我这里给的大小时 45120 KB, 单丝实际上得到的是　52 MB.</p>
+<p>即使你设置了 BOARD_SECOSIMAGE_PARTITION_SIZE, 但是 BOARD_SECOSIMAGE_PARTITION_SIZE 不一定是你设置的的大小．</p>
+<p>device/mediatek/build/build/tools/ptgen/MT6761/ptgen.pl 里会根据分区的大小， 各自对齐一下. 所以他的大小会改变．
+比如我这里在分区表里给的大小时 45120 KB, 但是实际上得到的是 52 MB. 这个你可以在编译完的生成目录的 ninja 文件里搜索到实际的大小.</p>
 <pre><code class="language-perl">if ($part-&gt;{Type} eq &quot;EXT4&quot; || $part-&gt;{Type} eq &quot;FAT&quot;)
 {
 	$temp = $part-&gt;{Size_KB} * 1024;
@@ -267,7 +282,8 @@ if ($ArgList{MTK_BOARD_AVB_ENABLE} eq &quot;true&quot;)
 
 
 </code></pre>
-<pre><code class="language-makefile">#　建立　target files 与　secos.img 文件
+<p>将这些添加的宏, 放到编译 ROM 包里面.</p>
+<pre><code class="language-makefile"># 建立　target files 与　secos.img 文件
 # Depending on the various images guarantees that the underlying
 # directories are up-to-date.
 $(BUILT_TARGET_FILES_PACKAGE): \
@@ -320,6 +336,7 @@ secosimage-nodeps: | $(INTERNAL_USERIMAGES_DEPS)
 
 
 </code></pre>
+<p>将生成的 image 文件 添加到target_file 文件里. 如果你不需要升级的话, 感觉不需要添加这个的.</p>
 <pre><code class="language-makefile">ifdef BOARD_PREBUILT_VENDORIMAGE
 	$(hide) mkdir -p $(zip_root)/IMAGES
 	$(hide) cp $(INSTALLED_VENDORIMAGE_TARGET) $(zip_root)/IMAGES/
@@ -452,7 +469,7 @@ writing RSA key
 
 </code></pre>
 <p>一开始我以为时　mkuserimg_mke2fs.sh　这个行的命令行出现了错误，但是把这个命令行单独拿出来，执行命令，没有发现任何错误．
-后来我怀疑是后面的的计算image 大小的出现了错误．　这个image的大小超出了系统分配的分区的大小．</p>
+后来我怀疑是后面的的计算image 大小的出现了错误．　这个image的大小超出了系统分配的分区的大小．实际上也不是真正的错误原因.</p>
 <pre><code>(size=\$(for i in out/target/product/ax2129/secos.img; do stat --format \&quot;%s\&quot; \&quot;\$i\&quot; | tr -d '\\n'; echo +; done; echo 0); total=\$(( \$( echo \&quot;\$size\&quot; ) )); printname=\$(echo -n \&quot;out/target/product/ax2129/secos.img\&quot; | tr \&quot; \&quot; +); maxsize=\$((50331648)); if [ \&quot;\$total\&quot; -gt \&quot;\$maxsize\&quot; ]; then echo \&quot;error: \$printname too large (\$total &gt; \$maxsize)\&quot;; false; elif [ \&quot;\$total\&quot; -gt \$((maxsize - 32768)) ]; then echo \&quot;WARNING: \$printname approaching size limit (\$total now; limit \$maxsize)\&quot;; fi )&quot;
 </code></pre>
 <p>out/host/linux-x86/bin/mkuserimg_mke2fs.sh
@@ -826,8 +843,9 @@ make: Entering directory `/mnt/code/huaqin/AX2129_D/vendor/mediatek/proprietary/
 
 </code></pre>
 <p>一般情况是这个是第四个或者第五个参数有问题。</p>
-<p>#define DEVPATH(_part) /dev/block/platform/BOOTDEV/by-name/_part
-DEVPATH(secos)      /mnt/vendor/secos   __MTK_DATAIMG_FSTYPE   defaults   FSMGR_FLAG_SYSTEM</p>
+<pre><code>#define DEVPATH(_part) /dev/block/platform/BOOTDEV/by-name/_part
+DEVPATH(secos)      /mnt/vendor/secos   __MTK_DATAIMG_FSTYPE   defaults   FSMGR_FLAG_SYSTEM
+</code></pre>
 <h4 id="无法挂载在根目录">无法挂载在根目录</h4>
 <p>系统启动的时候，找不到/secos目录</p>
 <pre><code>01-01 00:00:57.039   379  2678 D vold    : Starting trim of /mnt/vendor/protect_f
@@ -847,7 +865,8 @@ DEVPATH(secos)      /mnt/vendor/secos   __MTK_DATAIMG_FSTYPE   defaults   FSMGR_
 <p>这个是因为， 系统启动的时候并没有创建 /secos 目录， 无法打开根目录。
 不知道为什么总是无法创建根目录下的secos目录。</p>
 <h2 id="验证方案">验证方案</h2>
-<p>系统中验证是否已经添加好一个分区， 这个分区是否挂载上，挂载参数是否正确的的验证方法</p>
+<p>系统中验证是否已经添加好一个分区， 这个分区是否挂载上，挂载参数是否正确的的验证方法.</p>
+<p>可以通过查看以下路径, 知道是否建立分区.</p>
 <pre><code>/dev/block/platform/bootdevice/by-name/
 
 lrwxrwxrwx 1 root root   21 2019-09-06 10:52 boot_a -&gt; /dev/block/mmcblk0p23
