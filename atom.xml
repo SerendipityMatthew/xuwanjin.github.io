@@ -2,7 +2,7 @@
 <feed xmlns="http://www.w3.org/2005/Atom">
     <id>http://xuwanjin.me/</id>
     <title>Gridea</title>
-    <updated>2019-09-13T10:37:03.300Z</updated>
+    <updated>2019-09-14T00:24:01.348Z</updated>
     <generator>https://github.com/jpmonette/feed</generator>
     <link rel="alternate" href="http://xuwanjin.me/"/>
     <link rel="self" href="http://xuwanjin.me//atom.xml"/>
@@ -85,8 +85,8 @@
     </entry>
     <entry>
         <title type="html"><![CDATA[Golang slice 数据结构]]></title>
-        <id>http://xuwanjin.me//post/golang-slice-shu-ju-jie-gou</id>
-        <link href="http://xuwanjin.me//post/golang-slice-shu-ju-jie-gou">
+        <id>http://xuwanjin.me//post/golang_the_data_struct_slice</id>
+        <link href="http://xuwanjin.me//post/golang_the_data_struct_slice">
         </link>
         <updated>2019-06-12T16:14:59.000Z</updated>
         <summary type="html"><![CDATA[<p>Golang slice 数据结构简单使用</p>
