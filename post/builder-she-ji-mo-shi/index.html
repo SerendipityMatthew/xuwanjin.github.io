@@ -4,7 +4,7 @@
 <meta name="description" content="" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Builder 设计模式 | Gridea</title>
-<link rel="shortcut icon" href="http://xuwanjin.me//favicon.ico?v=1568420639414">
+<link rel="shortcut icon" href="http://xuwanjin.me//favicon.ico?v=1568515808450">
 <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
 <link rel="stylesheet" href="http://xuwanjin.me//styles/main.css">
@@ -20,7 +20,7 @@
       <div class="main-content">
         <div class="site-header">
   <a href="http://xuwanjin.me/">
-  <img class="avatar" src="http://xuwanjin.me//images/avatar.png?v=1568420639414" alt="">
+  <img class="avatar" src="http://xuwanjin.me//images/avatar.png?v=1568515808450" alt="">
   </a>
   <h1 class="site-title">
     Gridea
@@ -555,10 +555,10 @@ public final class StringBuilder
 }
 
 </code></pre>
-<p>你发现这些构造者都是以 Builder 为名的, 或者以 Builder 结尾的类名.  这个 Builder 都是需要被构造的类的内部类. 比如 Notification.Builder, JobInfo.Builder, StringBuilder, Hero.Builder. 在 android 的 aosp 的代码里可以发现大量的以 Builder 为类名的. 同时, 你也可以发现以下规律:
-1. Builder 类都会有一个或者多个构造函数,
-2. Builder 类的方法名称部分都是 set 类型的, 都是给一个字段赋值
-3. 而且都有一个返回值, 返回的都是 this
+<p>你发现这些构造者都是以 Builder 为名的, 或者以 Builder 结尾的类名.  这个 Builder 都是需要被构造的类的内部类. 比如 Notification.Builder, JobInfo.Builder, StringBuilder, Hero.Builder. 在 android 的 aosp 的代码里可以发现大量的以 Builder 为类名的. 同时, 你也可以发现以下规律:<br>
+1. Builder 类都会有一个或者多个构造函数,<br>
+2. Builder 类的方法名称部分都是 set 类型的, 都是给一个字段赋值<br>
+3. 而且都有一个返回值, 返回的都是 this<br>
 4. Builder 类型的调用都是链式调用</p>
 <h3 id="定义">定义</h3>
 <p>将一个复杂的对象的构造与他的表示分离, 是的同样的构造过程可以创建不同的表示.</p>

@@ -4,7 +4,7 @@
 <meta name="description" content="" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Java 命令（一） | Gridea</title>
-<link rel="shortcut icon" href="http://xuwanjin.me//favicon.ico?v=1568420639414">
+<link rel="shortcut icon" href="http://xuwanjin.me//favicon.ico?v=1568515808450">
 <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
 <link rel="stylesheet" href="http://xuwanjin.me//styles/main.css">
@@ -20,7 +20,7 @@
       <div class="main-content">
         <div class="site-header">
   <a href="http://xuwanjin.me/">
-  <img class="avatar" src="http://xuwanjin.me//images/avatar.png?v=1568420639414" alt="">
+  <img class="avatar" src="http://xuwanjin.me//images/avatar.png?v=1568515808450" alt="">
   </a>
   <h1 class="site-title">
     Gridea
@@ -100,11 +100,11 @@
 OpenJDK Runtime Environment (build 1.8.0_161-b14)
 OpenJDK 64-Bit Server VM (build 25.161-b14, mixed mode)
 </code></pre>
-<p>第一句是 jdk的版本信息
-第二句是jre的运行环境信息
-第三句是虚拟机的版本信息
-mixed mode 是JVM的工作模式。
-我们可以在命令行使用 java -X 命令获取java的所有的工作模式.
+<p>第一句是 jdk的版本信息<br>
+第二句是jre的运行环境信息<br>
+第三句是虚拟机的版本信息<br>
+mixed mode 是JVM的工作模式。<br>
+我们可以在命令行使用 java -X 命令获取java的所有的工作模式.<br>
 以下是JVM的所有的工作模式， mixed mode是默认的工作模式</p>
 <pre><code>    -Xmixed           mixed mode execution (default)
     -Xint             interpreted mode execution only
@@ -144,7 +144,7 @@ The -X options are non-standard and subject to change without notice.
 <p>Jmap 是JVM Memory Map for Java的意思。</p>
 <h3 id="jmap-error">Jmap Error</h3>
 <h4 id="vmversionmismatchexception">VMVersionMismatchException</h4>
-<p>执行java命令的jmap命令, 这个时候你会发现。VMVersionMismatchException 异常。
+<p>执行java命令的jmap命令, 这个时候你会发现。VMVersionMismatchException 异常。<br>
 适因为, jmap在的jdk的版本和当前正在运行的java程序的虚拟集版本号不一致导致的. 所以我们得尽量保持版本号的一直</p>
 <pre><code>[xuwanjin@xuwanjin Downloads]$ jmap -heap 30343
 Attaching to process ID 30343, please wait...
@@ -239,13 +239,13 @@ Caused by: java.lang.RuntimeException: unknown CollectedHeap type : class sun.jv
 	... 6 more
 
 </code></pre>
-<p>在执行jmap的时候出现了运行时异常 unknown CollectedHeap type : class 。
-遇到这类问题的第一反应是google了一下。 原来需要下载openjdk的debug 包
+<p>在执行jmap的时候出现了运行时异常 unknown CollectedHeap type : class 。<br>
+遇到这类问题的第一反应是google了一下。 原来需要下载openjdk的debug 包<br>
 如果你需要下载的是1.7的， 那么直接把java-1.8.0-openjdk-debuginfo 改成java-1.7.0-openjdk-debuginfo即可</p>
 <pre><code>sudo yum --enablerepo=&quot;*-debug*&quot; install java-1.8.0-openjdk-debuginfo
 </code></pre>
 <h4 id="jmap">Jmap</h4>
-<p>安装了相对应的debuginfo的包之后在此执行jmap -heap 1905。 当然你的获取的结果可能和我们不一样。
+<p>安装了相对应的debuginfo的包之后在此执行jmap -heap 1905。 当然你的获取的结果可能和我们不一样。<br>
 但是基本上都是相似的</p>
 <pre><code>[xuwanjin@xuwanjin Downloads]$ jmap -heap 1905
 Attaching to process ID 1905, please wait...

@@ -4,7 +4,7 @@
 <meta name="description" content="" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Activity 分析 | Gridea</title>
-<link rel="shortcut icon" href="http://xuwanjin.me//favicon.ico?v=1568420639414">
+<link rel="shortcut icon" href="http://xuwanjin.me//favicon.ico?v=1568515808450">
 <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
 <link rel="stylesheet" href="http://xuwanjin.me//styles/main.css">
@@ -20,7 +20,7 @@
       <div class="main-content">
         <div class="site-header">
   <a href="http://xuwanjin.me/">
-  <img class="avatar" src="http://xuwanjin.me//images/avatar.png?v=1568420639414" alt="">
+  <img class="avatar" src="http://xuwanjin.me//images/avatar.png?v=1568515808450" alt="">
   </a>
   <h1 class="site-title">
     Gridea
@@ -103,7 +103,7 @@ activity的启动过程应该分情形描述，中间各种check过程应该是�
 最好顺序换一换以免引起误会
 </code></pre>
 <h3 id="startactivity">startActivity</h3>
-<p>首先我们是最简单的StartActivity(Intent) 只有一个参数开始.
+<p>首先我们是最简单的StartActivity(Intent) 只有一个参数开始.<br>
 一般我们给了一个Intent, 可能是直接打开了一个应用, 或者找出了很多应用的Activity, 然后选择你需要的Activity(后面会介绍这种情况). <a href="">单个或者是多个Activity</a></p>
 <pre><code class="language-java">//Activity
 public void startActivity(Intent intent);
@@ -593,7 +593,7 @@ private int startActivity(IApplicationThread caller, Intent intent, Intent ephem
 <li>对FLAG_ACTIVITY_FORWARD_RESULT特殊参数进行sourcerecord</li>
 <li>对传递的一些参数进行非空检验, 必要时抛出异常, 比如voiceSession, sourceRecord, aInfo, intent.getComponent()</li>
 <li>Activity启动权限检查</li>
-<li>ephemeral application检查, 暂时不知道这个是干啥的, 有人说这个android的测试程序准备的. 为的是app不需要安装也可以
+<li>ephemeral application检查, 暂时不知道这个是干啥的, 有人说这个android的测试程序准备的. 为的是app不需要安装也可以<br>
 目前来看这个是Google为了不安装也能使用APP做准备的</li>
 <li>然后进入下一步的startActivityUnchecked</li>
 </ol>
@@ -1861,7 +1861,7 @@ RecentsActivity
 </code></pre>
 <p>s</p>
 <h3 id="启动流程的不同版本">启动流程的不同版本</h3>
-<p>android 5.0， 6.0， 7.0， 8.0的版本的启动流程
+<p>android 5.0， 6.0， 7.0， 8.0的版本的启动流程<br>
 他们有什么异同点， 在什么地方改进了.</p>
 <h2 id="参考文献">参考文献</h2>
 <ol>

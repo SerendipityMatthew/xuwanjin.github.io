@@ -4,7 +4,7 @@
 <meta name="description" content="" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Android Wear OTA 升级 | Gridea</title>
-<link rel="shortcut icon" href="http://xuwanjin.me//favicon.ico?v=1568420639414">
+<link rel="shortcut icon" href="http://xuwanjin.me//favicon.ico?v=1568515808450">
 <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
 <link rel="stylesheet" href="http://xuwanjin.me//styles/main.css">
@@ -20,7 +20,7 @@
       <div class="main-content">
         <div class="site-header">
   <a href="http://xuwanjin.me/">
-  <img class="avatar" src="http://xuwanjin.me//images/avatar.png?v=1568420639414" alt="">
+  <img class="avatar" src="http://xuwanjin.me//images/avatar.png?v=1568515808450" alt="">
   </a>
   <h1 class="site-title">
     Gridea
@@ -96,7 +96,7 @@
 <!-- more -->
 <h1 id="android-wear-ota-升级">Android Wear OTA 升级</h1>
 <p>[TOC]</p>
-<p>设备添加后有7天的有效期， 升级前先确认是否设备在有效期之内。
+<p>设备添加后有7天的有效期， 升级前先确认是否设备在有效期之内。<br>
 同时需要给每个设备添加设别的MID, 每个设备的MID都不一样</p>
 <h3 id="错误-一">错误 一</h3>
 <pre><code>[    2.185290] Supported API: 3
@@ -189,7 +189,7 @@
 [  144.755163] Installation aborted.
 
 </code></pre>
-<p><code>system partition fails to recover</code> 个说明了系统分区不对， 可能你的刷机的包不对，
+<p><code>system partition fails to recover</code> 个说明了系统分区不对， 可能你的刷机的包不对，<br>
 或者差分的时候base版本选择的不对， 或者root的情况下adb remount了</p>
 <h3 id="注意事项">注意事项</h3>
 <pre><code>1. 不要adb remount
@@ -264,7 +264,7 @@ db808b0dba96abc5b56c46d84af3be37316085c8  ./unsigned/emmc_appsboot.mbn
 -rw-r--r-- 1 ubuntu14 ubuntu14 526500 Oct 23 12:53 ./zwd503-download_files/emmc_appsboot.mbn
 -rw-r--r-- 1 ubuntu14 ubuntu14 526500 Oct 23 12:54 ./zwd503-unsparse-download_files/emmc_appsboot.mbn
 </code></pre>
-<p>这是第二次make otapackage 的生成的情况， target_file 里的和download , unsparse download 的不一样。 很明显 download file 和 unsparse download file 是上次编译的情况的 emmc_appsboot.mbn
+<p>这是第二次make otapackage 的生成的情况， target_file 里的和download , unsparse download 的不一样。 很明显 download file 和 unsparse download file 是上次编译的情况的 emmc_appsboot.mbn<br>
 sha1sum 值很明显就可以看出区别</p>
 <pre><code>ubuntu14@ubuntu14:/mnt/code/huaqin/out_10_23/second_make_otapackage$ find ./ -name &quot;emmc_appsboot.mbn&quot; | xargs sha1sum
 6dbfbf634f1f878d2c7ee3af2332815c1ec40656  ./zwd503/zwd503-download_files/emmc_appsboot.mbn
@@ -385,7 +385,7 @@ drwxrwxr-x 11 ubuntu14 ubuntu14       4096 Oct 25 11:47 ..
 drwxrwxr-x  9 ubuntu14 ubuntu14       4096 Oct 25 12:39 zwd503-target_files-NMF26F
 -rw-rw-r--  1 ubuntu14 ubuntu14 1180238357 Oct 25 12:42 zwd503-target_files-NMF26F.zip
 </code></pre>
-<p>在一次编译otapackage之后会有以下几个文件
+<p>在一次编译otapackage之后会有以下几个文件<br>
 对以下这几个文件作出相关的说明</p>
 <pre><code>1. zwd503-ota-NMF26F.zip // 全包升级的zip文件
 2. target_files-package.zip  // 用于差分的文件

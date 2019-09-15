@@ -4,7 +4,7 @@
 <meta name="description" content="" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>DeskClock 分析 | Gridea</title>
-<link rel="shortcut icon" href="http://xuwanjin.me//favicon.ico?v=1568420639414">
+<link rel="shortcut icon" href="http://xuwanjin.me//favicon.ico?v=1568515808450">
 <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
 <link rel="stylesheet" href="http://xuwanjin.me//styles/main.css">
@@ -20,7 +20,7 @@
       <div class="main-content">
         <div class="site-header">
   <a href="http://xuwanjin.me/">
-  <img class="avatar" src="http://xuwanjin.me//images/avatar.png?v=1568420639414" alt="">
+  <img class="avatar" src="http://xuwanjin.me//images/avatar.png?v=1568515808450" alt="">
   </a>
   <h1 class="site-title">
     Gridea
@@ -101,7 +101,7 @@
 <p>@[IPO(快速开机), 关机闹钟, 闹钟流程, 闹钟数据库]</p>
 <p>[TOC]</p>
 <h3 id="文件结构">文件结构</h3>
-<p>首先认识一下DeskClock这个模块的文件.
+<p>首先认识一下DeskClock这个模块的文件.<br>
 DeskClock进入之后会看到四个页面, AlarmClockFragment(闹钟), ClockFragment(时间), StopwatchFragment(t停表),  TimerFragment(计时器). 他们都继承与DeskClockFragment.</p>
 <h3 id="闹钟的设置">闹钟的设置</h3>
 <h3 id="闹钟小部件">闹钟小部件</h3>
@@ -163,18 +163,18 @@ public boolean play(final Context context, Uri ringtoneUri)
 <h3 id="关机闹钟的流程">关机闹钟的流程</h3>
 <p>如何设置的, 怎么响应的</p>
 <h3 id="问题">问题</h3>
-<p>每一个闹钟事件是如何存储的
+<p>每一个闹钟事件是如何存储的<br>
 涉及到哪一个类</p>
 <h3 id="快速开关机ipo">快速开关机(IPO)</h3>
 <p>快速开关机的宏是</p>
 <pre><code class="language-makefile">MTK_IPOH_SUPPORT = yes
 MTK_IPO_SUPPORT = yes
 </code></pre>
-<p>设置里面的快速开关机的开关是
+<p>设置里面的快速开关机的开关是<br>
 在./packages/SettingsProvider/res/values/mtk_defaults.xml 这个路径下面, 默认是打开的</p>
 <pre><code class="language-xml">&lt;bool name=&quot;def_ipo_setting&quot;&gt;true&lt;/bool&gt;
 </code></pre>
-<p>在build.prop文件里的ro值是
+<p>在build.prop文件里的ro值是<br>
 该值是1的时候, 是打开的状态</p>
 <pre><code>ro.mtk_ipo_support=1
 </code></pre>
@@ -196,16 +196,16 @@ RingtoneManager.getActualDefaultRingtoneUri(getContext(), RingtoneManager.TYPE_A
 <p>客户需要这样的效果</p>
 <p><img src="http://xuwanjin.me//post-images/1560383103652.png" alt=""></p>
 <h4 id="实现过程">实现过程</h4>
-<p>第一次是想通过布局文件实现, 想到的原因: 第一眼直觉
-类似这样的
-<img src="http://xuwanjin.me//post-images/1560383117914.png" alt="">
-就是写一个线性的布局文件然后在里面放两三个TextView, 然后获得时间, 是一个字符串, 然后拆解字符串, 分别显示字符串
+<p>第一次是想通过布局文件实现, 想到的原因: 第一眼直觉<br>
+类似这样的<br>
+<img src="http://xuwanjin.me//post-images/1560383117914.png" alt=""><br>
+就是写一个线性的布局文件然后在里面放两三个TextView, 然后获得时间, 是一个字符串, 然后拆解字符串, 分别显示字符串<br>
 不能实现的原因: 等到布局写好了, 发现了这个控件是TextClock, 正是一种特殊的控件, 继承与TextView, 在TextView的方法里就有一个获取时间的, 然后显示时间的, 因此他是一个专门用来显示的时间的控件, 因此这种方法是不可行的</p>
-<p>第二次: 想到上次修改bug,需要修改上午(am), 下午(pm)字体的的大小, 因此一路找到源码.
-发现最终都是调用了Utils类里面的两个方法get24ModeFormat 和get12ModeFormat 方法.
+<p>第二次: 想到上次修改bug,需要修改上午(am), 下午(pm)字体的的大小, 因此一路找到源码.<br>
+发现最终都是调用了Utils类里面的两个方法get24ModeFormat 和get12ModeFormat 方法.<br>
 发现这两个的方法返回的都是CharSequence, 一个返回的是&quot;h:mm a&quot;(中间有一个空格), 另一个返回的是&quot;HH:mm&quot;. 因此看起来是不大可行的</p>
-<p>第三次: 想到的是既然是这个TextClock控件, 那么我们就写两个类去继承这个TextClock类, 然后,改写掉获取时间的方法, 让他们分别去获取时间的分钟和冒号以及时钟. 这样我们就可以显示.
-然而这样有一个问题, 我们去重写的设置TextClock的时间, 发现该方法不能被重写, 准确的说, 该方法被隐藏了, 即onTimeChanged()方法是private类型的.
+<p>第三次: 想到的是既然是这个TextClock控件, 那么我们就写两个类去继承这个TextClock类, 然后,改写掉获取时间的方法, 让他们分别去获取时间的分钟和冒号以及时钟. 这样我们就可以显示.<br>
+然而这样有一个问题, 我们去重写的设置TextClock的时间, 发现该方法不能被重写, 准确的说, 该方法被隐藏了, 即onTimeChanged()方法是private类型的.<br>
 这时候我想到了, 干脆把整个TextClock类拿出来, 改写这个控件onTimeChanged()方法. 这样似乎工作量就上来了</p>
 <p>于是回到第二个方法, 先看看这个方法</p>
 <pre><code>/**
@@ -287,7 +287,7 @@ sp.setSpan(new RelativeSizeSpan(colonProportion), colonPos, colonPos + 3,
 </ol>
 <h3 id="deskclock-铃声删除-播放-没有声音">DeskClock 铃声删除, 播放, 没有声音</h3>
 <h4 id="具体现象">具体现象</h4>
-<p>x5921的手机安装了google的DeskClock后发现, 修改一个闹钟的铃声, 选择外部的铃声, 然后删除这个铃声.
+<p>x5921的手机安装了google的DeskClock后发现, 修改一个闹钟的铃声, 选择外部的铃声, 然后删除这个铃声.<br>
 然后再增加一个闹钟, 闹钟响应的时候, 发现没有声音. 而同一平台的手机X6061是有声音的.</p>
 <ol>
 <li>刚开始没有觉得这个是正常现象, 毕竟没有音频文件了, 但是对比了一下x6061的现象, 发现两部手机表现不一致</li>
@@ -299,7 +299,7 @@ sp.setSpan(new RelativeSizeSpan(colonProportion), colonPos, colonPos + 3,
 01-02 09:30:20.065   971   971 V NotificationService: pkg=com.google.android.deskclock canInterrupt=false intercept=false
 
 </code></pre>
-<p>在这里可以看出来, 971号进程是systemserver进程, 由通知的sound参数可知, 通知并没有传递音频文件的URI参数, 这也是比较符合预期的, 闹钟通知没有声音.
+<p>在这里可以看出来, 971号进程是systemserver进程, 由通知的sound参数可知, 通知并没有传递音频文件的URI参数, 这也是比较符合预期的, 闹钟通知没有声音.<br>
 我们再看看mediaserver进程的log, 几乎所有的音频文件的播放都需要mediaplayer播放(在这里我选择的是一份MP3文件, 音频也比较大, 因此应该是mediaplayer播放). 在这里我们看看该进程的log</p>
 <pre><code>01-02 09:31:00.776   271  5387 I MediaPlayerService: [create]line:623 Create new client(63) from pid 5080, uid 10045, 
 01-02 09:31:00.777   271   551 I MediaPlayerService: [setDataSource]line:1069 [63] setDataSource(content://com.android.externalstorage.documents/document/primary%3Axuwanjinxuwanjin.MP3)
@@ -318,7 +318,7 @@ sp.setSpan(new RelativeSizeSpan(colonProportion), colonPos, colonPos + 3,
 01-02 09:31:00.837   271   423 I MediaPlayerService: [~Client]line:908 [65]~Client
 
 </code></pre>
-<p>从log当中出现的Error发现Couldn't open fd for content, 这也是比较符合预期的, 文件的位置已经移动了.
+<p>从log当中出现的Error发现Couldn't open fd for content, 这也是比较符合预期的, 文件的位置已经移动了.<br>
 并且从log的Create new client 字符可以知道曾经三次尝试播放文件MP3文件(也可以从三次的Error看出), 但是三次都未成功, 其中两次是5080号进程, 一次是1107号进程, 上下文的log可以看出, 5080号进程就是该google的DeskClock进程, 而1107进程就是SystemUI的进程. 那么很奇怪的是为什么会出现SystemUI的进程播放文件呢.</p>
 <p>我们在看看正常的情况下, 这个份log</p>
 <pre><code>12-31 19:02:33.495   292   504 E MediaPlayerService: Couldn't open fd for content://com.android.externalstorage.documents/document/primary%3Axuwanjinxuwanjin.MP3
@@ -372,7 +372,7 @@ sp.setSpan(new RelativeSizeSpan(colonProportion), colonPos, colonPos + 3,
 <pre><code>12-31 19:04:01.726   292   503 I MediaPlayerService: [setDataSource]line:1131 [13] setDataSource fd=10 (/system/framework/framework-res.apk), offset=14390324, length=14611
 
 </code></pre>
-<p>这个音频文件竟然是一个app, 这点让我感到很奇怪, 为什么是一个App.  因为这个音频文件就在在这个app里面
+<p>这个音频文件竟然是一个app, 这点让我感到很奇怪, 为什么是一个App.  因为这个音频文件就在在这个app里面<br>
 再看看是SystemUI要求播放这个文件的, 进程号是1089号. 看这个之前的那一段systemui的进程的log</p>
 <pre><code>12-31 19:04:01.679  1089  1104 W Ringtone: Remote playback not allowed: java.io.IOException: setDataSource failed.: status=0x80000000
 12-31 19:04:01.679  1089  1104 D Ringtone: Problem opening; delegating to remote player
@@ -380,14 +380,14 @@ sp.setSpan(new RelativeSizeSpan(colonProportion), colonPos, colonPos + 3,
 12-31 19:04:01.680  1089  1104 W Ringtone: Neither local nor remote player available when applying playback properties
 </code></pre>
 <p>Ringtone的开始设置资源的时候出现了IO异常, 这点完全符合预期的, 因为没有资源文件了.</p>
-<p>期间比对了一下两个不同的分支的的RingtoneManager的代码在这两个函数有很大的不同.
+<p>期间比对了一下两个不同的分支的的RingtoneManager的代码在这两个函数有很大的不同.<br>
 将有没有的分支的代码合入到有声音的那个RingtoneManager. 重新刷机器之后, 表现一致了. 因此两个函数是有问题的. 但具体的原因还是不知道为什么. 继续寻找原因.</p>
 <pre><code>private static String getSettingForType(int type)
 private static String getSettingForType(int type, long simId)
 </code></pre>
 <p>因为是Ringtone播放的时候出现了问题， 所以我们再看看Ringtone的play()函数， 也就是看看铃声播放的函数， 这个一个公有的API接口, 因此修改之后需要, 全编译, 这比较麻烦。</p>
 <h4 id="说一下最终结果">说一下最终结果</h4>
-<p>Ringtone在执行play的操作的时候,如果资源文件不存在了.
+<p>Ringtone在执行play的操作的时候,如果资源文件不存在了.<br>
 会直接进入到</p>
 <pre><code class="language-java">   public void play() {
    //正常的流程是, 两次调用了play方法, 第二次出现了false为空和mRemotePlayer为空. 第一次则相反
@@ -460,10 +460,10 @@ private static String getSettingForType(int type, long simId)
 12-31 19:04:01.680  1089  1104 D Ringtone: Ringtone: play: mAllowRemote = false
 12-31 19:04:01.680  1089  1104 D Ringtone: Ringtone: play: mRemotePlayer = null
 </code></pre>
-<p>下面我们再看看playFallbackRingtone()方法
-当系统播放指定的音频文件, 而该音频文件又不存在的时候, 播放的文件是在这个路径下的
-frameworks\base\core\res\res\raw\fallbackring.ogg
-具体的代码是在
+<p>下面我们再看看playFallbackRingtone()方法<br>
+当系统播放指定的音频文件, 而该音频文件又不存在的时候, 播放的文件是在这个路径下的<br>
+frameworks\base\core\res\res\raw\fallbackring.ogg<br>
+具体的代码是在<br>
 \frameworks\base\media\java\android\media\下的Ringtone类的</p>
 <pre><code class="language-java">// Ringtone.java
 private boolean playFallbackRingtone() {
@@ -532,7 +532,7 @@ public static Uri getActualDefaultRingtoneUri(Context context, int type) {
     return uriString != null ? Uri.parse(uriString) : null;
 }
 </code></pre>
-<p>没有问题的那段代码
+<p>没有问题的那段代码<br>
 当Type是-1的时候,这里会进入到第一个判断, 这时候会返回Ringtone</p>
 <pre><code class="language-java">//RingtoneManager
 private static String getSettingForType(int type) {
@@ -551,7 +551,7 @@ private static String getSettingForType(int type) {
      }
 }
 </code></pre>
-<p>有问题的那段代码.
+<p>有问题的那段代码.<br>
 当Type是-1是的时候, 一个类型都不匹配, 所以返回的是null值.</p>
 <pre><code class="language-java">//RingtoneManager
 private static String getSettingForType(int type) {
@@ -572,14 +572,14 @@ private static String getSettingForType(int type) {
 
 </code></pre>
 <h4 id="问题原因总结">问题原因总结</h4>
-<p>添加了一个类型, TYPE_MESSAGE, 然后将getSettingForType方法里的type类型的判断都改成了 == .
-在铃声被删除的情况下, 获取的到Type是-1类型的, 当采用&amp; 他会和所有的都匹配上, 但是只会进入到Ringtone的这个类型里面, 返回的是Ringtone的类型.
-当采用 == 判断的话进入, 所有的条件都不会满足. 返回的是Null.
+<p>添加了一个类型, TYPE_MESSAGE, 然后将getSettingForType方法里的type类型的判断都改成了 == .<br>
+在铃声被删除的情况下, 获取的到Type是-1类型的, 当采用&amp; 他会和所有的都匹配上, 但是只会进入到Ringtone的这个类型里面, 返回的是Ringtone的类型.<br>
+当采用 == 判断的话进入, 所有的条件都不会满足. 返回的是Null.<br>
 主要原因是TYPE_MESSAGE的设计不合理, 不应该是3 ,而是2的整数次幂</p>
 <h4 id="建议修改方案">建议修改方案</h4>
-<p>将TYPE_MESSAGE这个值改为32, 然后将错误的方法里的==判断条件改为&amp; 然后在判断是否为非零作为条件.
-同时将res/res/values/attri.xml文件的关于音频的修改为32. 也就是下面的xml文件.
-其实
+<p>将TYPE_MESSAGE这个值改为32, 然后将错误的方法里的==判断条件改为&amp; 然后在判断是否为非零作为条件.<br>
+同时将res/res/values/attri.xml文件的关于音频的修改为32. 也就是下面的xml文件.<br>
+其实<br>
 在RingtoneManager类里面已经有了这句话</p>
 <pre><code>// Make sure these are in sync with attrs.xml:
 // &lt;attr name=&quot;ringtoneType&quot;&gt;
@@ -604,9 +604,9 @@ private static String getSettingForType(int type) {
     &lt;attr name=&quot;showSilent&quot; format=&quot;boolean&quot; /&gt;
 &lt;/declare-styleable&gt;
 </code></pre>
-<p>说一下在这里情境下声音播放的顺序. 大致的理一下思路
-首先是DeskClock正常的调用系统的API的Ringtone的Play()方法,  在第一次的播放里参数mAllowRemote为true, 允许远程播放, 同时mRemotePlayer不为空, 这时候mRemotePlayer也调用play方法, 这时候会有进程间的调用, 进入到SystemUI进程调用到RingtonePlayer类的mCallback的play方法. mRingtone也是调用系统的API方法, 这个时候allowRemote参数为false. 这次会进入到第三个条件里面执行playFallbackRingtone. 在这里会播放系统的默认声音.
-总的就是DeskClock调用系统API---&gt;远程播放进入到SystemUI---&gt;SystemUI调用系统API
+<p>说一下在这里情境下声音播放的顺序. 大致的理一下思路<br>
+首先是DeskClock正常的调用系统的API的Ringtone的Play()方法,  在第一次的播放里参数mAllowRemote为true, 允许远程播放, 同时mRemotePlayer不为空, 这时候mRemotePlayer也调用play方法, 这时候会有进程间的调用, 进入到SystemUI进程调用到RingtonePlayer类的mCallback的play方法. mRingtone也是调用系统的API方法, 这个时候allowRemote参数为false. 这次会进入到第三个条件里面执行playFallbackRingtone. 在这里会播放系统的默认声音.<br>
+总的就是DeskClock调用系统API---&gt;远程播放进入到SystemUI---&gt;SystemUI调用系统API<br>
 当然最终还是MediaServer播放了该音频</p>
 <h3 id="deskclock-设置闹钟铃声停止运行">DeskClock 设置闹钟铃声	停止运行</h3>
 <h4 id="log文件">log文件</h4>
@@ -739,21 +739,21 @@ if (mCustomRingtones != null) {
 <li><a href="https://source.android.com/security/encryption/full-disk.html">Full-Disk Encryption</a></li>
 <li><a href="http://souly.cn/%E6%8A%80%E6%9C%AF%E5%8D%9A%E6%96%87/2015/11/05/wakelock%E8%A7%A3%E6%9E%90/">Wakelock解析</a></li>
 <li><a href="http://blog.csdn.net/yihongyuelan/article/details/14000363">Android 4.2 关于GlowPadView的说明 </a></li>
-<li><a href="http://blog.csdn.net/qq_16430735/article/details/50427978">Android中各种Span的用法 </a>
-<a href=""></a>
-<a href=""></a>
-<a href=""></a>
-<a href=""></a>
-<a href=""></a>
-<a href=""></a>
-<a href=""></a>
-<a href=""></a>
-<a href=""></a>
-<a href=""></a>
-<a href=""></a>
-<a href=""></a>
-<a href=""></a>
-<a href=""></a>
+<li><a href="http://blog.csdn.net/qq_16430735/article/details/50427978">Android中各种Span的用法 </a><br>
+<a href=""></a><br>
+<a href=""></a><br>
+<a href=""></a><br>
+<a href=""></a><br>
+<a href=""></a><br>
+<a href=""></a><br>
+<a href=""></a><br>
+<a href=""></a><br>
+<a href=""></a><br>
+<a href=""></a><br>
+<a href=""></a><br>
+<a href=""></a><br>
+<a href=""></a><br>
+<a href=""></a><br>
 <a href=""></a></li>
 </ol>
 

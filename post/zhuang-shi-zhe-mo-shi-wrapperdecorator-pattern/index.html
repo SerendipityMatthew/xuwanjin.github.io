@@ -4,7 +4,7 @@
 <meta name="description" content="" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title> 装饰者模式 Wrapper/Decorator Pattern | Gridea</title>
-<link rel="shortcut icon" href="http://xuwanjin.me//favicon.ico?v=1568420639414">
+<link rel="shortcut icon" href="http://xuwanjin.me//favicon.ico?v=1568515808450">
 <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
 <link rel="stylesheet" href="http://xuwanjin.me//styles/main.css">
@@ -20,7 +20,7 @@
       <div class="main-content">
         <div class="site-header">
   <a href="http://xuwanjin.me/">
-  <img class="avatar" src="http://xuwanjin.me//images/avatar.png?v=1568420639414" alt="">
+  <img class="avatar" src="http://xuwanjin.me//images/avatar.png?v=1568515808450" alt="">
   </a>
   <h1 class="site-title">
     Gridea
@@ -492,7 +492,7 @@ public final class SubscriberResourceWrapper&lt;T&gt; extends AtomicReference&lt
 </code></pre>
 <p>我们发现这些第一个例子里.</p>
 <ol>
-<li><code>ContextWrapper</code> 这个装饰者类里面, 他继承了 Context, 同事它的方法是几乎什么都没有干, 只是调用了 <code>mBase</code> 的相应的方法, 而 <code>mBase</code> 是什么呢, 他是 <code>Context</code> 类型的, <code>mBase</code> 在<code>ContextWrapper</code> 的构造器里和或者 <code>attachBaseContext</code> 方法实例化这个 <code>mBase</code>.  那 mBase 是什么类型了, 我们可以看看 attachBaseContext 方法在哪个地方调用了, 可以发现他在 Application 里面的 attach 方法里面调用了,
+<li><code>ContextWrapper</code> 这个装饰者类里面, 他继承了 Context, 同事它的方法是几乎什么都没有干, 只是调用了 <code>mBase</code> 的相应的方法, 而 <code>mBase</code> 是什么呢, 他是 <code>Context</code> 类型的, <code>mBase</code> 在<code>ContextWrapper</code> 的构造器里和或者 <code>attachBaseContext</code> 方法实例化这个 <code>mBase</code>.  那 mBase 是什么类型了, 我们可以看看 attachBaseContext 方法在哪个地方调用了, 可以发现他在 Application 里面的 attach 方法里面调用了,<br>
 attach 方法又在 Instrumentation 类里面的 newApplication 调用, 再继续追踪在 LoadApk 里面的 makeApplication 方法里调用了该方法, 我们可以发现 Context 传入的是 ContextImpl 类型的.</li>
 </ol>
 <pre><code>   ContextImpl appContext = ContextImpl.createAppContext(mActivityThread, this);
@@ -500,11 +500,11 @@ attach 方法又在 Instrumentation 类里面的 newApplication 调用, 再继�
            cl, appClass, appContext);
    appContext.setOuterContext(app);
 </code></pre>
-<p>那么 ContextImpl 是什么呢? 他是一个继承 Context 类型的类.
+<p>那么 ContextImpl 是什么呢? 他是一个继承 Context 类型的类.<br>
 最终 Context, ContextWrapper, ContextImpl, ContextThemeWrapper, Activity 一起构成了一个 Wrapper 设计模式.</p>
 <ol start="2">
 <li><code>InputConnectionWrapper</code> 也是个装饰者类, 他实现了<code>InputConnection</code>, 在这类里面, 他的方法也是什么都没干的情况, 只是调用了InputConnection的实例 <code>mTarget</code> 的 方法. 同样 mTarget 只在<code>InputConnectionWrapper</code> 的构造函数里实例化.</li>
-<li><code>IInputMethodSessionWrapper</code> 同样是一个装饰者类, 他继承了 <code>IInputMethodSession.Stub</code> , 实现了<code>HandlerCaller.Callback</code>.  这个装饰者类的方法也基本上什么都没干, 只是调用了 <code>Handler</code> 类型的<code>mCaller</code> 实例的 <code>executeOrSendMessage</code> 方法. 但是 mCaller 实际上还是调用了  mInputMethodSession , 的相应方法. mInputMethodSession 也是在 包装器的构造函数里. 同样我们可以追踪一下mInputMethodSession的来源. 在IInputMethodWrapper.InputMethodSessionCallbackWrapper的 sessionCreated 方法里传输了 Session 参数. 而这个方法被调用实在 AbstractInputMethodService.AbstractInputMethodImpl 的 createSession 方法里. 传输的参数是onCreateInputMethodSessionInterface 返回的对象. 可以发现最后是 InputMethodSessionImpl 类型的对象.
+<li><code>IInputMethodSessionWrapper</code> 同样是一个装饰者类, 他继承了 <code>IInputMethodSession.Stub</code> , 实现了<code>HandlerCaller.Callback</code>.  这个装饰者类的方法也基本上什么都没干, 只是调用了 <code>Handler</code> 类型的<code>mCaller</code> 实例的 <code>executeOrSendMessage</code> 方法. 但是 mCaller 实际上还是调用了  mInputMethodSession , 的相应方法. mInputMethodSession 也是在 包装器的构造函数里. 同样我们可以追踪一下mInputMethodSession的来源. 在IInputMethodWrapper.InputMethodSessionCallbackWrapper的 sessionCreated 方法里传输了 Session 参数. 而这个方法被调用实在 AbstractInputMethodService.AbstractInputMethodImpl 的 createSession 方法里. 传输的参数是onCreateInputMethodSessionInterface 返回的对象. 可以发现最后是 InputMethodSessionImpl 类型的对象.<br>
 可以知道</li>
 <li><code>CursorWrapper</code> 调用者的方法也是基本这样的.</li>
 </ol>
@@ -512,11 +512,11 @@ attach 方法又在 Instrumentation 类里面的 newApplication 调用, 再继�
 <h3 id="定义">定义</h3>
 <p>动态的给一个对象添加一些额外的职责, 就增加功能来说, 装饰模式相比生成子类更为灵活.</p>
 <h3 id="结构">结构</h3>
-<p>这里调用别人的图.
+<p>这里调用别人的图.<br>
 <img src="./decorator_pattern.png" alt="Alt text"></p>
-<p>Component 是一个抽象构件. Component 是一个结构或者抽象类 就是定义我们的核心对象.
-ConcreteComponent 是 Component 的实现. 需要需要装饰的就是它.
-Decorator 一般是一个抽象类,  在他的属性里必然有一个 private 类型的 Component 类型的变量. 这个变量可以Decorator 的构造函数里赋值.
+<p>Component 是一个抽象构件. Component 是一个结构或者抽象类 就是定义我们的核心对象.<br>
+ConcreteComponent 是 Component 的实现. 需要需要装饰的就是它.<br>
+Decorator 一般是一个抽象类,  在他的属性里必然有一个 private 类型的 Component 类型的变量. 这个变量可以Decorator 的构造函数里赋值.<br>
 ConcreteDecorator 是继承于 Decorator 的具体实现装饰类.</p>
 <h3 id="优点">优点</h3>
 <ol>

@@ -4,7 +4,7 @@
 <meta name="description" content="" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>riggrep 搜索结果 | Gridea</title>
-<link rel="shortcut icon" href="http://xuwanjin.me//favicon.ico?v=1568420639414">
+<link rel="shortcut icon" href="http://xuwanjin.me//favicon.ico?v=1568515808450">
 <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
 <link rel="stylesheet" href="http://xuwanjin.me//styles/main.css">
@@ -20,7 +20,7 @@
       <div class="main-content">
         <div class="site-header">
   <a href="http://xuwanjin.me/">
-  <img class="avatar" src="http://xuwanjin.me//images/avatar.png?v=1568420639414" alt="">
+  <img class="avatar" src="http://xuwanjin.me//images/avatar.png?v=1568515808450" alt="">
   </a>
   <h1 class="site-title">
     Gridea
@@ -99,11 +99,11 @@
 <p><img src="http://xuwanjin.me//post-images/1560383160875.png" alt=""></p>
 <p>最近发现riggrep，执行搜索命令的时候出现了结果不对的情况</p>
 <h2 id="思考">思考</h2>
-<p>于是觉得这是一个bug， 只是很奇怪，rust 遍历系统当前的文件，然后唯独失去了<code>common</code>文件夹的搜索, 这事为什么呢?
+<p>于是觉得这是一个bug， 只是很奇怪，rust 遍历系统当前的文件，然后唯独失去了<code>common</code>文件夹的搜索, 这事为什么呢?<br>
 当我 cd 到这个目录再执行的时候，他却能搜的出来结果, 很奇怪。</p>
 <h2 id="解决过程">解决过程</h2>
 <h3 id="查看源码">查看源码</h3>
-<p>这个时候第一想法，是看看源代码，源码是怎么写的。这可能和我的一直做 Android Framework 的工作原因, 第一个想到的事情就是阅读源码.
+<p>这个时候第一想法，是看看源代码，源码是怎么写的。这可能和我的一直做 Android Framework 的工作原因, 第一个想到的事情就是阅读源码.<br>
 找了好久才找到了 ripgrep 的程序入口 <code>ripgrep/src/main.rs</code></p>
 <pre><code class="language-rust">fn main() {
 //这里是对命令行参数的解析
@@ -174,8 +174,8 @@ fn search(args: Args) -&gt; Result&lt;bool&gt; {
 }
 
 </code></pre>
-<p>于是我想在遍历路径的地方，加一个log， 想知道为什么他就没有搜索<code>common</code>路径。
-在各种百度和google的情况下。还是不知到rust语言是如何加log。但是我看到了源码里有一个<code>logger</code>模块.
+<p>于是我想在遍历路径的地方，加一个log， 想知道为什么他就没有搜索<code>common</code>路径。<br>
+在各种百度和google的情况下。还是不知到rust语言是如何加log。但是我看到了源码里有一个<code>logger</code>模块.<br>
 在代码里发现这样的code</p>
 <pre><code class="language-rust">fn enabled(&amp;self, _: &amp;log::Metadata) -&gt; bool {
     // We set the log level via log::set_max_level, so we don't need to
@@ -229,7 +229,7 @@ pub fn parse() -&gt; Result&lt;Args&gt; {
 }
 
 </code></pre>
-<p>从代码里来看<code>rg</code>命令似乎有debug和trace参数。
+<p>从代码里来看<code>rg</code>命令似乎有debug和trace参数。<br>
 于是我<code>help</code>了一下这个命令</p>
 <pre><code>--debug                             
 		Show debug messages. Please use this when filing a bug report.
@@ -243,7 +243,7 @@ pub fn parse() -&gt; Result&lt;Args&gt; {
 		large and is generally more useful for development.
 
 </code></pre>
-<p>于是接下来使用了这个命令
+<p>于是接下来使用了这个命令<br>
 使用rg命令默认的输出log的命令搜索改</p>
 <pre><code>rg config_screenBrightnessDoze -c --trace 2&gt;&amp;1 | tee result.log
 </code></pre>
@@ -480,7 +480,7 @@ result.log:1
 <p>上面是搜索的trace文件，在trace文件里我们可以看到。有一个文件</p>
 <pre><code>product/overlay/frameworks/base/core/res/res/values/config.xml
 </code></pre>
-<p>是执行了搜索的操作的。
+<p>是执行了搜索的操作的。<br>
 从再看一下这个搜索的trace文件开始的地方</p>
 <pre><code>DEBUG|ignore::walk|ignore/src/walk.rs:1611: ignoring ./.git: Ignore(IgnoreMatch(Hidden))
 DEBUG|ignore::walk|ignore/src/walk.rs:1611: ignoring ./opensource: Ignore(IgnoreMatch(Gitignore(Glob { from: Some(&quot;./.gitignore&quot;), original: &quot;opensource&quot;, actual: &quot;**/opensource&quot;, is_whitelist: false, is_only_dir: false })))
@@ -488,8 +488,8 @@ DEBUG|ignore::walk|ignore/src/walk.rs:1611: ignoring ./.gitignore: Ignore(Ignore
 DEBUG|ignore::walk|ignore/src/walk.rs:1611: ignoring ./common: Ignore(IgnoreMatch(Gitignore(Glob { from: Some(&quot;./.gitignore&quot;), original: &quot;common&quot;, actual: &quot;**/common&quot;, is_whitelist: false, is_only_dir: false })))
 DEBUG|ignore::walk|ignore/src/walk.rs:1611: ignoring ./sepolicy: Ignore(IgnoreMatch(Gitignore(Glob { from: Some(&quot;./.gitignore&quot;), original: &quot;sepolicy&quot;, actual: &quot;**/sepolicy&quot;, is_whitelist: false, is_only_dir: false })))
 </code></pre>
-<p>很明显在搜索他忽略了<code>common</code>, <code>sepolicy</code>, <code>opensource</code>三个目录，
-从log的意思来看，他是从<code>.gitignore</code>里忽略了这三个目录。
+<p>很明显在搜索他忽略了<code>common</code>, <code>sepolicy</code>, <code>opensource</code>三个目录，<br>
+从log的意思来看，他是从<code>.gitignore</code>里忽略了这三个目录。<br>
 我打开这个文件的的<code>.gitignore</code>文件，发现了他的确忽略了这三个目录。</p>
 <h3 id="验证之前的想法">验证之前的想法</h3>
 <pre><code>ubuntu14@ubuntu14:msm8909w$ cat .gitignore 
@@ -497,7 +497,7 @@ sepolicy
 common
 opensource
 </code></pre>
-<p>于是我把这个文件的文件内容删除掉.
+<p>于是我把这个文件的文件内容删除掉.<br>
 再次搜索，</p>
 <pre><code>ubuntu14@ubuntu14:msm8909w$ rg config_screenBrightnessDoze 
 product/overlay/frameworks/base/core/res/res/values/config.xml
@@ -505,7 +505,7 @@ product/overlay/frameworks/base/core/res/res/values/config.xml
 common/product/overlay/frameworks/base/core/res/res/values/config.xml
 45:    &lt;integer name=&quot;config_screenBrightnessDoze&quot;&gt;17&lt;/integer&gt;
 </code></pre>
-<p>果然，出现了搜索出了<code>common</code>目录下的文件。
+<p>果然，出现了搜索出了<code>common</code>目录下的文件。<br>
 如果使用<code>--no-ignore</code>参数搜索也可以有。</p>
 <pre><code>ubuntu14@ubuntu14:msm8909w$ rg config_screenBrightnessDoze  --no-ignore
 product/overlay/frameworks/base/core/res/res/values/config.xml

@@ -4,7 +4,7 @@
 <meta name="description" content="" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>MTK 9.0 平台添加一个分区 | Gridea</title>
-<link rel="shortcut icon" href="http://xuwanjin.me//favicon.ico?v=1568420639414">
+<link rel="shortcut icon" href="http://xuwanjin.me//favicon.ico?v=1568515808450">
 <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
 <link rel="stylesheet" href="http://xuwanjin.me//styles/main.css">
@@ -20,7 +20,7 @@
       <div class="main-content">
         <div class="site-header">
   <a href="http://xuwanjin.me/">
-  <img class="avatar" src="http://xuwanjin.me//images/avatar.png?v=1568420639414" alt="">
+  <img class="avatar" src="http://xuwanjin.me//images/avatar.png?v=1568515808450" alt="">
   </a>
   <h1 class="site-title">
     Gridea
@@ -108,7 +108,7 @@
 <h1 id="mtk-90-平台添加一个分区">MTK 9.0 平台添加一个分区</h1>
 <p>最近要在 MTK Android P 的平台, 添加一个 A/B 分区. 这其中踩了很多的坑. 以下是在添加新的分区当中遇到的问题进行的记录.</p>
 <p>##修改操作</p>
-<p>添加一个AB分区, 并且添加相应的 image 文件
+<p>添加一个AB分区, 并且添加相应的 image 文件<br>
 涉及到的文件. 已经设计的到的问题的总结:</p>
 <pre><code>build/core/Makefile　　// ②　命令行之前需要有一个TAB, ⑧编译出现了failed with exit 4,  未知原因；　③导致生成的image文件出现错误； 　 ④生成了相关的image 但是没有放在　target_files_package下的　IMAGES　文件夹下
 build/core/config.mk
@@ -140,14 +140,14 @@ secos,EXT4,45120.0,,EMMC_USER,N,Y,secos.img,N,N,Y,,Y,,AUTO
 sec1,Raw data,2048.0,,EMMC_USER,N,N,NONE,N,N,N,,N,,AUTO
 proinfo,Raw data,3072.0,,EMMC_USER,N,N,NONE,N,N,N,,N,,PROTECTED
 </code></pre>
-<p>下面是对各个字段的说明:
-Type，　　文件的分区格式　有Raw data 和 EXT4
-Download_File， 刷机的时的文件的文件名称，比如system.img, 注意前面的文件和未前面的文件
-Download，　　　　是否通过刷机的方式，应该和 Download_File 保持一致
-OTA_Update，　　　是否通过OTA升级的方式升级该分区，如果加入的不是AB分区，建议写N
-FastBoot_Download,  是否通过FastBoot的方式下载
-EMMC  指的是内存的
-MTK 的代码, 会根据 这个 CSV 文件, 生辰一个 Android_Scatter.txt 文件, 里面会包含分区的各种信息,
+<p>下面是对各个字段的说明:<br>
+Type，　　文件的分区格式　有Raw data 和 EXT4<br>
+Download_File， 刷机的时的文件的文件名称，比如system.img, 注意前面的文件和未前面的文件<br>
+Download，　　　　是否通过刷机的方式，应该和 Download_File 保持一致<br>
+OTA_Update，　　　是否通过OTA升级的方式升级该分区，如果加入的不是AB分区，建议写N<br>
+FastBoot_Download,  是否通过FastBoot的方式下载<br>
+EMMC  指的是内存的<br>
+MTK 的代码, 会根据 这个 CSV 文件, 生辰一个 Android_Scatter.txt 文件, 里面会包含分区的各种信息,<br>
 比如是否可以升级,1 刷机的文件名称, 其实的物理地址, 分区的大小, 分区的格式, 都是根据这个 csv 文件得来的.</p>
 <h3 id="initrc-创建目录">init.rc 创建目录</h3>
 <p>需要修改的 init.rc 文件.</p>
@@ -203,7 +203,7 @@ DEVPATH(persist)    /mnt/vendor/persist     ext4   FS_FLAG_COMMIT  FSMGR_FLAG_FM
 <p>DEVPATH 是一个变量，关于路径的变量</p>
 <pre><code>#define DEVPATH(_part) /dev/block/platform/BOOTDEV/by-name/_part
 </code></pre>
-<p>defaults　是一个默认的参数集
+<p>defaults　是一个默认的参数集<br>
 __MTK_DATAIMG_FSTYPE　在上面定义为 ext4 格式的</p>
 <pre><code>#define FSMGR_FLAG_FMT  wait,check,formattable
 </code></pre>
@@ -221,9 +221,9 @@ __MTK_DATAIMG_FSTYPE　在上面定义为 ext4 格式的</p>
 /secos(/.*)?		u:object_r:secos_file:s0
 /dev/block/platform/mtk-msdc\.0/[0-9]+\.(msdc|MSDC)0/by-name/secos	u:object_r:secos_block_device:s0
 </code></pre>
-<p>在这里我在这里踩得坑，因为我一开始要挂在 /mnt/vendor/ 目录下面的。 因此，我在这里把
-/secos(/.<em>)? 写成了 /mnt/vendor/secos(/.</em>)? 。因此老是出现了编译错误: failed with error code 4 的错误。
-一开始并没有意识到这个错误。 导致在这里花费了很长的时间。这个将在随后说。
+<p>在这里我在这里踩得坑，因为我一开始要挂在 /mnt/vendor/ 目录下面的。 因此，我在这里把<br>
+/secos(/.<em>)? 写成了 /mnt/vendor/secos(/.</em>)? 。因此老是出现了编译错误: failed with error code 4 的错误。<br>
+一开始并没有意识到这个错误。 导致在这里花费了很长的时间。这个将在随后说。<br>
 device/mediatek/sepolicy/basic/non_plat/fsck.te</p>
 <pre><code>allow fsck secos_block_device:blk_file rw_file_perms;
 </code></pre>
@@ -242,7 +242,7 @@ $(if $(BOARD_SECOSIMAGE_PARTITION_SIZE),$(hide) echo &quot;secos_size=$(BOARD_SE
 $(if $(INTERNAL_USERIMAGES_SPARSE_EXT_FLAG),$(hide) echo &quot;extfs_sparse_flag=$(INTERNAL_USERIMAGES_SPARSE_EXT_FLAG)&quot; &gt;&gt; $(1))
 </code></pre>
 <p>即使你设置了 BOARD_SECOSIMAGE_PARTITION_SIZE, 但是 BOARD_SECOSIMAGE_PARTITION_SIZE 不一定是你设置的的大小．</p>
-<p>device/mediatek/build/build/tools/ptgen/MT6761/ptgen.pl 里会根据分区的大小， 各自对齐一下. 所以他的大小会改变．
+<p>device/mediatek/build/build/tools/ptgen/MT6761/ptgen.pl 里会根据分区的大小， 各自对齐一下. 所以他的大小会改变．<br>
 比如我这里在分区表里给的大小时 45120 KB, 但是实际上得到的是 52 MB. 这个你可以在编译完的生成目录的 ninja 文件里搜索到实际的大小.</p>
 <pre><code class="language-perl">if ($part-&gt;{Type} eq &quot;EXT4&quot; || $part-&gt;{Type} eq &quot;FAT&quot;)
 {
@@ -423,10 +423,10 @@ bptimage: $(INSTALLED_BPTIMAGE_TARGET)
 无法挂载在根目录/
 </code></pre>
 <h4 id="分区表的各项注意">分区表的各项注意</h4>
-<p>Type，　　文件的分区格式　有Raw data 和 EXT4
-Download_File， 刷机的时的文件的文件名称，比如system.img
-Download，　　　　是否通过刷机的方式，应该和　Download_File保持一致
-OTA_Update，　　　是否通过OTA升级的方式升级该分区，如果加入的不是AB分区，建议写N
+<p>Type，　　文件的分区格式　有Raw data 和 EXT4<br>
+Download_File， 刷机的时的文件的文件名称，比如system.img<br>
+Download，　　　　是否通过刷机的方式，应该和　Download_File保持一致<br>
+OTA_Update，　　　是否通过OTA升级的方式升级该分区，如果加入的不是AB分区，建议写N<br>
 FastBoot_Download,  是否通过FastBoot的方式下载</p>
 <h4 id="missing-separator-错误">missing separator 错误</h4>
 <pre><code>mobicore - including vendor/mediatek/proprietary/trustzone/trustonic/source/external/mobicore/common/400b/Android.mk
@@ -468,11 +468,11 @@ writing RSA key
 writing RSA key
 
 </code></pre>
-<p>一开始我以为时　mkuserimg_mke2fs.sh　这个行的命令行出现了错误，但是把这个命令行单独拿出来，执行命令，没有发现任何错误．
+<p>一开始我以为时　mkuserimg_mke2fs.sh　这个行的命令行出现了错误，但是把这个命令行单独拿出来，执行命令，没有发现任何错误．<br>
 后来我怀疑是后面的的计算image 大小的出现了错误．　这个image的大小超出了系统分配的分区的大小．实际上也不是真正的错误原因.</p>
 <pre><code>(size=\$(for i in out/target/product/ax2129/secos.img; do stat --format \&quot;%s\&quot; \&quot;\$i\&quot; | tr -d '\\n'; echo +; done; echo 0); total=\$(( \$( echo \&quot;\$size\&quot; ) )); printname=\$(echo -n \&quot;out/target/product/ax2129/secos.img\&quot; | tr \&quot; \&quot; +); maxsize=\$((50331648)); if [ \&quot;\$total\&quot; -gt \&quot;\$maxsize\&quot; ]; then echo \&quot;error: \$printname too large (\$total &gt; \$maxsize)\&quot;; false; elif [ \&quot;\$total\&quot; -gt \$((maxsize - 32768)) ]; then echo \&quot;WARNING: \$printname approaching size limit (\$total now; limit \$maxsize)\&quot;; fi )&quot;
 </code></pre>
-<p>out/host/linux-x86/bin/mkuserimg_mke2fs.sh
+<p>out/host/linux-x86/bin/mkuserimg_mke2fs.sh<br>
 system/extras/ext4_utils/mkuserimg_mke2fs.sh</p>
 <pre><code class="language-makefile"># $(1): The file to check
 define get-file-size
@@ -794,7 +794,7 @@ make: Entering directory `/mnt/code/huaqin/AX2129_D/vendor/mediatek/proprietary/
     }
 }
 </code></pre>
-<p>添加一个AB分区的时候
+<p>添加一个AB分区的时候<br>
 未添加　slotselect 参数导致的无法挂载, Skipping</p>
 <pre><code>[   23.075795] .(3)[273:wdtk-3][wdk-c] cpu=3,lbit=0x9,cbit=0xf,0,1,2930432545,[23075790516,19999990,43072185]
 [   23.075804] .(3)[273:wdtk-3][thread:273][RT:23075799901] 2019-09-05 12:52:45.905161 UTC;android time 2019-09-05 12:52:45.905161
@@ -862,7 +862,7 @@ DEVPATH(secos)      /mnt/vendor/secos   __MTK_DATAIMG_FSTYPE   defaults   FSMGR_
 01-01 00:00:57.040   379  2678 W vold    : Failed to open /mnt/vendor/persist: Permission denied
 01-01 00:00:57.045   429   553 D MDP     : DpAsyncBlitStream: rot(0) flip(0) padding(c)
 </code></pre>
-<p>这个是因为， 系统启动的时候并没有创建 /secos 目录， 无法打开根目录。
+<p>这个是因为， 系统启动的时候并没有创建 /secos 目录， 无法打开根目录。<br>
 不知道为什么总是无法创建根目录下的secos目录。</p>
 <h2 id="验证方案">验证方案</h2>
 <p>系统中验证是否已经添加好一个分区， 这个分区是否挂载上，挂载参数是否正确的的验证方法.</p>

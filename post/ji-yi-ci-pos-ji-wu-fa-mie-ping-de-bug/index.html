@@ -4,7 +4,7 @@
 <meta name="description" content="" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>记一次pos机无法灭屏的bug | Gridea</title>
-<link rel="shortcut icon" href="http://xuwanjin.me//favicon.ico?v=1568420639414">
+<link rel="shortcut icon" href="http://xuwanjin.me//favicon.ico?v=1568515808450">
 <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
 <link rel="stylesheet" href="http://xuwanjin.me//styles/main.css">
@@ -20,7 +20,7 @@
       <div class="main-content">
         <div class="site-header">
   <a href="http://xuwanjin.me/">
-  <img class="avatar" src="http://xuwanjin.me//images/avatar.png?v=1568420639414" alt="">
+  <img class="avatar" src="http://xuwanjin.me//images/avatar.png?v=1568515808450" alt="">
   </a>
   <h1 class="site-title">
     Gridea
@@ -107,7 +107,7 @@
 <!-- more -->
 <h1 id="记一次pos机无法灭屏的bug">记一次pos机无法灭屏的bug</h1>
 <p>@(aosp/Android)</p>
-<p>操作系统基于5.1.1
+<p>操作系统基于5.1.1<br>
 平台是: 高通</p>
 <h2 id="bug的现象">bug的现象</h2>
 <h3 id="测试提出的现象">测试提出的现象</h3>
@@ -153,9 +153,9 @@ Suspend Blockers: size=4
 Display Power: state=ON
 </code></pre>
 <p>首先可以发现 还有一个 WakeLock 被 PowerManagerService.Display 所持有着。 这似乎合情合理的。 毕竟屏幕还在亮着。</p>
-<p>再看系统的 mLastUserActivityTime 这个变， 从这个变量的名字上可以知道。 这个就是系统用来记录用户上次操作的时间。
-这个时间的后面是 XXX ms ago。 这个可以在系统里知道。这个数字的含义是系统的当前时间和和用户上次操作的时间的差值。
-在代码的 frameworks\base\services\core\java\com\android\server\power\PowerManagerService.java
+<p>再看系统的 mLastUserActivityTime 这个变， 从这个变量的名字上可以知道。 这个就是系统用来记录用户上次操作的时间。<br>
+这个时间的后面是 XXX ms ago。 这个可以在系统里知道。这个数字的含义是系统的当前时间和和用户上次操作的时间的差值。<br>
+在代码的 frameworks\base\services\core\java\com\android\server\power\PowerManagerService.java<br>
 以下是 mLastUserActivityTime 是被赋值的时候。 可以看到他是被赋了 eventtime 的值。</p>
 <pre><code class="language-JAVA">private boolean userActivityNoUpdateLocked(long eventTime, int event, int flags, int uid) {
     if (DEBUG_SPEW) {
@@ -234,11 +234,11 @@ Display Power: state=ON
     public static final int USER_ACTIVITY_EVENT_TOUCH = 2;
 
 </code></pre>
-<p>USER_ACTIVITY_EVENT_OTHER  是非特别的的事件类型， USER_ACTIVITY_EVENT_BUTTON 是指按键被按下或者释放的事件。USER_ACTIVITY_EVENT_TOUCH 是屏幕触摸的事件类型，可以是down， move或者是up。也就是系统不断地接收到了 按键或者按钮不断地按下或者停止按下的事件。然后不断的改变了系统的记录用户操作的时间戳 userActivityNoUpdateLocked 。
+<p>USER_ACTIVITY_EVENT_OTHER  是非特别的的事件类型， USER_ACTIVITY_EVENT_BUTTON 是指按键被按下或者释放的事件。USER_ACTIVITY_EVENT_TOUCH 是屏幕触摸的事件类型，可以是down， move或者是up。也就是系统不断地接收到了 按键或者按钮不断地按下或者停止按下的事件。然后不断的改变了系统的记录用户操作的时间戳 userActivityNoUpdateLocked 。<br>
 从这里可以知道。 android 5.1的代码里， 目前只有一个方法 userActivityInternal 调用了userActivityNoUpdateLocked方法的时候event 的值是不确定的。 当然你可以加一个log</p>
 <pre><code>android.util.Slog.d(TAG, &quot;&quot; + android.util.log.getStackTraceString(new Throwable))
 </code></pre>
-<p>一路追踪可以发现。android_server_PowerManagerService_userActivity 最终是调用了这里。最后走到pokeUserActivity的 frameworks/base/services/core/jni/com_android_server_input_InputManagerService.cpp.
+<p>一路追踪可以发现。android_server_PowerManagerService_userActivity 最终是调用了这里。最后走到pokeUserActivity的 frameworks/base/services/core/jni/com_android_server_input_InputManagerService.cpp.<br>
 于是我打开了InputFlinger里的InputDispatcher 里的所有log。 抓了一个log， 看了一下。没有发现异常（这里是错误的）</p>
 <h3 id="查看-input的-dump-文件">查看 input的 dump 文件</h3>
 <p>这个时候我们查看一下 adb shell dumpsys input ， 可以查看Input的dump文件。</p>
@@ -337,9 +337,9 @@ Input Dispatcher State:
     KeyRepeatDelay: 50.0ms
     KeyRepeatTimeout: 500.0ms
 </code></pre>
-<p>从RecentQueue里面我们可以发现， 最后系统执行的时间是KeyEvent，这个就很有问题了，因为我最后是操作了屏幕， 并没有操作某一个按键，所以他应该是 MotionEvent 事件。 从这里我们看到上报KeyEvent的是设备号 deviceId =4。 再从上面的DeviceID 可以看到这个是一个SX9310 Cap Touch。 在InputReader里可以看到KeyDowns 这里说明为， 有一个键是Down的状态。所以猜测很可能是这个Sensor 一直上报事件导致的。
-我们可以吧这个器件的 event节点删除/dev/input/event2。 再次进行多次测试， 也没有测试来不灭屏的现象了。
-然后我们看看没删除event2之前的系统的 getevent -lt ， 可以查看一下但是没有事件的输出。
+<p>从RecentQueue里面我们可以发现， 最后系统执行的时间是KeyEvent，这个就很有问题了，因为我最后是操作了屏幕， 并没有操作某一个按键，所以他应该是 MotionEvent 事件。 从这里我们看到上报KeyEvent的是设备号 deviceId =4。 再从上面的DeviceID 可以看到这个是一个SX9310 Cap Touch。 在InputReader里可以看到KeyDowns 这里说明为， 有一个键是Down的状态。所以猜测很可能是这个Sensor 一直上报事件导致的。<br>
+我们可以吧这个器件的 event节点删除/dev/input/event2。 再次进行多次测试， 也没有测试来不灭屏的现象了。<br>
+然后我们看看没删除event2之前的系统的 getevent -lt ， 可以查看一下但是没有事件的输出。<br>
 然后我们在在系统编译的时候去掉SAR， 然后替换掉bootimage。再次测试的时候，测试了多次， 并没有出现不灭屏幕的情况。因此基本上可以确定是 SAR sensor的问题。</p>
 <h3 id="回过头看inputflinger的log">回过头看InputFlinger的log</h3>
 <p>在之前的我抓去了 InputFlinger 的log。我并没有发现问题， 但其实是我看错了。我们在仔细的看一下这个log</p>
@@ -531,7 +531,7 @@ Input Dispatcher State:
 03-16 00:02:05.474   801  2448 D PowerManagerService1111: updateDisplayPowerStateLocked: mDisplayReady=true, policy=3, mWakefulness=1, mWakeLockSummary=0x0, mUserActivitySummary=0x1, mBootCompleted=true, mScreenBrightnessBoostInProgress=false
 
 </code></pre>
-<p>在这里我选取了一个循环的，因为他是两次PowerManagerService， 去改变了 UserLastActivityTime。因此我们可以选择两次PowerManagerService 之间的log
+<p>在这里我选取了一个循环的，因为他是两次PowerManagerService， 去改变了 UserLastActivityTime。因此我们可以选择两次PowerManagerService 之间的log<br>
 在这里我们可以看到 repeatCount=14670 这明显是不正常的。同时我们也可以看到，这个log也是循环的出现的。 我截取一个循环之内的</p>
 <pre><code>03-16 00:02:05.422   801  2448 D InputDispatcher: dispatchKey - eventTime=1143359032219, deviceId=4, source=0x101, policyFlags=0x42000000, action=0x0, flags=0x8, keyCode=0x105, scanCode=0x277, metaState=0x0, repeatCount=14670, downTime=395357128000
 03-16 00:02:05.422   801  2448 D InputDispatcher: findFocusedWindow finished: injectionResult=0, timeSpentWaitingForApplication=0.0ms
@@ -639,8 +639,8 @@ void KeyboardInputMapper::processKey(nsecs_t when, bool down, int32_t keyCode,
 <h3 id="添加配置节点">添加配置节点</h3>
 <pre><code>echo &quot;keyboard.handlesKeyRepeat = 1&quot; &gt; /system/usr/idc/SX9310_Cap_Touch.idc
 </code></pre>
-<p>添加 SAR的 一个数据节点文件， 并且向里面写 keyboard.handlesKeyRepeat = 1 数据。
-这个方法是基于， InputReader 会有读取Configure的行为。在 InputReader 里的有一个方法 configureParameters。
+<p>添加 SAR的 一个数据节点文件， 并且向里面写 keyboard.handlesKeyRepeat = 1 数据。<br>
+这个方法是基于， InputReader 会有读取Configure的行为。在 InputReader 里的有一个方法 configureParameters。<br>
 这个节点不支持空格， 以下划线替代。</p>
 <pre><code>// frameworks/native/services/inputflinger/InputReader.cpp
 void KeyboardInputMapper::configureParameters() {
@@ -661,7 +661,7 @@ void KeyboardInputMapper::configureParameters() {
 </code></pre>
 <p>他在读取这个值之后， 这个上传的KeyEvent一样会产生不重复的效果。</p>
 <h3 id="添加数据节点">添加数据节点</h3>
-<p>sar 是一直报键值的, 报的还是 KeyEvent 类型的键值, 这类键值事件上报上来了, 必须要做处理.
+<p>sar 是一直报键值的, 报的还是 KeyEvent 类型的键值, 这类键值事件上报上来了, 必须要做处理.<br>
 SAR 这种一直报键值的方式是不对的，个人觉得最好的办法是： 因为 SAR 是只给 modem 工作的一种 sensor， 工模里需要该键值来测试 SAR 的 sensor 是否正常工作。 建议的方式， 直接写节点。然后 app 去读取这个节点， 就可以达到检测sar 传感器的了。这样避免了形成系统的 event 事件， 然后在封装成 KeyEvent , 再给 InputFlinger， InputFlinger 再派发出去到某一个界面。这种设计太过繁琐。可以直接写成一个数据节点，然后工模的 App 读取这个数值。 这样可以更直接一点。</p>
 <h2 id="其他反应情况">其他反应情况</h2>
 <h3 id="为什么有时候又是正常灭屏的">为什么有时候又是正常灭屏的</h3>
@@ -703,7 +703,7 @@ SAR 这种一直报键值的方式是不对的，个人觉得最好的办法是�
 [    4619.831867] /dev/input/event2: EV_KEY       0277                 DOWN                
 [    4619.831867] /dev/input/event2: EV_SYN       SYN_REPORT           00000000  
 </code></pre>
-<p>Sar sensor， 在这部手机上的表现是， 当手机的屏幕朝上放置的时候，拿起手机是报up键值的。 放下手机是报的down键值。
+<p>Sar sensor， 在这部手机上的表现是， 当手机的屏幕朝上放置的时候，拿起手机是报up键值的。 放下手机是报的down键值。<br>
 可以看到， 这里手机一直处于down状态。</p>
 <p>一直down. 没其他事件刷新 因此触发repeat机制， 一直分发相同的事件</p>
 

@@ -4,7 +4,7 @@
 <meta name="description" content="" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>OTA 升级测试的一些错误 | Gridea</title>
-<link rel="shortcut icon" href="http://xuwanjin.me//favicon.ico?v=1568420639414">
+<link rel="shortcut icon" href="http://xuwanjin.me//favicon.ico?v=1568515808450">
 <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
 <link rel="stylesheet" href="http://xuwanjin.me//styles/main.css">
@@ -20,7 +20,7 @@
       <div class="main-content">
         <div class="site-header">
   <a href="http://xuwanjin.me/">
-  <img class="avatar" src="http://xuwanjin.me//images/avatar.png?v=1568420639414" alt="">
+  <img class="avatar" src="http://xuwanjin.me//images/avatar.png?v=1568515808450" alt="">
   </a>
   <h1 class="site-title">
     Gridea
@@ -273,7 +273,7 @@ if(part_num_scatter != part_num_device) {
 [    5.334450] I:temperature_end: 41700
 [    5.334477] I:temperature_max: 41700
 </code></pre>
-<p>在系统里 system 目录下或者system/etc/vintf/目录下，的xml文件里查看CONFIG_DEVMEM和kernel里的的开关是否一致。
+<p>在系统里 system 目录下或者system/etc/vintf/目录下，的xml文件里查看CONFIG_DEVMEM和kernel里的的开关是否一致。<br>
 compatibility_matrix.xml 或者compatibility_matrix.X.xml 文件。</p>
 <pre><code class="language-cpp">bool verify_package_compatibility(ZipArchiveHandle package_zip) {
   LOG(INFO) &lt;&lt; &quot;Verifying package compatibility...&quot;;
@@ -400,11 +400,11 @@ bool RuntimeInfo::matchKernelConfigs(const std::vector&lt;KernelConfig&gt;&amp; 
 [    0.639233] I:temperature_end: 42500
 [    0.639267] I:temperature_max: 43600
 </code></pre>
-<p>data 分区加密导致的. 可以按照一下方案手动的就行解密
-1、在系统正常启动的情况下先把升级包(update.zip) push 到data分区目，比如/data/data/update.zip.
-2、adb shell 下执行：/system/bin/uncrypt /data/update.zip /cache/recovery/block.map
-注意：要等待一段时间，直到命令执行退出…，然后在执行如下命令；
-3、adb shell 下执行：echo &quot;--update_package=@/cache/recovery/block.map&quot; &gt; /cache/recovery/command
+<p>data 分区加密导致的. 可以按照一下方案手动的就行解密<br>
+1、在系统正常启动的情况下先把升级包(update.zip) push 到data分区目，比如/data/data/update.zip.<br>
+2、adb shell 下执行：/system/bin/uncrypt /data/update.zip /cache/recovery/block.map<br>
+注意：要等待一段时间，直到命令执行退出…，然后在执行如下命令；<br>
+3、adb shell 下执行：echo &quot;--update_package=@/cache/recovery/block.map&quot; &gt; /cache/recovery/command<br>
 4、reboot recovery</p>
 <p>通过 installPackage的方式升级， 系统会自动的解密data分区</p>
 

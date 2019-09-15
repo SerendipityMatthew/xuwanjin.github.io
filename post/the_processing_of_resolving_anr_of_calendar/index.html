@@ -4,7 +4,7 @@
 <meta name="description" content="" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>记一次 Monkey Calendar  解决的过程 | Gridea</title>
-<link rel="shortcut icon" href="http://xuwanjin.me//favicon.ico?v=1568420639414">
+<link rel="shortcut icon" href="http://xuwanjin.me//favicon.ico?v=1568515808450">
 <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
 <link rel="stylesheet" href="http://xuwanjin.me//styles/main.css">
@@ -20,7 +20,7 @@
       <div class="main-content">
         <div class="site-header">
   <a href="http://xuwanjin.me/">
-  <img class="avatar" src="http://xuwanjin.me//images/avatar.png?v=1568420639414" alt="">
+  <img class="avatar" src="http://xuwanjin.me//images/avatar.png?v=1568515808450" alt="">
   </a>
   <h1 class="site-title">
     Gridea
@@ -214,10 +214,10 @@
 07-12 21:42:04.118  1095  1095 D RILJ    : [3808]&gt; RIL_REQUEST_GET_ACTIVITY_INFO [SUB0]
 07-12 21:42:04.119  1095  1095 D RilRequest: [3808]&lt; RIL_REQUEST_GET_ACTIVITY_INFO error: com.android.internal.telephony.CommandException: RADIO_NOT_AVAILABLE ret=
 </code></pre>
-<p>在这份log当中, Calendar进程出现了连续两次错误. 在进程 13864 挂掉之前, 搜整份log的时候, 关于进程 13864, 并没有其他的收获.
+<p>在这份log当中, Calendar进程出现了连续两次错误. 在进程 13864 挂掉之前, 搜整份log的时候, 关于进程 13864, 并没有其他的收获.<br>
 感觉这个发生的异常只是 logcat 里的缓存. 刚好被 logcat 抓取了.</p>
 <h3 id="第二份-log">第二份 log</h3>
-<p>同时这错误发生的前后, 都有关于时间的log, 似乎, 这个错误和时间有关系. 但是我们还不能确定.
+<p>同时这错误发生的前后, 都有关于时间的log, 似乎, 这个错误和时间有关系. 但是我们还不能确定.<br>
 以下的log, 是一份完整的. 在 进程calendar挂掉之前, calendar的进程</p>
 <pre><code class="language-log">07-13 07:39:24.246 13864 13864 I am_on_paused_called: [0,com.android.calendar.RequestPermissionsActivity,handlePauseActivity]
 07-13 07:39:24.263   729 20384 I am_restart_activity: [0,99129693,529,com.android.packageinstaller/.permission.ui.GrantPermissionsActivity]
@@ -487,21 +487,21 @@
 07-13 06:39:28.337   729   919 I ActivityManager: Process com.android.calendar (pid 13864) has died
 07-13 06:39:28.337   729   919 I am_proc_died: [0,13864,com.android.calendar]
 </code></pre>
-<p>在以上的两份log当中, 都出现了权限问题, Permission Denial: opening provider .
-但是从log 里的打印的异常调用栈里, 我们并没有发现任何在 Calendar 源码里的东西. 这里只是提示了一个AsyncTaskLoader 异常.
-我们先看看第二份log, 在第二份log之前, 出现了我们可以在 event log的 am_focused_activity和am_resume_activity, 知道,
-当前 Monkey正在操作的界面是Setting模块的 DateTimeSettingsActivity 界面. 我们打开Settings的这个界面, 会发现, 这个是
-一个改变当前系统时间, 日期, 时区, 时间格式的界面. 那么他到操作了哪一个呢.我们不知道.
+<p>在以上的两份log当中, 都出现了权限问题, Permission Denial: opening provider .<br>
+但是从log 里的打印的异常调用栈里, 我们并没有发现任何在 Calendar 源码里的东西. 这里只是提示了一个AsyncTaskLoader 异常.<br>
+我们先看看第二份log, 在第二份log之前, 出现了我们可以在 event log的 am_focused_activity和am_resume_activity, 知道,<br>
+当前 Monkey正在操作的界面是Setting模块的 DateTimeSettingsActivity 界面. 我们打开Settings的这个界面, 会发现, 这个是<br>
+一个改变当前系统时间, 日期, 时区, 时间格式的界面. 那么他到操作了哪一个呢.我们不知道.<br>
 我在这个界面, 分别操作了每一个功能, 并没有出现任何异常.</p>
-<p>在发生错误之前, ActivityManager: Permission Denial: opening provider .这份log, 又显示, 似乎者权限有关系.
-这个和 Calendar 以及 CalendarProvider 都有关系.
-在第二份log里的进程13864, 我们只看这一个进程的log, 可以看到, 只出现了RequestPermissionsActivity 这个activity, 明显这个时请求权限的.
-那他给了权限吗. 似乎没有给. 看看随后的Systemserver进程, 也就是729号进程. 在这个进程里我们可以看到, am_destroy_activity 这个 tag, 尝试打开
-AllInOneActivity 界面, 但是并没有, 而是finish .
+<p>在发生错误之前, ActivityManager: Permission Denial: opening provider .这份log, 又显示, 似乎者权限有关系.<br>
+这个和 Calendar 以及 CalendarProvider 都有关系.<br>
+在第二份log里的进程13864, 我们只看这一个进程的log, 可以看到, 只出现了RequestPermissionsActivity 这个activity, 明显这个时请求权限的.<br>
+那他给了权限吗. 似乎没有给. 看看随后的Systemserver进程, 也就是729号进程. 在这个进程里我们可以看到, am_destroy_activity 这个 tag, 尝试打开<br>
+AllInOneActivity 界面, 但是并没有, 而是finish .<br>
 这段 Monkey的操作, 似乎是. 打开了calendar的界面, 但是并没有给权限. 然后切换到了 Setting的界面, 改变了日期.</p>
 <h3 id="第三份-log">第三份 log</h3>
-<p>于是, 我按照上面的的操作. 先打开 Calendar 的界面, 然后从 Home界面跳出来, 保证calendar 进程并没有挂掉.
-然后进入到Settings的日期界面秒, 尝试改变日期和时间. 这个时候出现了 Calendar 的错误.
+<p>于是, 我按照上面的的操作. 先打开 Calendar 的界面, 然后从 Home界面跳出来, 保证calendar 进程并没有挂掉.<br>
+然后进入到Settings的日期界面秒, 尝试改变日期和时间. 这个时候出现了 Calendar 的错误.<br>
 这样我们抓了另一份log.</p>
 <pre><code>11-27 17:17:37.200     0     0 I         : [0][  171.996633][11-27 21:17:37.053]&lt;&lt;-GTP-DEBUG-&gt;&gt; [899]Devices touch Up(Slot)!
 11-27 17:17:37.200     0     0 I         : [0][  171.996649][11-27 21:17:37.053]&lt;&lt;-GTP-DEBUG-&gt;&gt; [441]Touch id[ 6] release!
@@ -605,7 +605,7 @@ AllInOneActivity 界面, 但是并没有, 而是finish .
 11-15 17:17:37.624   739   767 V BoostFramework: BoostFramework() : mPerf = com.qualcomm.qti.Performance@b9944e7
 11-15 17:17:37.627  2209  2209 W System  : ClassLoader referenced unknown path: /system/app/TimeService/lib/arm
 </code></pre>
-<p>在这次操作的流程我是改变了日期, 从时间戳发生的变化可以知道. 11-27变成了11-15号.
+<p>在这次操作的流程我是改变了日期, 从时间戳发生的变化可以知道. 11-27变成了11-15号.<br>
 再这次的操作过程中, 可以知道, 这个和Monkey出现的log是一致的. 基本上可以确定就是这个问题了.</p>
 <h3 id="结合代码分析">结合代码分析</h3>
 <p>我们在看看 这次Calendar的启动,</p>
@@ -617,9 +617,9 @@ AllInOneActivity 界面, 但是并没有, 而是finish .
 11-15 17:17:37.294   739   765 W ActivityManager: Slow operation: 52ms so far, now at startProcess: done updating pids map
 11-15 17:17:37.294   739   765 W ActivityManager: Slow operation: 52ms so far, now at startProcess: done starting proc!
 </code></pre>
-<p>从 am_proc_start 和 Start proc 可以知道, 系统是县启动的 CalendarAppWidgetService 这个类的. 而不是系统的点击activity的方式.
-同时我们可以看到时接受到了TIME_SET的广播, Calendar才启动的. 因此我们可以在 Calendar的源码搜索一下.
-我么可以知道 CalendarFactory 是一个广播接受者, 他接受了 TIMEZONE_CHANGED DATE_CHANGED TIME_SET LOCALE_CHANGED 等广播.
+<p>从 am_proc_start 和 Start proc 可以知道, 系统是县启动的 CalendarAppWidgetService 这个类的. 而不是系统的点击activity的方式.<br>
+同时我们可以看到时接受到了TIME_SET的广播, Calendar才启动的. 因此我们可以在 Calendar的源码搜索一下.<br>
+我么可以知道 CalendarFactory 是一个广播接受者, 他接受了 TIMEZONE_CHANGED DATE_CHANGED TIME_SET LOCALE_CHANGED 等广播.<br>
 这些和我们在测试的时候是基本一致的. 改变设置里的关于时间的设置, Calendar 就会挂掉.</p>
 <pre><code class="language-xml">&lt;receiver android:name=&quot;.widget.CalendarAppWidgetService$CalendarFactory&quot;&gt;
     &lt;intent-filter&gt;
@@ -641,7 +641,7 @@ AllInOneActivity 界面, 但是并没有, 而是finish .
     &lt;/intent-filter&gt;
 &lt;/receiver&gt;
 </code></pre>
-<p>在 Calendar/src/com/android/calendar/widget/CalendarAppWidgetService.java 源码中我们可以看到
+<p>在 Calendar/src/com/android/calendar/widget/CalendarAppWidgetService.java 源码中我们可以看到<br>
 CalendarFactory 是一个 BroadcastReceiver的子类</p>
 <pre><code class="language-java">public static class CalendarFactory extends BroadcastReceiver implements
         RemoteViewsService.RemoteViewsFactory, Loader.OnLoadCompleteListener&lt;Cursor&gt; {
@@ -693,7 +693,7 @@ public void onReceive(Context context, Intent intent) {
     });
 }
 </code></pre>
-<p>在这里似乎没有什么和广播有关系的, 只要是那四个广播都会走这段代码.
+<p>在这里似乎没有什么和广播有关系的, 只要是那四个广播都会走这段代码.<br>
 在 initLoader 方法里我们可以看到有一个log开关, 打开这个开关继续, 做上述的测试.</p>
 <pre><code class="language-java">public void initLoader(String selection) {
     if (LOGD)
@@ -711,8 +711,8 @@ public void onReceive(Context context, Intent intent) {
     mLoader.startLoading();
 }
 </code></pre>
-<p>在第二次的log里,  是已经走到了initloader1方法的.
-在这里, 看到有一个CursorLoader, 而这个恰恰是 AsyncTaskLoader 的子类.
+<p>在第二次的log里,  是已经走到了initloader1方法的.<br>
+在这里, 看到有一个CursorLoader, 而这个恰恰是 AsyncTaskLoader 的子类.<br>
 这就验证了上说 AsyncTaskLoader</p>
 <p>所以我们应该在 executor执行新的线程之前, 判断一下是否有权限, 如果没有权限的话就 直接return 掉就行了</p>
 <pre><code class="language-java">public void onReceive(Context context, Intent intent) {
@@ -766,10 +766,10 @@ public void onReceive(Context context, Intent intent) {
 </code></pre>
 <p>修改好, 继续按照上次的操作流程操作之后, 就没有出现此类的问题了. 至此, 完美的解决了问题了.</p>
 <h2 id="总结">总结:</h2>
-<p>对于Monkey类的问题, 要明确一下发生错误之前, Monkey 操作了些什么:
-1. 操作了哪Activity的. 这点可以从 am_focused_activity 和 am_resume_activity确定 是哪一个. 这是因为Monkey主要是靠发送事件, 模拟点击的效果.
-2. 操作的界面的操作改变了什么.  比如这里的系统的时间, 时区, 日期. 而这些东西是如何影响其他的. 比如这里的是通过发送广播方式.
-3. 进程死亡了前后, 系统哪些log, 总是伴随着发生的. 比如这里的时间, 权限. 对于和权限有关系的. 关闭权限, 打开权限的情况要试试
+<p>对于Monkey类的问题, 要明确一下发生错误之前, Monkey 操作了些什么:<br>
+1. 操作了哪Activity的. 这点可以从 am_focused_activity 和 am_resume_activity确定 是哪一个. 这是因为Monkey主要是靠发送事件, 模拟点击的效果.<br>
+2. 操作的界面的操作改变了什么.  比如这里的系统的时间, 时区, 日期. 而这些东西是如何影响其他的. 比如这里的是通过发送广播方式.<br>
+3. 进程死亡了前后, 系统哪些log, 总是伴随着发生的. 比如这里的时间, 权限. 对于和权限有关系的. 关闭权限, 打开权限的情况要试试<br>
 4. 对于没有出现典型类型错误的 log, 我们可以看该错误类的子类. 当然子类可能在代码里很多.</p>
 
             </div>

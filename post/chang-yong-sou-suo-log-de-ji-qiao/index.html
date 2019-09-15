@@ -4,7 +4,7 @@
 <meta name="description" content="" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>常用搜索log的技巧 | Gridea</title>
-<link rel="shortcut icon" href="http://xuwanjin.me//favicon.ico?v=1568420639414">
+<link rel="shortcut icon" href="http://xuwanjin.me//favicon.ico?v=1568515808450">
 <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
 <link rel="stylesheet" href="http://xuwanjin.me//styles/main.css">
@@ -20,7 +20,7 @@
       <div class="main-content">
         <div class="site-header">
   <a href="http://xuwanjin.me/">
-  <img class="avatar" src="http://xuwanjin.me//images/avatar.png?v=1568420639414" alt="">
+  <img class="avatar" src="http://xuwanjin.me//images/avatar.png?v=1568515808450" alt="">
   </a>
   <h1 class="site-title">
     Gridea
@@ -98,7 +98,7 @@
 <h2 id="常用搜索log的技巧">常用搜索log的技巧</h2>
 <h3 id="通知的技巧">通知的技巧</h3>
 <ol>
-<li>通知的显示
+<li>通知的显示<br>
 弹出通知必定会走的log</li>
 </ol>
 <pre><code class="language-java">//TAG 是NotificationService
@@ -232,7 +232,7 @@ ALOGI(&quot;%s: fork is finished, pid of child process is %d &quot;, __FUNCTION_
 <pre><code class="language-java">event = 2 是 触摸事件的down事件
 
 </code></pre>
-<p>触摸事件只需要down一次
+<p>触摸事件只需要down一次<br>
 触摸事件down, up各一次的log, 这个log在InputReader.cpp文件里面</p>
 <p>触摸事件up</p>
 <pre><code class="language-cpp">{
@@ -492,8 +492,8 @@ log(&quot;Dispatching SMS CB, SmsCbMessage is: &quot; + message);
 </code></pre>
 <h3 id="命令行打开log">命令行打开log</h3>
 <p>命令行动态打开</p>
-<p>简写
-命令含义
+<p>简写<br>
+命令含义<br>
 命令行</p>
 <pre><code>x	打开所有的开关	adb shell dumpsys activity log x on
 a	activity相关	adb shell dumpsys activity log a on
@@ -508,9 +508,9 @@ anr	ANR相关	adb shell dumpsys activity log anr 2
 
 /frameworks/base/services/core/java/com/android/server/am/ActivityManagerDebugConfig.java
 </code></pre>
-<p>打开所有的：
-46 /// M: Dynamically enable AMS logs @{
-47 // Enable all debug log categories.
+<p>打开所有的：<br>
+46 /// M: Dynamically enable AMS logs @{<br>
+47 // Enable all debug log categories.<br>
 48 static boolean DEBUG_ALL = false;  //change to true</p>
 <p>打开某一个debug开关，则单独修改对应的debug开关</p>
 <p>最后build frameworks/base/services 模块即可</p>
