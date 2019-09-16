@@ -4,7 +4,7 @@
 <meta name="description" content="" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>MTK 9.0 平台添加一个分区 | Gridea</title>
-<link rel="shortcut icon" href="http://xuwanjin.me//favicon.ico?v=1568554864653">
+<link rel="shortcut icon" href="http://xuwanjin.me//favicon.ico?v=1568633651195">
 <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
 <link rel="stylesheet" href="http://xuwanjin.me//styles/main.css">
@@ -20,7 +20,7 @@
       <div class="main-content">
         <div class="site-header">
   <a href="http://xuwanjin.me/">
-  <img class="avatar" src="http://xuwanjin.me//images/avatar.png?v=1568554864653" alt="">
+  <img class="avatar" src="http://xuwanjin.me//images/avatar.png?v=1568633651195" alt="">
   </a>
   <h1 class="site-title">
     Gridea
@@ -110,25 +110,25 @@
 <p>##修改操作</p>
 <p>添加一个AB分区, 并且添加相应的 image 文件<br>
 涉及到的文件. 已经设计的到的问题的总结:</p>
-<pre><code>build/core/Makefile　　// ②　命令行之前需要有一个TAB, ⑧编译出现了failed with exit 4,  未知原因；　③导致生成的image文件出现错误； 　 ④生成了相关的image 但是没有放在　target_files_package下的　IMAGES　文件夹下
+<pre><code>build/core/Makefile  // ② 命令行之前需要有一个TAB, ⑧编译出现了failed with exit 4,  未知原因； ③导致生成的image文件出现错误；   ④生成了相关的image 但是没有放在 target_files_package下的 IMAGES 文件夹下
 build/core/config.mk
 build/core/config.mk
 build/core/envsetup.mk
 build/core/main.mk
-build/tools/releasetools/add_img_to_target_files.py  // 　 ④add_img_to_target_files　出现无法找到相应的　image文件, 和makefile其中一个是同一个问题
-build/tools/releasetools/build_image.py　　　
+build/tools/releasetools/add_img_to_target_files.py  //   ④add_img_to_target_files 出现无法找到相应的 image文件, 和makefile其中一个是同一个问题
+build/tools/releasetools/build_image.py   
 build/tools/releasetools/common.py
 
 device/oemMa/project/partition_size.mk
-device/mediatek/build/build/tools/ptgen/MT6761/partition_table_MT6761_emmc_ab.csv　①相关配置项的注意，Type，Download_File，Download，OTA_Update，FastBoot_Download, FastBoot_Erase，FastBoot_Erase
+device/mediatek/build/build/tools/ptgen/MT6761/partition_table_MT6761_emmc_ab.csv ①相关配置项的注意 ,Type ,Download_File ,Download ,OTA_Update,FastBoot_Download, FastBoot_Erase ,FastBoot_Erase
 device/mediatek/common/device.mk
 device/mediatek/mt6761/init.mt6761.rc 
 device/mediatek/sepolicy/basic/non_plat/device.te
 device/mediatek/sepolicy/basic/non_plat/non_plat/file.te
-device/mediatek/sepolicy/basic/non_plat/non_plat/file_contexts // ⑧编译出现了failed with exit 4,  未知原因　&quot;/mnt/vendor/secos&quot; 还是 &quot;/secos&quot;
+device/mediatek/sepolicy/basic/non_plat/non_plat/file_contexts // ⑧编译出现了failed with exit 4,  未知原因 &quot;/mnt/vendor/secos&quot; 还是 &quot;/secos&quot;
 device/mediatek/sepolicy/basic/non_plat/non_plat/fsck.te
 device/mediatek/sepolicy/basic/non_plat/non_plat/init.te
-vendor/mediatek/proprietary/hardware/fstab/mt6765/fstab.in.mt6761　　　//⑤挂载参数错误导致的无法开机　⑧&quot;/mnt/vendor/secos&quot; 还是 &quot;/secos&quot;；　⑥修改参数之后开机没有挂载上去skipping, slotselect参数; ⑦无法挂载在根目录/
+vendor/mediatek/proprietary/hardware/fstab/mt6765/fstab.in.mt6761   //⑤挂载参数错误导致的无法开机 ⑧&quot;/mnt/vendor/secos&quot; 还是 &quot;/secos&quot;； ⑥修改参数之后开机没有挂载上去skipping, slotselect参数; ⑦无法挂载在根目录/
 vendor/mediatek/proprietary/scripts/releasetools/mt_ota_preprocess.py
 vendor/mediatek/proprietary/scripts/releasetools/replace_img_from_target_files.py
 </code></pre>
@@ -141,13 +141,13 @@ sec1,Raw data,2048.0,,EMMC_USER,N,N,NONE,N,N,N,,N,,AUTO
 proinfo,Raw data,3072.0,,EMMC_USER,N,N,NONE,N,N,N,,N,,PROTECTED
 </code></pre>
 <p>下面是对各个字段的说明:<br>
-Type，　　文件的分区格式　有Raw data 和 EXT4<br>
-Download_File， 刷机的时的文件的文件名称，比如system.img, 注意前面的文件和未前面的文件<br>
-Download，　　　　是否通过刷机的方式，应该和 Download_File 保持一致<br>
-OTA_Update，　　　是否通过OTA升级的方式升级该分区，如果加入的不是AB分区，建议写N<br>
+Type, 文件的分区格式 有Raw data 和 EXT4<br>
+Download_File, 刷机的时的文件的文件名称 ,比如system.img, 注意前面的文件和未前面的文件<br>
+Download, 是否通过刷机的方式 ,应该和 Download_File 保持一致<br>
+OTA_Update,是否通过OTA升级的方式升级该分区, 如果加入的不是AB分区 ,建议写 N<br>
 FastBoot_Download,  是否通过FastBoot的方式下载<br>
 EMMC  指的是内存的<br>
-MTK 的代码, 会根据 这个 CSV 文件, 生辰一个 Android_Scatter.txt 文件, 里面会包含分区的各种信息,<br>
+MTK 的代码, 会根据 这个 CSV 文件, 生辰一个 platform_Android_Scatter.txt 文件, 里面会包含分区的各种信息,<br>
 比如是否可以升级,1 刷机的文件名称, 其实的物理地址, 分区的大小, 分区的格式, 都是根据这个 csv 文件得来的.</p>
 <h3 id="initrc-创建目录">init.rc 创建目录</h3>
 <p>需要修改的 init.rc 文件.</p>
@@ -200,11 +200,11 @@ DEVPATH(persist)    /mnt/vendor/persist     ext4   FS_FLAG_COMMIT  FSMGR_FLAG_FM
 #endif
 
 </code></pre>
-<p>DEVPATH 是一个变量，关于路径的变量</p>
+<p>DEVPATH 是一个变量 ,关于路径的变量</p>
 <pre><code>#define DEVPATH(_part) /dev/block/platform/BOOTDEV/by-name/_part
 </code></pre>
-<p>defaults　是一个默认的参数集<br>
-__MTK_DATAIMG_FSTYPE　在上面定义为 ext4 格式的</p>
+<p>defaults 是一个默认的参数集<br>
+__MTK_DATAIMG_FSTYPE 在上面定义为 ext4 格式的</p>
 <pre><code>#define FSMGR_FLAG_FMT  wait,check,formattable
 </code></pre>
 <h3 id="添加分区的-selinux-权限">添加分区的 selinux 权限</h3>
@@ -221,7 +221,7 @@ __MTK_DATAIMG_FSTYPE　在上面定义为 ext4 格式的</p>
 /secos(/.*)?		u:object_r:secos_file:s0
 /dev/block/platform/mtk-msdc\.0/[0-9]+\.(msdc|MSDC)0/by-name/secos	u:object_r:secos_block_device:s0
 </code></pre>
-<p>在这里我在这里踩得坑，因为我一开始要挂在 /mnt/vendor/ 目录下面的。 因此，我在这里把<br>
+<p>在这里我在这里踩得坑 ,因为我一开始要挂在 /mnt/vendor/ 目录下面的。 因此 ,我在这里把<br>
 /secos(/.<em>)? 写成了 /mnt/vendor/secos(/.</em>)? 。因此老是出现了编译错误: failed with error code 4 的错误。<br>
 一开始并没有意识到这个错误。 导致在这里花费了很长的时间。这个将在随后说。<br>
 device/mediatek/sepolicy/basic/non_plat/fsck.te</p>
@@ -242,7 +242,7 @@ $(if $(BOARD_SECOSIMAGE_PARTITION_SIZE),$(hide) echo &quot;secos_size=$(BOARD_SE
 $(if $(INTERNAL_USERIMAGES_SPARSE_EXT_FLAG),$(hide) echo &quot;extfs_sparse_flag=$(INTERNAL_USERIMAGES_SPARSE_EXT_FLAG)&quot; &gt;&gt; $(1))
 </code></pre>
 <p>即使你设置了 BOARD_SECOSIMAGE_PARTITION_SIZE, 但是 BOARD_SECOSIMAGE_PARTITION_SIZE 不一定是你设置的的大小．</p>
-<p>device/mediatek/build/build/tools/ptgen/MT6761/ptgen.pl 里会根据分区的大小， 各自对齐一下. 所以他的大小会改变．<br>
+<p>device/mediatek/build/build/tools/ptgen/MT6761/ptgen.pl 里会根据分区的大小 , 各自对齐一下. 所以他的大小会改变．<br>
 比如我这里在分区表里给的大小时 45120 KB, 但是实际上得到的是 52 MB. 这个你可以在编译完的生成目录的 ninja 文件里搜索到实际的大小.</p>
 <pre><code class="language-perl">if ($part-&gt;{Type} eq &quot;EXT4&quot; || $part-&gt;{Type} eq &quot;FAT&quot;)
 {
@@ -283,7 +283,7 @@ if ($ArgList{MTK_BOARD_AVB_ENABLE} eq &quot;true&quot;)
 
 </code></pre>
 <p>将这些添加的宏, 放到编译 ROM 包里面.</p>
-<pre><code class="language-makefile"># 建立　target files 与　secos.img 文件
+<pre><code class="language-makefile"># 建立 target files 与 secos.img 文件
 # Depending on the various images guarantees that the underlying
 # directories are up-to-date.
 $(BUILT_TARGET_FILES_PACKAGE): \
@@ -341,7 +341,7 @@ secosimage-nodeps: | $(INTERNAL_USERIMAGES_DEPS)
 	$(hide) mkdir -p $(zip_root)/IMAGES
 	$(hide) cp $(INSTALLED_VENDORIMAGE_TARGET) $(zip_root)/IMAGES/
 endif
-# 生成的　image 文件放置　target_file 的IMAGES路径下面
+# 生成的 image 文件放置 target_file 的IMAGES路径下面
 ifdef BOARD_SECOSIMAGE_FILE_SYSTEM_TYPE
 	$(hide) mkdir -p $(zip_root)/IMAGES
 	$(hide) cp $(INSTALLED_SECOSIMAGE_TARGET) $(zip_root)/IMAGES/
@@ -413,22 +413,22 @@ bptimage: $(INSTALLED_BPTIMAGE_TARGET)
       sys.exit(1)
 </code></pre>
 <h2 id="出现的错误">出现的错误</h2>
-<h4 id="错误索引">错误索引</h4>
-<pre><code>相关配置项的注意，Type，Download_File，Download，OTA_Update，FastBoot_Download, 
+<h3 id="错误索引">错误索引</h3>
+<pre><code>相关配置项的注意 ,Type ,Download_File ,Download ,OTA_Update ,FastBoot_Download, 
 命令行之前需要有一个TAB,
-生成了相关的image 但是没有放在　target_files_package
-编译出现了failed with exit 4，　&quot;/mnt/vendor/secos&quot; 还是 &quot;/secos&quot;
+生成了相关的image 但是没有放在 target_files_package
+编译出现了failed with exit 4 , &quot;/mnt/vendor/secos&quot; 还是 &quot;/secos&quot;
 挂载参数错误导致的无法开机
-修改参数之后开机没有挂载上去skipping, slotselect参数
+修改参数之后开机没有挂载上去 skipping, slotselect参数
 无法挂载在根目录/
 </code></pre>
-<h4 id="分区表的各项注意">分区表的各项注意</h4>
-<p>Type，　　文件的分区格式　有Raw data 和 EXT4<br>
-Download_File， 刷机的时的文件的文件名称，比如system.img<br>
-Download，　　　　是否通过刷机的方式，应该和　Download_File保持一致<br>
-OTA_Update，　　　是否通过OTA升级的方式升级该分区，如果加入的不是AB分区，建议写N<br>
+<h3 id="分区表的各项注意">分区表的各项注意</h3>
+<p>Type ,  文件的分区格式 有Raw data 和 EXT4<br>
+Download_File , 刷机的时的文件的文件名称 ,比如system.img<br>
+Download ,    是否通过刷机的方式 ,应该和 Download_File保持一致<br>
+OTA_Update ,   是否通过OTA升级的方式升级该分区 ,如果加入的不是AB分区 ,建议写N<br>
 FastBoot_Download,  是否通过FastBoot的方式下载</p>
-<h4 id="missing-separator-错误">missing separator 错误</h4>
+<h3 id="missing-separator-错误">missing separator 错误</h3>
 <pre><code>mobicore - including vendor/mediatek/proprietary/trustzone/trustonic/source/external/mobicore/common/400b/Android.mk
 including vendor/mediatek/widevine_tlib/Android.mk ...
 [950/950] including vendor/nxp/Android.mk ...
@@ -438,8 +438,8 @@ build/make/core/Makefile:2920: error: missing separator.
   end android build
 ***************************************************
 </code></pre>
-<p>这个是因为Makefile 里使用命令行之前，需要空出TAB键</p>
-<h4 id="failed-with-exit-code-4">failed with exit code 4</h4>
+<p>这个是因为Makefile 里使用命令行之前 ,需要空出TAB键</p>
+<h3 id="failed-with-exit-code-4">failed with exit code 4</h3>
 <pre><code>img-1 size:0x5c0
 add index1 image, this is final image
 img name not match,exit!!
@@ -468,8 +468,8 @@ writing RSA key
 writing RSA key
 
 </code></pre>
-<p>一开始我以为时　mkuserimg_mke2fs.sh　这个行的命令行出现了错误，但是把这个命令行单独拿出来，执行命令，没有发现任何错误．<br>
-后来我怀疑是后面的的计算image 大小的出现了错误．　这个image的大小超出了系统分配的分区的大小．实际上也不是真正的错误原因.</p>
+<p>一开始我以为时 mkuserimg_mke2fs.sh 这个行的命令行出现了错误 ,但是把这个命令行单独拿出来 ,执行命令 ,没有发现任何错误．<br>
+后来我怀疑是后面的的计算image 大小的出现了错误． 这个image的大小超出了系统分配的分区的大小．实际上也不是真正的错误原因.</p>
 <pre><code>(size=\$(for i in out/target/product/ax2129/secos.img; do stat --format \&quot;%s\&quot; \&quot;\$i\&quot; | tr -d '\\n'; echo +; done; echo 0); total=\$(( \$( echo \&quot;\$size\&quot; ) )); printname=\$(echo -n \&quot;out/target/product/ax2129/secos.img\&quot; | tr \&quot; \&quot; +); maxsize=\$((50331648)); if [ \&quot;\$total\&quot; -gt \&quot;\$maxsize\&quot; ]; then echo \&quot;error: \$printname too large (\$total &gt; \$maxsize)\&quot;; false; elif [ \&quot;\$total\&quot; -gt \$((maxsize - 32768)) ]; then echo \&quot;WARNING: \$printname approaching size limit (\$total now; limit \$maxsize)\&quot;; fi )&quot;
 </code></pre>
 <p>out/host/linux-x86/bin/mkuserimg_mke2fs.sh<br>
@@ -502,13 +502,13 @@ $(if $(2), \
  )
 endef
 </code></pre>
-<p>但是经过详细的计算，得出还是没超过．所以这个也不似root cause．</p>
-<p>随后，请教别人, 出现错误的地方是后面的 selinux相关的．</p>
+<p>但是经过详细的计算 ,得出还是没超过．所以这个也不似root cause．</p>
+<p>随后 ,请教别人, 出现错误的地方是后面的 selinux相关的．</p>
 <pre><code>e2fsdroid -p out/target/product/ax2129/system -S out/target/product/ax2129/obj/ETC/file_contexts.bin_intermediates/file_contexts.bin -f out/target/product/ax2129/secos -a /secos out/target/product/ax2129/secos.img
 set_selinux_xattr: Unknown code ____ 255 searching for label &quot;/secos&quot;
 </code></pre>
 <p>e2fsdroid 是一个命令。他的源码在 external/e2fsprogs 下面。</p>
-<pre><code>// external/e2fsprogs/contrib/android/perms.c
+<pre><code class="language-cpp">// external/e2fsprogs/contrib/android/perms.c
 static errcode_t set_selinux_xattr(ext2_filsys fs, ext2_ino_t ino,
 				   struct inode_params *params)
 {
@@ -543,7 +543,7 @@ static errcode_t set_selinux_xattr(ext2_filsys fs, ext2_ino_t ino,
 
 </code></pre>
 <p>有此可以知道他进入了 selabel_lookup 函数</p>
-<pre><code>// external/selinux/libselinux/src/label.c
+<pre><code class="language-cpp">// external/selinux/libselinux/src/label.c
 int selabel_lookup(struct selabel_handle *rec, char **con,
 		   const char *key, int type)
 {
@@ -579,7 +579,24 @@ make: Entering directory `/mnt/code/huaqin/AX2129_D/vendor/mediatek/proprietary/
 
 
 </code></pre>
-<pre><code class="language-cpp">int fs_mgr_mount_all(struct fstab *fstab, int mount_mode)
+<h3 id="挂载的时候跳过了-缺少-slotselect-参数">挂载的时候跳过了, 缺少 slotselect 参数</h3>
+<p>添加一个AB分区的时候<br>
+未添加 slotselect 参数导致的无法挂载, Skipping</p>
+<pre><code>[   23.075795] .(3)[273:wdtk-3][wdk-c] cpu=3,lbit=0x9,cbit=0xf,0,1,2930432545,[23075790516,19999990,43072185]
+[   23.075804] .(3)[273:wdtk-3][thread:273][RT:23075799901] 2019-09-05 12:52:45.905161 UTC;android time 2019-09-05 12:52:45.905161
+[   23.084361] .(2)[272:wdtk-2][wdk-c] cpu=2,lbit=0xd,cbit=0xf,0,1,2930432545,[23084350593,19991430,43072185]
+[   23.140353] .(1)[271:wdtk-1][wdk-k] cpu=1,lbit=0xf,cbit=0xf,0,1,2930432545,[23140341209,19935439,43072185]
+[   24.294772] .(1)[303:init]init: [libfs_mgr]Skipping '/dev/block/platform/bootdevice/by-name/secos' during mount_all
+[   24.299752] .(2)[303:init]init: [libfs_mgr]superblock s_max_mnt_count:65535,/dev/block/platform/bootdevice/by-name/persist
+[   24.301783] .(2)[303:init]EXT4-fs (mmcblk0p11): Ignoring removed nomblk_io_submit option
+[   24.304515] .(2)[303:init]EXT4-fs (mmcblk0p11): mounted filesystem with ordered data mode. Opts: errors=remount-ro,nomblk_io_submit
+[   24.306406] .(2)[303:init]init: [libfs_mgr]check_fs(): mount(/dev/block/platform/bootdevice/by-name/persist,/mnt/vendor/persist,ext4)=0: Success
+[   24.309307] .(2)[303:init]init: [libfs_mgr]check_fs(): unmount(/mnt/vendor/persist) succeeded
+
+</code></pre>
+<p>以下时挂载的代码.</p>
+<pre><code class="language-cpp">// system/core/fs_mgr/fs_mgr.cpp
+int fs_mgr_mount_all(struct fstab *fstab, int mount_mode)
 {
     int i = 0;
     int encryptable = FS_MGR_MNTALL_DEV_NOT_ENCRYPTABLE;
@@ -794,21 +811,8 @@ make: Entering directory `/mnt/code/huaqin/AX2129_D/vendor/mediatek/proprietary/
     }
 }
 </code></pre>
-<p>添加一个AB分区的时候<br>
-未添加　slotselect 参数导致的无法挂载, Skipping</p>
-<pre><code>[   23.075795] .(3)[273:wdtk-3][wdk-c] cpu=3,lbit=0x9,cbit=0xf,0,1,2930432545,[23075790516,19999990,43072185]
-[   23.075804] .(3)[273:wdtk-3][thread:273][RT:23075799901] 2019-09-05 12:52:45.905161 UTC;android time 2019-09-05 12:52:45.905161
-[   23.084361] .(2)[272:wdtk-2][wdk-c] cpu=2,lbit=0xd,cbit=0xf,0,1,2930432545,[23084350593,19991430,43072185]
-[   23.140353] .(1)[271:wdtk-1][wdk-k] cpu=1,lbit=0xf,cbit=0xf,0,1,2930432545,[23140341209,19935439,43072185]
-[   24.294772] .(1)[303:init]init: [libfs_mgr]Skipping '/dev/block/platform/bootdevice/by-name/secos' during mount_all
-[   24.299752] .(2)[303:init]init: [libfs_mgr]superblock s_max_mnt_count:65535,/dev/block/platform/bootdevice/by-name/persist
-[   24.301783] .(2)[303:init]EXT4-fs (mmcblk0p11): Ignoring removed nomblk_io_submit option
-[   24.304515] .(2)[303:init]EXT4-fs (mmcblk0p11): mounted filesystem with ordered data mode. Opts: errors=remount-ro,nomblk_io_submit
-[   24.306406] .(2)[303:init]init: [libfs_mgr]check_fs(): mount(/dev/block/platform/bootdevice/by-name/persist,/mnt/vendor/persist,ext4)=0: Success
-[   24.309307] .(2)[303:init]init: [libfs_mgr]check_fs(): unmount(/mnt/vendor/persist) succeeded
-
-</code></pre>
-<p>开机只到bootlogo 阶段，　出现了 hwcomposer 错误， 导致无法开机， 这个是因为挂载参数的错误</p>
+<h3 id="无法开机-启动后只进入到-bootlogo">无法开机, 启动后只进入到 bootlogo</h3>
+<p>开机只到bootlogo 阶段 , 出现了 hwcomposer 错误 , 导致无法开机 , 这个是因为挂载参数的错误</p>
 <pre><code>01-01 00:23:45.730   379   496 W SpeechMessengerNormal: formatShareMemoryThread(), #13 checkModemReady fail...
 01-01 00:23:45.810   435   435 I ccci_mdinit: (1):check_nvram_ready(), property_get(&quot;vendor.service.nvram_init&quot;) = , read_nvram_ready_retry = 5
 01-01 00:23:45.816   458   458 W stp_dump: fail to get Sdcard stat :No such file or directory, count: 2
@@ -842,12 +846,37 @@ make: Entering directory `/mnt/code/huaqin/AX2129_D/vendor/mediatek/proprietary/
 
 
 </code></pre>
-<p>一般情况是这个是第四个或者第五个参数有问题。</p>
+<p>一般情况是这个是第四列或者第五列的挂载参数有问题。</p>
 <pre><code>#define DEVPATH(_part) /dev/block/platform/BOOTDEV/by-name/_part
 DEVPATH(secos)      /mnt/vendor/secos   __MTK_DATAIMG_FSTYPE   defaults   FSMGR_FLAG_SYSTEM
 </code></pre>
-<h4 id="无法挂载在根目录">无法挂载在根目录</h4>
-<p>系统启动的时候，找不到/secos目录</p>
+<p>我是第五列参数设置的不对, 以下是我最开始的错误的挂载配置．　修改为上面的就正常了.</p>
+<pre><code>#define DEVPATH(_part) /dev/block/platform/BOOTDEV/by-name/_part
+DEVPATH(secos)      /mnt/vendor/secos   __MTK_DATAIMG_FSTYPE   defaults   defaults
+</code></pre>
+<p>###　无法找到 secos.img</p>
+<pre><code>
+vbmeta.img already exists, no need to overwrite...
+boot.img already exists, no need to overwrite...
+system.img already exists, no need to overwrite...
+lk.img already exists, no need to overwrite...
+preloader.img already exists, no need to overwrite...
+Traceback (most recent call last):
+  File &quot;build/make/tools/releasetools/add_img_to_target_files&quot;, line 885, in &lt;module&gt;
+    main(sys.argv[1:])
+  File &quot;build/make/tools/releasetools/add_img_to_target_files&quot;, line 879, in main
+    AddImagesToTargetFiles(args[0])
+  File &quot;build/make/tools/releasetools/add_img_to_target_files&quot;, line 830, in AddImagesToTargetFiles
+    AddRadioImagesForAbOta(output_zip, ab_partitions)
+  File &quot;build/make/tools/releasetools/add_img_to_target_files&quot;, line 570, in AddRadioImagesForAbOta
+    assert os.path.exists(img_path), &quot;cannot find &quot; + img_name
+AssertionError: cannot find secos.img
+ninja: build stopped: subcommand failed.
+14:51:27 ninja failed with: exit status 1
+</code></pre>
+<p>这个表明你需要把生成的 secos.img 文件放到 IMAGES 目录下面. 可以通过上面的 Makefile 做到.</p>
+<h3 id="无法挂载在根目录">无法挂载在根目录</h3>
+<p>系统启动的时候 ,找不到 /secos 目录</p>
 <pre><code>01-01 00:00:57.039   379  2678 D vold    : Starting trim of /mnt/vendor/protect_f
 01-01 00:00:57.039   379  2678 W vold    : Failed to open /mnt/vendor/protect_f: Permission denied
 01-01 00:00:57.039   379  2678 D vold    : Starting trim of /mnt/vendor/protect_s
@@ -862,10 +891,70 @@ DEVPATH(secos)      /mnt/vendor/secos   __MTK_DATAIMG_FSTYPE   defaults   FSMGR_
 01-01 00:00:57.040   379  2678 W vold    : Failed to open /mnt/vendor/persist: Permission denied
 01-01 00:00:57.045   429   553 D MDP     : DpAsyncBlitStream: rot(0) flip(0) padding(c)
 </code></pre>
-<p>这个是因为， 系统启动的时候并没有创建 /secos 目录， 无法打开根目录。<br>
-不知道为什么总是无法创建根目录下的secos目录。</p>
+<p>这个是因为 , 系统启动的时候并没有创建 /secos 目录 , 无法打开 secos 目录。<br>
+不知道为什么总是无法创建根目录下的secos目录。即使我在 mkdir /system 的后面, 创建 /secos 路径, 也不行. ???</p>
+<h3 id="ota-再次验证">OTA 再次验证</h3>
+<p>如果你添加了一个分区 , 一定要再次看看 OTA升级功能是否正常</p>
+<pre><code>09-09 09:14:08.198  1056  2680 W BestClock: java.time.DateTimeException: Missing NTP fix
+09-09 09:14:08.201  1056  2681 W BestClock: java.time.DateTimeException: Missing NTP fix
+09-09 09:14:08.205   377   377 I bootctrlHAL: boot control bootctrl_get_suffix
+09-09 09:14:08.206   614   614 E update_engine: [0909/091408.206236:ERROR:boot_control_android.cc(123)] Device file /dev/block/platform/bootdevice/by-name/antcommon_a does not exist.
+09-09 09:14:08.208   377   377 I bootctrlHAL: boot control bootctrl_get_suffix
+09-09 09:14:08.208   614   614 E update_engine: [0909/091408.208489:ERROR:boot_control_android.cc(123)] Device file /dev/block/platform/bootdevice/by-name/antcommon_b does not exist.
+09-09 09:14:08.210   377   377 I bootctrlHAL: boot control bootctrl_get_suffix
+09-09 09:14:08.244   377   377 I chatty  : uid=0(root) boot@1.0-servic identical 21 lines
+09-09 09:14:08.246   377   377 I bootctrlHAL: boot control bootctrl_get_suffix
+09-09 09:14:08.247  1056  2680 W BestClock: java.time.DateTimeException: Missing NTP fix
+09-09 09:14:08.248   377   377 I bootctrlHAL: boot control bootctrl_get_suffix
+09-09 09:14:08.248   614   614 E update_engine: [0909/091408.248628:ERROR:delta_performer.cc(829)] Unable to determine all the partition devices.
+09-09 09:14:08.248   614   614 E update_engine: [0909/091408.248856:ERROR:download_action.cc(337)] Error ErrorCode::kInstallDeviceOpenError (7) in DeltaPerformer's Write method when processing the received payload -- Terminating processing
+09-09 09:14:08.250  3919  3919 I ADB_SERVICES: for fd 47, revents = 2019
+09-09 09:14:08.250  3919  3919 I ADB_SERVICES: for fd 47, revents = 2019
+</code></pre>
+<p>在编译生成的full_project-target_files(obj/PACKAGING/target_files_intermediates/full_project-target_files/META/ab_partitions.txt)<br>
+或者该 full_project-target_files.zip 的目录下找到 META 目录 ,该目录下的 ab_partitions.txt<br>
+文件保存着系统可以升级的分区, 如果你添加的分区时AB分区 ,所以时可以升级的, 在分区表的csv文件的 OTA_Update 字段是 Y.<br>
+以下是 ab_partitions.txt 文件的内容</p>
+<pre><code>md1img
+spmfw
+scp
+sspm
+dtbo
+tee
+vendor
+vbmeta
+boot
+system
+lk
+preloader
+</code></pre>
 <h2 id="验证方案">验证方案</h2>
-<p>系统中验证是否已经添加好一个分区， 这个分区是否挂载上，挂载参数是否正确的的验证方法.</p>
+<h3 id="android_scatter-文件查看">Android_Scatter 文件查看</h3>
+<p>在编译生成的文件中 , 查看相应的平台的Android_scatter.txt 文件 , 比如在这里的 MT6761_Android_scatter.txt.</p>
+<pre><code>- partition_index: SYS14
+  partition_name: secos_a
+  file_name: secos.img
+  is_download: true
+  type: EXT4_IMG
+  linear_start_addr: 0x14400000
+  physical_start_addr: 0x14400000
+  partition_size: 0x3400000
+  region: EMMC_USER
+  storage: HW_STORAGE_EMMC
+  boundary_check: true
+  is_reserved: false
+  operation_type: UPDATE
+  is_upgradable: false
+  empty_boot_needed: false
+  reserve: 0x00
+
+</code></pre>
+<h3 id="生成文件查看">生成文件查看</h3>
+<p>在编译的生成文件路径下查看 obj/PACKAGING/secos_intermediates 可以看到.<br>
+同时查看一下obj/PACKAGING/target_files_intermediates/(full_preoject_target_files)/IMAGES 这个路径是否存在相应的 secos.img 文件<br>
+full_preoject_target_files 是相应的平台的 target_file生成目录</p>
+<h3 id="系统中查看">系统中查看</h3>
+<p>系统中验证是否已经添加好一个分区 , 这个分区是否挂载上 ,挂载参数是否正确的的验证方法.</p>
 <p>可以通过查看以下路径, 知道是否建立分区.</p>
 <pre><code>/dev/block/platform/bootdevice/by-name/
 
@@ -916,10 +1005,30 @@ lrwxrwxrwx 1 root root   21 2019-09-06 10:52 vbmeta_b -&gt; /dev/block/mmcblk0p4
 lrwxrwxrwx 1 root root   21 2019-09-06 10:52 vendor_a -&gt; /dev/block/mmcblk0p26
 lrwxrwxrwx 1 root root   21 2019-09-06 10:52 vendor_b -&gt; /dev/block/mmcblk0p39
 
-/vendor/etc/fstab.mt6761  // 挂载的fstab文件
-/vendor/etc/fstab.mt8766  // 挂载的fstab文件
+
 vendor/secos -&gt; /mnt/vendor/secos 
 </code></pre>
+<h3 id="mount-无法查看">mount 无法查看</h3>
+<p>我新添加的分区, 在执行 mount 命令的时候, 并没有发现新的分区, 但是到相应的挂在路径下面, 是存在的.<br>
+mount 查看并没看到分区, 这个可能和挂载参数有关系．<br>
+这个是和挂载参数的最后一列 wait,check,formattable 有关系,添加上这个就可以 mount 直接看到了．<br>
+wait,check 也可以查看到<br>
+wait,formattable 也可以查看到.</p>
+<h3 id="检查挂载参数">检查挂载参数</h3>
+<p>在有时候 ,我们需要挂载的文件的参数是否正确 , 由以下两个文件可以知道<br>
+/vendor/etc/fstab.mt6761  // 挂载的fstab文件<br>
+/vendor/etc/fstab.mt8766  // 挂载的fstab文件</p>
+<h3 id="分区放再userdata-分区的前面">分区放再userdata 分区的前面</h3>
+<p>这里是把一个分区放在另一个分区的前面</p>
+<h2 id="参考文献">参考文献</h2>
+<h3 id="关键参数说明">关键参数说明</h3>
+<p><a href="https://wiki.archlinux.org/index.php/Fstab_(%E7%AE%80%E4%BD%93%E4%B8%AD%E6%96%87)">fstab</a><br>
+<a href="https://wiki.archlinux.org/index.php/Fstab">fstab</a><br>
+<a href="http://liaoph.com/linux-system-io/">Linux 性能优化之 IO 子系统</a><br>
+<a href="https://www.kernel.org/doc/Documentation/filesystems/ext4.txt">Ext4 Filesystem</a></p>
+<h3 id="添加分区">添加分区</h3>
+<p><a href="https://www.xiezeyang.com/2018/12/08/Filesystem/MTK%E5%B9%B3%E5%8F%B0%E6%96%B0%E5%A2%9E%E4%B8%80%E4%B8%AA%E5%88%86%E5%8C%BA/">MTK平台新增一个分区</a><br>
+MTK的FAQ19053</p>
 
             </div>
           </article>
