@@ -2,7 +2,7 @@
 <feed xmlns="http://www.w3.org/2005/Atom">
     <id>http://xuwanjin.me/</id>
     <title>Gridea</title>
-    <updated>2019-09-17T14:40:00.585Z</updated>
+    <updated>2019-09-17T14:40:24.703Z</updated>
     <generator>https://github.com/jpmonette/feed</generator>
     <link rel="alternate" href="http://xuwanjin.me/"/>
     <link rel="self" href="http://xuwanjin.me//atom.xml"/>
@@ -10,6 +10,13 @@
     <logo>http://xuwanjin.me//images/avatar.png</logo>
     <icon>http://xuwanjin.me//favicon.ico</icon>
     <rights>All rights reserved 2019, Gridea</rights>
+    <entry>
+        <title type="html"><![CDATA[Android 5.0~10.0 更新]]></title>
+        <id>http://xuwanjin.me//post/android_5_10_release_note</id>
+        <link href="http://xuwanjin.me//post/android_5_10_release_note">
+        </link>
+        <updated>2019-09-17T14:35:57.000Z</updated>
+    </entry>
     <entry>
         <title type="html"><![CDATA[泛型 / Generic programming]]></title>
         <id>http://xuwanjin.me//post/generic_programming</id>
@@ -100,16 +107,5 @@
         <link href="http://xuwanjin.me//post/builder-she-ji-mo-shi">
         </link>
         <updated>2019-06-16T03:27:05.000Z</updated>
-    </entry>
-    <entry>
-        <title type="html"><![CDATA[Golang slice 数据结构]]></title>
-        <id>http://xuwanjin.me//post/golang_the_data_struct_slice</id>
-        <link href="http://xuwanjin.me//post/golang_the_data_struct_slice">
-        </link>
-        <updated>2019-06-12T16:14:59.000Z</updated>
-        <summary type="html"><![CDATA[<p>Golang slice 数据结构简单使用</p>
-]]></summary>
-        <content type="html"><![CDATA[<p>Golang slice 数据结构简单使用</p>
-]]></content>
     </entry>
 </feed>
