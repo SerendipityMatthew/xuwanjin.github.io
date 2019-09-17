@@ -2,7 +2,7 @@
 <feed xmlns="http://www.w3.org/2005/Atom">
     <id>http://xuwanjin.me/</id>
     <title>Gridea</title>
-    <updated>2019-09-16T13:03:28.575Z</updated>
+    <updated>2019-09-17T14:39:20.269Z</updated>
     <generator>https://github.com/jpmonette/feed</generator>
     <link rel="alternate" href="http://xuwanjin.me/"/>
     <link rel="self" href="http://xuwanjin.me//atom.xml"/>
@@ -10,6 +10,17 @@
     <logo>http://xuwanjin.me//images/avatar.png</logo>
     <icon>http://xuwanjin.me//favicon.ico</icon>
     <rights>All rights reserved 2019, Gridea</rights>
+    <entry>
+        <title type="html"><![CDATA[泛型 / Generic programming]]></title>
+        <id>http://xuwanjin.me//post/generic_programming</id>
+        <link href="http://xuwanjin.me//post/generic_programming">
+        </link>
+        <updated>2019-09-17T14:35:01.000Z</updated>
+        <summary type="html"><![CDATA[<p>学习泛型</p>
+]]></summary>
+        <content type="html"><![CDATA[<p>学习泛型</p>
+]]></content>
+    </entry>
     <entry>
         <title type="html"><![CDATA[Handler学习]]></title>
         <id>http://xuwanjin.me//post/learning_handler</id>
@@ -99,17 +110,6 @@
         <summary type="html"><![CDATA[<p>Golang slice 数据结构简单使用</p>
 ]]></summary>
         <content type="html"><![CDATA[<p>Golang slice 数据结构简单使用</p>
-]]></content>
-    </entry>
-    <entry>
-        <title type="html"><![CDATA[DeskClock 分析]]></title>
-        <id>http://xuwanjin.me//post/deskclock-fen-xi</id>
-        <link href="http://xuwanjin.me//post/deskclock-fen-xi">
-        </link>
-        <updated>2019-06-12T15:58:08.000Z</updated>
-        <summary type="html"><![CDATA[<p>一次做 DeskClock 的需求的分析</p>
-]]></summary>
-        <content type="html"><![CDATA[<p>一次做 DeskClock 的需求的分析</p>
 ]]></content>
     </entry>
 </feed>
