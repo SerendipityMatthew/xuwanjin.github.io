@@ -1,0 +1,294 @@
+<html>
+  <head>
+    <meta charset="utf-8" />
+<meta name="description" content="" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Golang slice 数据结构 | Gridea</title>
+<link rel="shortcut icon" href="http://xuwanjin.me//favicon.ico?v=1568730948716">
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
+<link rel="stylesheet" href="http://xuwanjin.me//styles/main.css">
+
+<script src="https://cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js"></script>
+<script src="https://cdn.bootcss.com/moment.js/2.23.0/moment.min.js"></script>
+
+
+
+  </head>
+  <body>
+    <div class="main">
+      <div class="main-content">
+        <div class="site-header">
+  <a href="http://xuwanjin.me/">
+  <img class="avatar" src="http://xuwanjin.me//images/avatar.png?v=1568730948716" alt="">
+  </a>
+  <h1 class="site-title">
+    Gridea
+  </h1>
+  <p class="site-description">
+    温故而知新
+  </p>
+  <div class="menu-container">
+    
+      
+        <a href="/" class="menu">
+          首页
+        </a>
+      
+    
+      
+        <a href="/archives" class="menu">
+          归档
+        </a>
+      
+    
+      
+        <a href="/tags" class="menu">
+          标签
+        </a>
+      
+    
+      
+        <a href="/post/about" class="menu">
+          关于
+        </a>
+      
+    
+  </div>
+  <div class="social-container">
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+  </div>
+</div>
+
+
+        <div class="post-detail">
+          <article class="post">
+            <h2 class="post-title">
+              Golang slice 数据结构
+            </h2>
+            <div class="post-info">
+              <time class="post-time">
+                · 2019-06-13 ·
+              </time>
+              
+                <a href="http://xuwanjin.me//tag/xdwD7wpso" class="post-tag">
+                  # Golang
+                </a>
+              
+                <a href="http://xuwanjin.me//tag/5966Yf6bC" class="post-tag">
+                  # Slice
+                </a>
+              
+            </div>
+            
+              <div class="post-feature-image" style="background-image: url('http://xuwanjin.me//post-images/golang_the_data_struct_slice.png')">
+              </div>
+            
+            <div class="post-content">
+              <p>Golang slice 数据结构简单使用</p>
+<!-- more -->
+<h1 id="golang-的-slice-数据结构">Golang 的 slice 数据结构</h1>
+<p>@(Golang笔记)</p>
+<h2 id="slice-的申明">Slice 的申明</h2>
+<pre><code>package main
+
+import (
+    &quot;fmt&quot;
+)
+
+func main() {
+    a := []int{1, 2, 3, 4, 5, 6, 7, 8}
+    b := []int{}
+    fmt.Println(a)
+    fmt.Println(b)
+}
+</code></pre>
+<p>当然 slice 里面也可以放其他的元素的</p>
+<pre><code>package main
+
+import (
+    &quot;fmt&quot;
+)
+
+func main() {
+    a := []struct {
+        name string
+        age int
+    }{
+        {
+            name: &quot;Angela&quot;,
+        },
+        {
+            name:&quot;Mathew&quot;,
+            age:28,
+        },
+        {
+
+        },
+    }
+    fmt.Println(a[1])
+}
+</code></pre>
+<p>还可以是空接口, 里面放置各种类型的</p>
+<pre><code>package main
+
+import (
+    &quot;fmt&quot;
+    &quot;strconv&quot;
+)
+
+func main() {
+    a := []interface {
+    }{
+        struct {
+            Name string
+            Age int
+        }{
+            Name:&quot;Mathew&quot;,
+            Age:28,
+        },
+        func(a, b int) string{
+            return strconv.Itoa(a + b)
+        },
+        &quot;mathew&quot;,
+    }
+    fmt.Println(a[0])
+}
+</code></pre>
+<h2 id="操作slice">操作Slice</h2>
+<h3 id="访问">访问</h3>
+<pre><code>package main
+
+import &quot;fmt&quot;
+
+func main() {
+    var c = 100
+    var d = 20
+    a := []interface{}{
+        Person{
+            name: &quot;Mathew&quot;,
+            age:  23,
+        },
+        Animal{},
+        SumAndMulti(c, d),
+    }
+
+    fmt.Println(a[0].(Person).name)
+    fmt.Println(a[2])
+}
+
+type Person struct {
+    name string
+    age  int
+}
+type Animal struct {
+    Name string
+    Age  int
+}
+
+func SumAndMulti(a, b int) (sum int) {
+    sum = a + b
+    return
+}
+</code></pre>
+<h3 id="截取">截取</h3>
+<pre><code>package main
+
+import &quot;fmt&quot;
+
+func main() {
+    a := []int{1, 2, 3, 4, 5, 6, 7, 8, 9,}
+    fmt.Println(a[3:])
+    fmt.Println(a[0:])
+    fmt.Println(a[:])
+    fmt.Println(a[:4])
+}
+</code></pre>
+<h3 id="删除">删除</h3>
+<pre><code>package main
+
+import &quot;fmt&quot;
+
+func main() {
+    a := []int{1, 2, 3, 4, 5, 6, 7, 8, 9,}
+    var b []int
+    var removeItem = 5
+    for _, item := range a {
+        if item != removeItem{
+            b = append(b,item)
+        }
+    }
+    fmt.Println(b)
+}
+</code></pre>
+<p>从这里可以看到, golang 是一门相当原始的语言, 删除一个数组需要自己去写一个遍历, 而不是根据他的index提供删除的方法.<br>
+这个方法, 需要新建一个数组, 从某种程度上增加了空间</p>
+<h3 id="添加">添加</h3>
+<pre><code>package main
+
+import &quot;fmt&quot;
+
+func main() {
+    a := []int{1, 2, 3, 4, 5, 6, 7, 8, 9,}
+    b := append(a, 21, 123, 453)
+    fmt.Println(b)
+}
+</code></pre>
+<h3 id="更新元素">更新元素</h3>
+<pre><code>package main
+
+import &quot;fmt&quot;
+
+func main() {
+    a := []int{1, 2, 3, 4, 5, 6, 7, 8, 9,}
+    a[3] = 123
+    fmt.Println(a)
+}
+
+</code></pre>
+<p>slice更新一个元素, 可以直接</p>
+<h2 id="参考文献">参考文献</h2>
+<ol>
+<li><a href="https://draveness.me/golang-array-and-slice">Go 语言数组和切片的原理</a></li>
+</ol>
+
+            </div>
+          </article>
+        </div>
+
+        
+          <div class="next-post">
+            <div class="next">下一篇</div>
+            <a href="http://xuwanjin.me//post/deskclock-fen-xi">
+              <h3 class="post-title">
+                DeskClock 分析
+              </h3>
+            </a>
+          </div>
+        
+
+        
+
+        <div class="site-footer">
+  Powered by <a href="https://github.com/getgridea/gridea" target="_blank">Gridea</a> | 
+  <a class="rss" href="http://xuwanjin.me//atom.xml" target="_blank">RSS</a>
+</div>
+
+<script>
+  hljs.initHighlightingOnLoad()
+</script>
+
+      </div>
+    </div>
+  </body>
+</html>

@@ -1,0 +1,613 @@
+<html>
+  <head>
+    <meta charset="utf-8" />
+<meta name="description" content="" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Builder 设计模式 | Gridea</title>
+<link rel="shortcut icon" href="http://xuwanjin.me//favicon.ico?v=1568730948716">
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
+<link rel="stylesheet" href="http://xuwanjin.me//styles/main.css">
+
+<script src="https://cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js"></script>
+<script src="https://cdn.bootcss.com/moment.js/2.23.0/moment.min.js"></script>
+
+
+
+  </head>
+  <body>
+    <div class="main">
+      <div class="main-content">
+        <div class="site-header">
+  <a href="http://xuwanjin.me/">
+  <img class="avatar" src="http://xuwanjin.me//images/avatar.png?v=1568730948716" alt="">
+  </a>
+  <h1 class="site-title">
+    Gridea
+  </h1>
+  <p class="site-description">
+    温故而知新
+  </p>
+  <div class="menu-container">
+    
+      
+        <a href="/" class="menu">
+          首页
+        </a>
+      
+    
+      
+        <a href="/archives" class="menu">
+          归档
+        </a>
+      
+    
+      
+        <a href="/tags" class="menu">
+          标签
+        </a>
+      
+    
+      
+        <a href="/post/about" class="menu">
+          关于
+        </a>
+      
+    
+  </div>
+  <div class="social-container">
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+  </div>
+</div>
+
+
+        <div class="post-detail">
+          <article class="post">
+            <h2 class="post-title">
+              Builder 设计模式
+            </h2>
+            <div class="post-info">
+              <time class="post-time">
+                · 2019-06-16 ·
+              </time>
+              
+            </div>
+            
+              <div class="post-feature-image" style="background-image: url('http://xuwanjin.me//post-images/builder-she-ji-mo-shi.png')">
+              </div>
+            
+            <div class="post-content">
+              <h1 id="builder-设计模式">Builder 设计模式</h1>
+<p>@(design pattern)</p>
+<h2 id="解决了什么问题">解决了什么问题</h2>
+<h2 id="例子">例子</h2>
+<p>首先我们看看 https://github.com/iluwatar/java-design-patterns 这个项目里的简单示例.</p>
+<h3 id="java-design-patterns-里的例子">java-design-patterns 里的例子</h3>
+<pre><code class="language-java">public class App {
+
+  private static final Logger LOGGER = LoggerFactory.getLogger(App.class);
+
+  /**
+   * Program entry point
+   * 
+   * @param args command line args
+   */
+  public static void main(String[] args) {
+
+    Hero mage =
+        new Hero.Builder(Profession.MAGE, &quot;Riobard&quot;)
+                .withHairColor(HairColor.BLACK)
+                .withWeapon(Weapon.DAGGER)
+                .build();
+    LOGGER.info(mage.toString());
+
+    Hero warrior =
+        new Hero.Builder(Profession.WARRIOR, &quot;Amberjill&quot;)
+                .withHairColor(HairColor.BLOND)
+                .withHairType(HairType.LONG_CURLY)
+                .withArmor(Armor.CHAIN_MAIL)
+                .withWeapon(Weapon.SWORD)
+                .build();
+    LOGGER.info(warrior.toString());
+
+    Hero thief =
+        new Hero.Builder(Profession.THIEF, &quot;Desmond&quot;)
+                .withHairType(HairType.BALD)
+                .withWeapon(Weapon.BOW)
+                .build();
+    LOGGER.info(thief.toString());
+
+  }
+}
+
+</code></pre>
+<pre><code>package com.iluwatar.builder;
+
+public final class Hero {
+    //省略掉字段
+  private Hero(Builder builder) {
+    this.profession = builder.profession;
+    this.name = builder.name;
+    this.hairColor = builder.hairColor;
+    this.hairType = builder.hairType;
+    this.weapon = builder.weapon;
+    this.armor = builder.armor;
+  }
+
+  public static class Builder {
+
+    private final Profession profession;
+    private final String name;
+    private HairType hairType;
+    private HairColor hairColor;
+    private Armor armor;
+    private Weapon weapon;
+    省略掉一部分
+    /**
+     * Constructor
+     */
+    public Builder(Profession profession, String name) {
+      if (profession == null || name == null) {
+        throw new IllegalArgumentException(&quot;profession and name can not be null&quot;);
+      }
+      this.profession = profession;
+      this.name = name;
+    }
+
+    public Builder withHairType(HairType hairType) {
+      this.hairType = hairType;
+      return this;
+    }
+    // 省略掉一部分
+    public Builder withWeapon(Weapon weapon) {
+      this.weapon = weapon;
+      return this;
+    }
+
+    public Hero build() {
+      return new Hero(this);
+    }
+  }
+}
+</code></pre>
+<p>然后我我们再看看 android 源代码里面的 Notification.Builder 的例子</p>
+<h3 id="notificationbuilder-例子">Notification.Builder 例子</h3>
+<pre><code>// frameworks/base/core/java/android/app/Notification.java
+public class Notification implements Parcelable
+{
+		// 省略掉一部分
+	public static class Builder {
+	      public static final String EXTRA_REBUILD_CONTENT_VIEW_ACTION_COUNT =
+	              &quot;android.rebuild.contentViewActionCount&quot;;
+	      public static final String EXTRA_REBUILD_BIG_CONTENT_VIEW_ACTION_COUNT
+	              = &quot;android.rebuild.bigViewActionCount&quot;;
+	
+	    public Notification()
+        {
+            this.when = System.currentTimeMillis();
+            this.creationTime = System.currentTimeMillis();
+            this.priority = PRIORITY_DEFAULT;
+        }
+
+        public Notification(Context context, int icon, CharSequence tickerText, long when,
+                CharSequence contentTitle, CharSequence contentText, Intent contentIntent)
+        {
+            new Builder(context)
+                    .setWhen(when)
+                    .setSmallIcon(icon)
+                    .setTicker(tickerText)
+                    .setContentTitle(contentTitle)
+                    .setContentText(contentText)
+                    .setContentIntent(PendingIntent.getActivity(context, 0, contentIntent, 0))
+                    .buildInto(this);
+        }
+
+        @Deprecated
+        public Notification(int icon, CharSequence tickerText, long when)
+        {
+            this.icon = icon;
+            this.tickerText = tickerText;
+            this.when = when;
+            this.creationTime = System.currentTimeMillis();
+        }
+
+        @SuppressWarnings(&quot;unchecked&quot;)
+        public Notification(Parcel parcel) {
+            // IMPORTANT: Add unmarshaling code in readFromParcel as the pending
+            // intents in extras are always written as the last entry.
+            readFromParcelImpl(parcel);
+            // Must be read last!
+            allPendingIntents = (ArraySet&lt;PendingIntent&gt;) parcel.readArraySet(null);
+        }
+        public Builder setWhen(long when) {
+            mN.when = when;
+            return this;
+        }
+
+        public Builder setShowWhen(boolean show) {
+            mN.extras.putBoolean(EXTRA_SHOW_WHEN, show);
+            return this;
+        }
+
+        public Builder setUsesChronometer(boolean b) {
+            mN.extras.putBoolean(EXTRA_SHOW_CHRONOMETER, b);
+            return this;
+        }
+
+        public Builder setChronometerCountDown(boolean countDown) {
+            mN.extras.putBoolean(EXTRA_CHRONOMETER_COUNT_DOWN, countDown);
+            return this;
+        }
+
+        public Builder setSmallIcon(@DrawableRes int icon) {
+            return setSmallIcon(icon != 0
+                    ? Icon.createWithResource(mContext, icon)
+                    : null);
+        }
+
+        public Builder setSmallIcon(@DrawableRes int icon, int level) {
+            mN.iconLevel = level;
+            return setSmallIcon(icon);
+        }
+
+        public Builder setSmallIcon(Icon icon) {
+            mN.setSmallIcon(icon);
+            if (icon != null &amp;&amp; icon.getType() == Icon.TYPE_RESOURCE) {
+                mN.icon = icon.getResId();
+            }
+            return this;
+        }
+
+        public Builder setContentTitle(CharSequence title) {
+            mN.extras.putCharSequence(EXTRA_TITLE, safeCharSequence(title));
+            return this;
+        }
+	}
+}
+</code></pre>
+<p>接下来我们再看一个 android 源代码里的另一个构造者 JobInfo.Builder. 他的代码路径是 frameworks/base/core/java/android/app/job/JobInfo.java .</p>
+<h3 id="jobinfobuilder">JobInfo.Builder</h3>
+<pre><code>// frameworks/base/core/java/android/app/job/JobInfo.java
+public class JobInfo implements Parcelable {
+    private static String TAG = &quot;JobInfo&quot;;
+
+    /** Builder class for constructing {@link JobInfo} objects. */
+    public static final class Builder {
+        private final int mJobId;
+        private final ComponentName mJobService;
+        private PersistableBundle mExtras = PersistableBundle.EMPTY;
+        private Bundle mTransientExtras = Bundle.EMPTY;
+        private ClipData mClipData;
+        private int mClipGrantFlags;
+        private int mPriority = PRIORITY_DEFAULT;
+        private int mFlags;
+        // Requirements.
+        private int mConstraintFlags;
+        private NetworkRequest mNetworkRequest;
+        private long mNetworkDownloadBytes = NETWORK_BYTES_UNKNOWN;
+        private long mNetworkUploadBytes = NETWORK_BYTES_UNKNOWN;
+        private ArrayList&lt;TriggerContentUri&gt; mTriggerContentUris;
+        private long mTriggerContentUpdateDelay = -1;
+        private long mTriggerContentMaxDelay = -1;
+        private boolean mIsPersisted;
+
+        public Builder(int jobId, @NonNull ComponentName jobService) {
+            mJobService = jobService;
+            mJobId = jobId;
+        }
+
+        /** @hide */
+        public Builder setPriority(int priority) {
+            mPriority = priority;
+            return this;
+        }
+
+        /** @hide */
+        public Builder setFlags(int flags) {
+            mFlags = flags;
+            return this;
+        }
+
+        public Builder setExtras(@NonNull PersistableBundle extras) {
+            mExtras = extras;
+            return this;
+        }
+
+        public Builder setTransientExtras(@NonNull Bundle extras) {
+            mTransientExtras = extras;
+            return this;
+        }
+
+        public Builder setClipData(@Nullable ClipData clip, int grantFlags) {
+            mClipData = clip;
+            mClipGrantFlags = grantFlags;
+            return this;
+        }
+
+        public Builder setRequiredNetworkType(@NetworkType int networkType) {
+            if (networkType == NETWORK_TYPE_NONE) {
+                return setRequiredNetwork(null);
+            } else {
+                final NetworkRequest.Builder builder = new NetworkRequest.Builder();
+
+                // All types require validated Internet
+                builder.addCapability(NET_CAPABILITY_INTERNET);
+                builder.addCapability(NET_CAPABILITY_VALIDATED);
+                builder.removeCapability(NET_CAPABILITY_NOT_VPN);
+
+                if (networkType == NETWORK_TYPE_ANY) {
+                    // No other capabilities
+                } else if (networkType == NETWORK_TYPE_UNMETERED) {
+                    builder.addCapability(NET_CAPABILITY_NOT_METERED);
+                } else if (networkType == NETWORK_TYPE_NOT_ROAMING) {
+                    builder.addCapability(NET_CAPABILITY_NOT_ROAMING);
+                } else if (networkType == NETWORK_TYPE_CELLULAR) {
+                    builder.addTransportType(TRANSPORT_CELLULAR);
+                }
+
+                return setRequiredNetwork(builder.build());
+            }
+        }
+
+        public Builder setRequiredNetwork(@Nullable NetworkRequest networkRequest) {
+            mNetworkRequest = networkRequest;
+            return this;
+        }
+
+        @Deprecated
+        public Builder setEstimatedNetworkBytes(@BytesLong long networkBytes) {
+            return setEstimatedNetworkBytes(networkBytes, NETWORK_BYTES_UNKNOWN);
+        }
+
+        public Builder setEstimatedNetworkBytes(@BytesLong long downloadBytes,
+                @BytesLong long uploadBytes) {
+            mNetworkDownloadBytes = downloadBytes;
+            mNetworkUploadBytes = uploadBytes;
+            return this;
+        }
+
+        public Builder setRequiresCharging(boolean requiresCharging) {
+            mConstraintFlags = (mConstraintFlags&amp;~CONSTRAINT_FLAG_CHARGING)
+                    | (requiresCharging ? CONSTRAINT_FLAG_CHARGING : 0);
+            return this;
+        }
+
+
+        public Builder setRequiresBatteryNotLow(boolean batteryNotLow) {
+            mConstraintFlags = (mConstraintFlags&amp;~CONSTRAINT_FLAG_BATTERY_NOT_LOW)
+                    | (batteryNotLow ? CONSTRAINT_FLAG_BATTERY_NOT_LOW : 0);
+            return this;
+        }
+
+        public Builder setRequiresDeviceIdle(boolean requiresDeviceIdle) {
+            mConstraintFlags = (mConstraintFlags&amp;~CONSTRAINT_FLAG_DEVICE_IDLE)
+                    | (requiresDeviceIdle ? CONSTRAINT_FLAG_DEVICE_IDLE : 0);
+            return this;
+        }
+
+        public Builder setRequiresStorageNotLow(boolean storageNotLow) {
+            mConstraintFlags = (mConstraintFlags&amp;~CONSTRAINT_FLAG_STORAGE_NOT_LOW)
+                    | (storageNotLow ? CONSTRAINT_FLAG_STORAGE_NOT_LOW : 0);
+            return this;
+        }
+
+        public Builder addTriggerContentUri(@NonNull TriggerContentUri uri) {
+            if (mTriggerContentUris == null) {
+                mTriggerContentUris = new ArrayList&lt;&gt;();
+            }
+            mTriggerContentUris.add(uri);
+            return this;
+        }
+
+        public Builder setTriggerContentUpdateDelay(long durationMs) {
+            mTriggerContentUpdateDelay = durationMs;
+            return this;
+        }
+
+
+        public Builder setTriggerContentMaxDelay(long durationMs) {
+            mTriggerContentMaxDelay = durationMs;
+            return this;
+        }
+
+        public Builder setPeriodic(long intervalMillis) {
+            return setPeriodic(intervalMillis, intervalMillis);
+        }
+
+
+        public Builder setPeriodic(long intervalMillis, long flexMillis) {
+            final long minPeriod = getMinPeriodMillis();
+            if (intervalMillis &lt; minPeriod) {
+                Log.w(TAG, &quot;Requested interval &quot; + formatDuration(intervalMillis) + &quot; for job &quot;
+                        + mJobId + &quot; is too small; raising to &quot; + formatDuration(minPeriod));
+                intervalMillis = minPeriod;
+            }
+
+            final long percentClamp = 5 * intervalMillis / 100;
+            final long minFlex = Math.max(percentClamp, getMinFlexMillis());
+            if (flexMillis &lt; minFlex) {
+                Log.w(TAG, &quot;Requested flex &quot; + formatDuration(flexMillis) + &quot; for job &quot; + mJobId
+                        + &quot; is too small; raising to &quot; + formatDuration(minFlex));
+                flexMillis = minFlex;
+            }
+
+            mIsPeriodic = true;
+            mIntervalMillis = intervalMillis;
+            mFlexMillis = flexMillis;
+            mHasEarlyConstraint = mHasLateConstraint = true;
+            return this;
+        }
+
+        public Builder setMinimumLatency(long minLatencyMillis) {
+            mMinLatencyMillis = minLatencyMillis;
+            mHasEarlyConstraint = true;
+            return this;
+        }
+
+        public Builder setOverrideDeadline(long maxExecutionDelayMillis) {
+            mMaxExecutionDelayMillis = maxExecutionDelayMillis;
+            mHasLateConstraint = true;
+            return this;
+        }
+
+        public Builder setBackoffCriteria(long initialBackoffMillis,
+                @BackoffPolicy int backoffPolicy) {
+            final long minBackoff = getMinBackoffMillis();
+            if (initialBackoffMillis &lt; minBackoff) {
+                Log.w(TAG, &quot;Requested backoff &quot; + formatDuration(initialBackoffMillis) + &quot; for job &quot;
+                        + mJobId + &quot; is too small; raising to &quot; + formatDuration(minBackoff));
+                initialBackoffMillis = minBackoff;
+            }
+
+            mBackoffPolicySet = true;
+            mInitialBackoffMillis = initialBackoffMillis;
+            mBackoffPolicy = backoffPolicy;
+            return this;
+        }
+
+        public Builder setImportantWhileForeground(boolean importantWhileForeground) {
+            if (importantWhileForeground) {
+                mFlags |= FLAG_IMPORTANT_WHILE_FOREGROUND;
+            } else {
+                mFlags &amp;= (~FLAG_IMPORTANT_WHILE_FOREGROUND);
+            }
+            return this;
+        }
+    }
+}
+</code></pre>
+<h3 id="stringbuilder">StringBuilder</h3>
+<pre><code>
+public final class StringBuilder
+    extends AbstractStringBuilder
+    implements java.io.Serializable, CharSequence
+{
+
+    static final long serialVersionUID = 4383685877147921099L;
+
+    public StringBuilder() {
+        super(16);
+    }
+
+    public StringBuilder(int capacity) {
+        super(capacity);
+    }
+
+    public StringBuilder(String str) {
+        super(str.length() + 16);
+        append(str);
+    }
+
+    public StringBuilder(CharSequence seq) {
+        this(seq.length() + 16);
+        append(seq);
+    }
+
+    @Override
+    public StringBuilder append(Object obj) {
+        return append(String.valueOf(obj));
+    }
+
+    @Override
+    public StringBuilder append(String str) {
+        super.append(str);
+        return this;
+    }
+
+    public StringBuilder append(StringBuffer sb) {
+        super.append(sb);
+        return this;
+    }
+
+    @Override
+    public StringBuilder append(CharSequence s) {
+        super.append(s);
+        return this;
+    }
+
+    @Override
+    public StringBuilder append(CharSequence s, int start, int end) {
+        super.append(s, start, end);
+        return this;
+    }
+
+    @Override
+    public StringBuilder append(char[] str) {
+        super.append(str);
+        return this;
+    }
+
+    @Override
+    public StringBuilder append(char[] str, int offset, int len) {
+        super.append(str, offset, len);
+        return this;
+    }
+}
+
+</code></pre>
+<p>你发现这些构造者都是以 Builder 为名的, 或者以 Builder 结尾的类名.  这个 Builder 都是需要被构造的类的内部类. 比如 Notification.Builder, JobInfo.Builder, StringBuilder, Hero.Builder. 在 android 的 aosp 的代码里可以发现大量的以 Builder 为类名的. 同时, 你也可以发现以下规律:<br>
+1. Builder 类都会有一个或者多个构造函数,<br>
+2. Builder 类的方法名称部分都是 set 类型的, 都是给一个字段赋值<br>
+3. 而且都有一个返回值, 返回的都是 this<br>
+4. Builder 类型的调用都是链式调用</p>
+<h3 id="定义">定义</h3>
+<p>将一个复杂的对象的构造与他的表示分离, 是的同样的构造过程可以创建不同的表示.</p>
+<h3 id="结构">结构</h3>
+<p><img src="http://xuwanjin.me//post-images/1560655644209.jpg" alt=""></p>
+<h3 id="优缺点">优缺点</h3>
+<h4 id="优点">优点</h4>
+<ol>
+<li>建造者模式可以使客户端不必知道产品内部组成细节</li>
+<li>建造者容易独立, 容易扩展</li>
+<li>具体的建造者是独立的, 因此可以对建造过程逐步细化, 而不对其他模块产生任何影响</li>
+</ol>
+<h4 id="缺点">缺点</h4>
+<p>由于Builder是非线程安全的，所以如果要在Builder内部类中检查一个参数的合法性，必需要在对象创建完成之后再检查。</p>
+<h3 id="应用场景">应用场景</h3>
+<pre><code>Notification.Builder
+Notification.Action.Builder
+Uri.Builder
+JobInfo.Builder
+StringBuilder
+</code></pre>
+
+            </div>
+          </article>
+        </div>
+
+        
+          <div class="next-post">
+            <div class="next">下一篇</div>
+            <a href="http://xuwanjin.me//post/golang_the_data_struct_slice">
+              <h3 class="post-title">
+                Golang slice 数据结构
+              </h3>
+            </a>
+          </div>
+        
+
+        
+
+        <div class="site-footer">
+  Powered by <a href="https://github.com/getgridea/gridea" target="_blank">Gridea</a> | 
+  <a class="rss" href="http://xuwanjin.me//atom.xml" target="_blank">RSS</a>
+</div>
+
+<script>
+  hljs.initHighlightingOnLoad()
+</script>
+
+      </div>
+    </div>
+  </body>
+</html>

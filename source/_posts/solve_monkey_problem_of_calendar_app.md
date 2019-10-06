@@ -1,3 +1,4 @@
+<<<<<<< HEAD:source/_posts/solve_monkey_problem_of_calendar_app.md
 ---
 title: 记一次 Monkey Calendar 解决的过程
 date: 2019-09-27 21:49:25
@@ -8,6 +9,110 @@ tags:
 ---
 
 最近遇到了一个 Monkey 的bug.
+=======
+<html>
+  <head>
+    <meta charset="utf-8" />
+<meta name="description" content="" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>记一次 Monkey Calendar  解决的过程 | Gridea</title>
+<link rel="shortcut icon" href="http://xuwanjin.me//favicon.ico?v=1568730948716">
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
+<link rel="stylesheet" href="http://xuwanjin.me//styles/main.css">
+
+<script src="https://cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js"></script>
+<script src="https://cdn.bootcss.com/moment.js/2.23.0/moment.min.js"></script>
+
+
+
+  </head>
+  <body>
+    <div class="main">
+      <div class="main-content">
+        <div class="site-header">
+  <a href="http://xuwanjin.me/">
+  <img class="avatar" src="http://xuwanjin.me//images/avatar.png?v=1568730948716" alt="">
+  </a>
+  <h1 class="site-title">
+    Gridea
+  </h1>
+  <p class="site-description">
+    温故而知新
+  </p>
+  <div class="menu-container">
+    
+      
+        <a href="/" class="menu">
+          首页
+        </a>
+      
+    
+      
+        <a href="/archives" class="menu">
+          归档
+        </a>
+      
+    
+      
+        <a href="/tags" class="menu">
+          标签
+        </a>
+      
+    
+      
+        <a href="/post/about" class="menu">
+          关于
+        </a>
+      
+    
+  </div>
+  <div class="social-container">
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+  </div>
+</div>
+
+
+        <div class="post-detail">
+          <article class="post">
+            <h2 class="post-title">
+              记一次 Monkey Calendar  解决的过程
+            </h2>
+            <div class="post-info">
+              <time class="post-time">
+                · 2019-08-14 ·
+              </time>
+              
+                <a href="http://xuwanjin.me//tag/V03QdGwaE" class="post-tag">
+                  # Monkey
+                </a>
+              
+                <a href="http://xuwanjin.me//tag/Z8Gd-9aZx" class="post-tag">
+                  # Calendar
+                </a>
+              
+                <a href="http://xuwanjin.me//tag/MMp-M05aE" class="post-tag">
+                  # Android
+                </a>
+              
+            </div>
+            
+              <div class="post-feature-image" style="background-image: url('http://xuwanjin.me//post-images/the_processing_of_resolving_anr_of_calendar.png')">
+              </div>
+            
+            <div class="post-content">
+              <p>最近解决的 Monkey 比较多. 对monkey 问题有了新的理解了. 在此记录下来</p>
+>>>>>>> parent of e6c13be... update from gridea: 2019-09-17 22:40:24:post/the_processing_of_resolving_anr_of_calendar/index.html
 <!-- more -->
 # 记一次 Monkey Calendar 解决的过程
 ## 背景
