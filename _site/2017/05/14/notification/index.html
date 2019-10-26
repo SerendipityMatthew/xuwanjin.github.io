@@ -1,0 +1,1895 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="google-site-verification" content="xBT4GhYoi5qRD5tr338pgPM5OWHHIDR6mNg1a3euekI" />
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="等待美好, 追求美好">
+    <meta name="keyword"  content="">
+    <link rel="shortcut icon" href="/img/favicon.ico">
+
+    <title>Notification分析 - 秋叶博客 | 秋叶 Blog</title>
+
+    <link rel="canonical" href="http://localhost:4000/2017/05/14/notification/">
+
+    <!-- Bootstrap Core CSS -->
+    <link rel="stylesheet" href="/css/bootstrap.min.css">
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="/css/hux-blog.min.css">
+
+    <!-- Pygments Github CSS -->
+    <link rel="stylesheet" href="/css/syntax.css">
+
+    <!-- Custom Fonts -->
+    <!-- <link href="http://maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css" rel="stylesheet" type="text/css"> -->
+    <!-- Hux change font-awesome CDN to qiniu -->
+    <link href="http://cdn.staticfile.org/font-awesome/4.2.0/css/font-awesome.min.css" rel="stylesheet" type="text/css">
+
+
+    <!-- Hux Delete, sad but pending in China
+    <link href='http://fonts.googleapis.com/css?family=Lora:400,700,400italic,700italic' rel='stylesheet' type='text/css'>
+    <link href='http://fonts.googleapis.com/css?family=Open+Sans:300italic,400italic,600italic,700italic,800italic,400,300,600,700,800' rel='stylesheet' type='text/
+    css'>
+    -->
+
+
+    <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+        <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+        <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+    <![endif]-->
+
+    <!-- ga & ba script hoook -->
+    <script></script>
+</head>
+
+
+<!-- hack iOS CSS :active style -->
+<body ontouchstart="">
+
+    <!-- Navigation -->
+<nav class="navbar navbar-default navbar-custom navbar-fixed-top">
+    <div class="container-fluid">
+        <!-- Brand and toggle get grouped for better mobile display -->
+        <div class="navbar-header page-scroll">
+            <button type="button" class="navbar-toggle">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="/">秋叶 Blog</a>
+        </div>
+
+        <!-- Collect the nav links, forms, and other content for toggling -->
+        <!-- Known Issue, found by Hux:
+            <nav>'s height woule be hold on by its content.
+            so, when navbar scale out, the <nav> will cover tags.
+            also mask any touch event of tags, unfortunately.
+        -->
+        <div id="huxblog_navbar">
+            <div class="navbar-collapse">
+                <ul class="nav navbar-nav navbar-right">
+                    <li>
+                        <a href="/">Home</a>
+                    </li>
+                    
+                    <li>
+                        <a href="/about/">About</a>
+                    </li>
+                    
+                    <li>
+                        <a href="/tags/">Tags</a>
+                    </li>
+                    
+                </ul>
+            </div>
+        </div>
+        <!-- /.navbar-collapse -->
+    </div>
+    <!-- /.container -->
+</nav>
+<script>
+    // Drop Bootstarp low-performance Navbar
+    // Use customize navbar with high-quality material design animation
+    // in high-perf jank-free CSS3 implementation
+    var $body   = document.body;
+    var $toggle = document.querySelector('.navbar-toggle');
+    var $navbar = document.querySelector('#huxblog_navbar');
+    var $collapse = document.querySelector('.navbar-collapse');
+
+    $toggle.addEventListener('click', handleMagic)
+    function handleMagic(e){
+        if ($navbar.className.indexOf('in') > 0) {
+        // CLOSE
+            $navbar.className = " ";
+            // wait until animation end.
+            setTimeout(function(){
+                // prevent frequently toggle
+                if($navbar.className.indexOf('in') < 0) {
+                    $collapse.style.height = "0px"
+                }
+            },400)
+        }else{
+        // OPEN
+            $collapse.style.height = "auto"
+            $navbar.className += " in";
+        }
+    }
+</script>
+
+
+    <!-- Image to hack wechat -->
+<!-- <img src="/img/icon_wechat.png" width="0" height="0"> -->
+<!-- <img src="/img/post-bg-2017.jpg" width="0" height="0"> -->
+
+<!-- Post Header -->
+<style type="text/css">
+    header.intro-header{
+        background-image: url('/img/post-bg-2017.jpg')
+    }
+</style>
+<header class="intro-header" >
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                <div class="post-heading">
+                    <div class="tags">
+                        
+                        <a class="tag" href="/tags/#Android" title="Android">Android</a>
+                        
+                        <a class="tag" href="/tags/#Notification" title="Notification">Notification</a>
+                        
+                    </div>
+                    <h1>Notification分析</h1>
+                    
+                    
+                    <h2 class="subheading">Android Notification分析</h2>
+                    
+                    <span class="meta">Posted by 秋叶 on May 14, 2017</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</header>
+
+<!-- Post Content -->
+<article>
+    <div class="container">
+        <div class="row">
+
+    <!-- Post Container -->
+            <div class="
+                col-lg-8 col-lg-offset-2
+                col-md-10 col-md-offset-1
+                post-container">
+
+				<h1 id="notification">Notification</h1>
+
+<p>[TOC]</p>
+
+<p>虽然网络上很大神对Android 的Notification都介绍了， 写的很详细, 很深入. 在Android N上Google对Notification进行了非常大的改造(同时有相关的中文和英文<a href="https://developer.android.com/guide/topics/ui/notifiers/notifications.html">文档</a>) 但是我还是想以我的方式, 以我的理解来解读一下Android N 上面的Notification. 我会从以下几个方面来讲解Notification.</p>
+
+<h2 id="从界面上认识notification">从界面上认识Notification</h2>
+
+<p>首先 Notification是分种类的, 一共有以下几个种类浮动通知(Heads-up Notifications), 锁屏通知Lock Screen Notifications, Bundling Notifications, Peeking Notifications. 
+第二 Notification是分优先级(priority)的一共有五个等级; 分别是PRIORITY_LOW， PRIORITY_MIN, PRIORITY_DEFAULT, PRIORITY_HIGH, PRIORITY_MAX, 依次是-2， -1， 0， 1， 2. 一般不指定优先级的话, 默认的是为零, 在Notification的运行当中, 会被封装成其他的类, 同样优先级会被转换成其他的数字. 
+第三 Notification有不同的样式. 有</p>
+<div class="highlighter-rouge"><pre class="highlight"><code>BigPictureStyle
+BigTextStyle
+DecoratedCustomViewStyle
+DecoratedMediaCustomViewStyle
+InboxStyle
+MediaStyle
+MessagingStyle
+</code></pre>
+</div>
+
+<p>第四: Notification 的有一个defaults属性,可以设置Notification的通知灯, 震动, 声音. 默认情况是所有的都包含</p>
+
+<p>第五: Notification的color属性将会给通知的small icon染上颜色</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>.
+|-- CalendarTracker.java
+|-- ConditionProviders.java
+|-- CountdownConditionProvider.java
+|-- EventConditionProvider.java
+|-- GlobalSortKeyComparator.java
+|-- ImportanceExtractor.java
+|-- ManagedServices.java
+|-- NotificationComparator.java
+|-- NotificationDelegate.java
+|-- NotificationIntrusivenessExtractor.java
+|-- NotificationManagerInternal.java
+|-- NotificationManagerService.java
+|-- NotificationRecord.java
+|-- NotificationSignalExtractor.java
+|-- NotificationUsageStats.java
+|-- PriorityExtractor.java
+|-- PropConfig.java
+|-- RankingConfig.java
+|-- RankingHandler.java
+|-- RankingHelper.java
+|-- RankingReconsideration.java
+|-- RateEstimator.java
+|-- ScheduleCalendar.java
+|-- ScheduleConditionProvider.java
+|-- SystemConditionProviderService.java
+|-- ValidateNotificationPeople.java
+|-- VisibilityExtractor.java
+|-- ZenLog.java
+|-- ZenModeConditions.java
+|-- ZenModeFiltering.java
+`-- ZenModeHelper.java
+
+0 directories, 31 files
+</code></pre>
+</div>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>Notification.aidl
+Notification.java
+NotificationManager.aidl
+NotificationManager.java
+
+</code></pre>
+</div>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>.
+|-- MediaProjectionPermissionActivity.java
+|-- NotificationPlayer.java
+`-- RingtonePlayer.java
+</code></pre>
+</div>
+
+<h2 id="从代码上认识notification">从代码上认识Notification</h2>
+
+<div class="language-java highlighter-rouge"><pre class="highlight"><code><span class="kd">public</span> <span class="kt">void</span> <span class="nf">notify</span><span class="o">(</span><span class="kt">int</span> <span class="n">id</span><span class="o">,</span> <span class="n">Notification</span> <span class="n">notification</span><span class="o">)</span>
+</code></pre>
+</div>
+
+<div class="language-java highlighter-rouge"><pre class="highlight"><code><span class="kd">public</span> <span class="kt">void</span> <span class="nf">notify</span><span class="o">(</span><span class="n">String</span> <span class="n">tag</span><span class="o">,</span> <span class="kt">int</span> <span class="n">id</span><span class="o">,</span> <span class="n">Notification</span> <span class="n">notification</span><span class="o">)</span>
+</code></pre>
+</div>
+
+<div class="language-java highlighter-rouge"><pre class="highlight"><code><span class="kd">public</span> <span class="kt">void</span> <span class="nf">notifyAsUser</span><span class="o">(</span><span class="n">String</span> <span class="n">tag</span><span class="o">,</span> <span class="kt">int</span> <span class="n">id</span><span class="o">,</span> <span class="n">Notification</span> <span class="n">notification</span><span class="o">,</span> <span class="n">UserHandle</span> <span class="n">user</span><span class="o">)</span>
+</code></pre>
+</div>
+
+<div class="language-java highlighter-rouge"><pre class="highlight"><code><span class="kd">public</span> <span class="kt">void</span> <span class="nf">notifyAsUser</span><span class="o">(</span><span class="n">String</span> <span class="n">tag</span><span class="o">,</span> <span class="kt">int</span> <span class="n">id</span><span class="o">,</span> <span class="n">Notification</span> <span class="n">notification</span><span class="o">,</span> <span class="n">UserHandle</span> <span class="n">user</span><span class="o">)</span>
+<span class="o">{</span>
+    <span class="kt">int</span><span class="o">[]</span> <span class="n">idOut</span> <span class="o">=</span> <span class="k">new</span> <span class="kt">int</span><span class="o">[</span><span class="mi">1</span><span class="o">];</span>
+    <span class="n">INotificationManager</span> <span class="n">service</span> <span class="o">=</span> <span class="n">getService</span><span class="o">();</span> <span class="c1">//获取NotificationManagerService</span>
+    <span class="n">String</span> <span class="n">pkg</span> <span class="o">=</span> <span class="n">mContext</span><span class="o">.</span><span class="na">getPackageName</span><span class="o">();</span>
+    <span class="c1">// Fix the notification as best we can.</span>
+    <span class="n">Notification</span><span class="o">.</span><span class="na">addFieldsFromContext</span><span class="o">(</span><span class="n">mContext</span><span class="o">,</span> <span class="n">notification</span><span class="o">);</span>  <span class="c1">//主要是向notification加入应用信息和用户ID</span>
+    <span class="k">if</span> <span class="o">(</span><span class="n">notification</span><span class="o">.</span><span class="na">sound</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+        <span class="n">notification</span><span class="o">.</span><span class="na">sound</span> <span class="o">=</span> <span class="n">notification</span><span class="o">.</span><span class="na">sound</span><span class="o">.</span><span class="na">getCanonicalUri</span><span class="o">();</span> <span class="c1">//获取通知声音的实际地址</span>
+        <span class="k">if</span> <span class="o">(</span><span class="n">StrictMode</span><span class="o">.</span><span class="na">vmFileUriExposureEnabled</span><span class="o">())</span> <span class="o">{</span>
+            <span class="n">notification</span><span class="o">.</span><span class="na">sound</span><span class="o">.</span><span class="na">checkFileUriExposed</span><span class="o">(</span><span class="s">"Notification.sound"</span><span class="o">);</span>
+        <span class="o">}</span>
+    <span class="o">}</span>
+    <span class="n">fixLegacySmallIcon</span><span class="o">(</span><span class="n">notification</span><span class="o">,</span> <span class="n">pkg</span><span class="o">);</span> <span class="c1">//修复一些icon问题,如果没有就给他指定一个</span>
+    <span class="k">if</span> <span class="o">(</span><span class="n">mContext</span><span class="o">.</span><span class="na">getApplicationInfo</span><span class="o">().</span><span class="na">targetSdkVersion</span> <span class="o">&gt;</span> <span class="n">Build</span><span class="o">.</span><span class="na">VERSION_CODES</span><span class="o">.</span><span class="na">LOLLIPOP_MR1</span><span class="o">)</span> <span class="o">{</span>
+        <span class="k">if</span> <span class="o">(</span><span class="n">notification</span><span class="o">.</span><span class="na">getSmallIcon</span><span class="o">()</span> <span class="o">==</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+            <span class="k">throw</span> <span class="k">new</span> <span class="nf">IllegalArgumentException</span><span class="o">(</span><span class="s">"Invalid notification (no valid small icon): "</span>
+                    <span class="o">+</span> <span class="n">notification</span><span class="o">);</span>
+        <span class="o">}</span>
+    <span class="o">}</span>
+    <span class="k">if</span> <span class="o">(</span><span class="n">localLOGV</span><span class="o">)</span> <span class="n">Log</span><span class="o">.</span><span class="na">v</span><span class="o">(</span><span class="n">TAG</span><span class="o">,</span> <span class="n">pkg</span> <span class="o">+</span> <span class="s">": notify("</span> <span class="o">+</span> <span class="n">id</span> <span class="o">+</span> <span class="s">", "</span> <span class="o">+</span> <span class="n">notification</span> <span class="o">+</span> <span class="s">")"</span><span class="o">);</span>
+    <span class="kd">final</span> <span class="n">Notification</span> <span class="n">copy</span> <span class="o">=</span> <span class="n">Builder</span><span class="o">.</span><span class="na">maybeCloneStrippedForDelivery</span><span class="o">(</span><span class="n">notification</span><span class="o">);</span>
+    <span class="k">try</span> <span class="o">{</span>
+        <span class="n">service</span><span class="o">.</span><span class="na">enqueueNotificationWithTag</span><span class="o">(</span><span class="n">pkg</span><span class="o">,</span> <span class="n">mContext</span><span class="o">.</span><span class="na">getOpPackageName</span><span class="o">(),</span> <span class="n">tag</span><span class="o">,</span> <span class="n">id</span><span class="o">,</span>
+                <span class="n">copy</span><span class="o">,</span> <span class="n">idOut</span><span class="o">,</span> <span class="n">user</span><span class="o">.</span><span class="na">getIdentifier</span><span class="o">());</span>
+        <span class="k">if</span> <span class="o">(</span><span class="n">id</span> <span class="o">!=</span> <span class="n">idOut</span><span class="o">[</span><span class="mi">0</span><span class="o">])</span> <span class="o">{</span>
+            <span class="n">Log</span><span class="o">.</span><span class="na">w</span><span class="o">(</span><span class="n">TAG</span><span class="o">,</span> <span class="s">"notify: id corrupted: sent "</span> <span class="o">+</span> <span class="n">id</span> <span class="o">+</span> <span class="s">", got back "</span> <span class="o">+</span> <span class="n">idOut</span><span class="o">[</span><span class="mi">0</span><span class="o">]);</span>
+        <span class="o">}</span>
+    <span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="n">RemoteException</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
+        <span class="k">throw</span> <span class="n">e</span><span class="o">.</span><span class="na">rethrowFromSystemServer</span><span class="o">();</span>
+    <span class="o">}</span>
+<span class="o">}</span>
+</code></pre>
+</div>
+
+<div class="language-java highlighter-rouge"><pre class="highlight"><code><span class="kd">public</span> <span class="kd">static</span> <span class="n">Notification</span> <span class="nf">maybeCloneStrippedForDelivery</span><span class="o">(</span><span class="n">Notification</span> <span class="n">n</span><span class="o">)</span> <span class="o">{</span>
+    <span class="n">String</span> <span class="n">templateClass</span> <span class="o">=</span> <span class="n">n</span><span class="o">.</span><span class="na">extras</span><span class="o">.</span><span class="na">getString</span><span class="o">(</span><span class="n">EXTRA_TEMPLATE</span><span class="o">);</span>
+
+    <span class="c1">// Only strip views for known Styles because we won't know how to</span>
+    <span class="c1">// re-create them otherwise.</span>
+    <span class="k">if</span> <span class="o">(!</span><span class="n">TextUtils</span><span class="o">.</span><span class="na">isEmpty</span><span class="o">(</span><span class="n">templateClass</span><span class="o">)</span>
+            <span class="o">&amp;&amp;</span> <span class="n">getNotificationStyleClass</span><span class="o">(</span><span class="n">templateClass</span><span class="o">)</span> <span class="o">==</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+        <span class="k">return</span> <span class="n">n</span><span class="o">;</span>
+    <span class="o">}</span>
+
+    <span class="c1">// Only strip unmodified BuilderRemoteViews.</span>
+    <span class="kt">boolean</span> <span class="n">stripContentView</span> <span class="o">=</span> <span class="n">n</span><span class="o">.</span><span class="na">contentView</span> <span class="k">instanceof</span> <span class="n">BuilderRemoteViews</span> <span class="o">&amp;&amp;</span>
+            <span class="n">n</span><span class="o">.</span><span class="na">extras</span><span class="o">.</span><span class="na">getInt</span><span class="o">(</span><span class="n">EXTRA_REBUILD_CONTENT_VIEW_ACTION_COUNT</span><span class="o">,</span> <span class="o">-</span><span class="mi">1</span><span class="o">)</span> <span class="o">==</span>
+                    <span class="n">n</span><span class="o">.</span><span class="na">contentView</span><span class="o">.</span><span class="na">getSequenceNumber</span><span class="o">();</span>
+    <span class="kt">boolean</span> <span class="n">stripBigContentView</span> <span class="o">=</span> <span class="n">n</span><span class="o">.</span><span class="na">bigContentView</span> <span class="k">instanceof</span> <span class="n">BuilderRemoteViews</span> <span class="o">&amp;&amp;</span>
+            <span class="n">n</span><span class="o">.</span><span class="na">extras</span><span class="o">.</span><span class="na">getInt</span><span class="o">(</span><span class="n">EXTRA_REBUILD_BIG_CONTENT_VIEW_ACTION_COUNT</span><span class="o">,</span> <span class="o">-</span><span class="mi">1</span><span class="o">)</span> <span class="o">==</span>
+                    <span class="n">n</span><span class="o">.</span><span class="na">bigContentView</span><span class="o">.</span><span class="na">getSequenceNumber</span><span class="o">();</span>
+    <span class="kt">boolean</span> <span class="n">stripHeadsUpContentView</span> <span class="o">=</span> <span class="n">n</span><span class="o">.</span><span class="na">headsUpContentView</span> <span class="k">instanceof</span> <span class="n">BuilderRemoteViews</span> <span class="o">&amp;&amp;</span>
+            <span class="n">n</span><span class="o">.</span><span class="na">extras</span><span class="o">.</span><span class="na">getInt</span><span class="o">(</span><span class="n">EXTRA_REBUILD_HEADS_UP_CONTENT_VIEW_ACTION_COUNT</span><span class="o">,</span> <span class="o">-</span><span class="mi">1</span><span class="o">)</span> <span class="o">==</span>
+                    <span class="n">n</span><span class="o">.</span><span class="na">headsUpContentView</span><span class="o">.</span><span class="na">getSequenceNumber</span><span class="o">();</span>
+
+    <span class="c1">// Nothing to do here, no need to clone.</span>
+    <span class="k">if</span> <span class="o">(!</span><span class="n">stripContentView</span> <span class="o">&amp;&amp;</span> <span class="o">!</span><span class="n">stripBigContentView</span> <span class="o">&amp;&amp;</span> <span class="o">!</span><span class="n">stripHeadsUpContentView</span><span class="o">)</span> <span class="o">{</span>
+        <span class="k">return</span> <span class="n">n</span><span class="o">;</span>
+    <span class="o">}</span>
+
+    <span class="n">Notification</span> <span class="n">clone</span> <span class="o">=</span> <span class="n">n</span><span class="o">.</span><span class="na">clone</span><span class="o">();</span>
+    <span class="k">if</span> <span class="o">(</span><span class="n">stripContentView</span><span class="o">)</span> <span class="o">{</span>
+        <span class="n">clone</span><span class="o">.</span><span class="na">contentView</span> <span class="o">=</span> <span class="kc">null</span><span class="o">;</span>
+        <span class="n">clone</span><span class="o">.</span><span class="na">extras</span><span class="o">.</span><span class="na">remove</span><span class="o">(</span><span class="n">EXTRA_REBUILD_CONTENT_VIEW_ACTION_COUNT</span><span class="o">);</span>
+    <span class="o">}</span>
+    <span class="k">if</span> <span class="o">(</span><span class="n">stripBigContentView</span><span class="o">)</span> <span class="o">{</span>
+        <span class="n">clone</span><span class="o">.</span><span class="na">bigContentView</span> <span class="o">=</span> <span class="kc">null</span><span class="o">;</span>
+        <span class="n">clone</span><span class="o">.</span><span class="na">extras</span><span class="o">.</span><span class="na">remove</span><span class="o">(</span><span class="n">EXTRA_REBUILD_BIG_CONTENT_VIEW_ACTION_COUNT</span><span class="o">);</span>
+    <span class="o">}</span>
+    <span class="k">if</span> <span class="o">(</span><span class="n">stripHeadsUpContentView</span><span class="o">)</span> <span class="o">{</span>
+        <span class="n">clone</span><span class="o">.</span><span class="na">headsUpContentView</span> <span class="o">=</span> <span class="kc">null</span><span class="o">;</span>
+        <span class="n">clone</span><span class="o">.</span><span class="na">extras</span><span class="o">.</span><span class="na">remove</span><span class="o">(</span><span class="n">EXTRA_REBUILD_HEADS_UP_CONTENT_VIEW_ACTION_COUNT</span><span class="o">);</span>
+    <span class="o">}</span>
+    <span class="k">return</span> <span class="n">clone</span><span class="o">;</span>
+<span class="o">}</span>
+</code></pre>
+</div>
+
+<div class="language-java highlighter-rouge"><pre class="highlight"><code><span class="kt">void</span> <span class="nf">enqueueNotificationInternal</span><span class="o">(</span><span class="kd">final</span> <span class="n">String</span> <span class="n">pkg</span><span class="o">,</span> <span class="kd">final</span> <span class="n">String</span> <span class="n">opPkg</span><span class="o">,</span> <span class="kd">final</span> <span class="kt">int</span> <span class="n">callingUid</span><span class="o">,</span>
+        <span class="kd">final</span> <span class="kt">int</span> <span class="n">callingPid</span><span class="o">,</span> <span class="kd">final</span> <span class="n">String</span> <span class="n">tag</span><span class="o">,</span> <span class="kd">final</span> <span class="kt">int</span> <span class="n">id</span><span class="o">,</span> <span class="kd">final</span> <span class="n">Notification</span>  <span class="n">notification</span><span class="o">,</span>
+        <span class="kt">int</span><span class="o">[]</span> <span class="n">idOut</span><span class="o">,</span> <span class="kt">int</span> <span class="n">incomingUserId</span><span class="o">)</span> <span class="o">{</span>
+    <span class="k">if</span> <span class="o">(</span><span class="n">DBG</span><span class="o">)</span> <span class="o">{</span>
+        <span class="n">Slog</span><span class="o">.</span><span class="na">v</span><span class="o">(</span><span class="n">TAG</span><span class="o">,</span> <span class="s">"enqueueNotificationInternal: pkg="</span> <span class="o">+</span> <span class="n">pkg</span> <span class="o">+</span> <span class="s">" id="</span> <span class="o">+</span> <span class="n">id</span>
+                <span class="o">+</span> <span class="s">" notification="</span> <span class="o">+</span> <span class="n">notification</span><span class="o">);</span>
+    <span class="o">}</span>
+    <span class="n">checkCallerIsSystemOrSameApp</span><span class="o">(</span><span class="n">pkg</span><span class="o">);</span> <span class="c1">//检查一下通知是否由系统发送过来的还是同一个通知发送过来的</span>
+    <span class="c1">//是否系统发送过来的主要是通过Linux分配给进程的UID来判断</span>
+    <span class="kd">final</span> <span class="kt">boolean</span> <span class="n">isSystemNotification</span> <span class="o">=</span> <span class="n">isUidSystem</span><span class="o">(</span><span class="n">callingUid</span><span class="o">)</span> <span class="o">||</span> <span class="o">(</span><span class="s">"android"</span><span class="o">.</span><span class="na">equals</span><span class="o">(</span><span class="n">pkg</span><span class="o">));</span> <span class="c1">//是否是系统的通知</span>
+    <span class="kd">final</span> <span class="kt">boolean</span> <span class="n">isNotificationFromListener</span> <span class="o">=</span> <span class="n">mListeners</span><span class="o">.</span><span class="na">isListenerPackage</span><span class="o">(</span><span class="n">pkg</span><span class="o">);</span>
+
+    <span class="kd">final</span> <span class="kt">int</span> <span class="n">userId</span> <span class="o">=</span> <span class="n">ActivityManager</span><span class="o">.</span><span class="na">handleIncomingUser</span><span class="o">(</span><span class="n">callingPid</span><span class="o">,</span>
+            <span class="n">callingUid</span><span class="o">,</span> <span class="n">incomingUserId</span><span class="o">,</span> <span class="kc">true</span><span class="o">,</span> <span class="kc">false</span><span class="o">,</span> <span class="s">"enqueueNotification"</span><span class="o">,</span> <span class="n">pkg</span><span class="o">);</span><span class="c1">// 获取当前的用户id</span>
+    <span class="kd">final</span> <span class="n">UserHandle</span> <span class="n">user</span> <span class="o">=</span> <span class="k">new</span> <span class="n">UserHandle</span><span class="o">(</span><span class="n">userId</span><span class="o">);</span>
+
+    <span class="c1">// Fix the notification as best we can.</span>
+    <span class="k">try</span> <span class="o">{</span>
+        <span class="kd">final</span> <span class="n">ApplicationInfo</span> <span class="n">ai</span> <span class="o">=</span> <span class="n">getContext</span><span class="o">().</span><span class="na">getPackageManager</span><span class="o">().</span><span class="na">getApplicationInfoAsUser</span><span class="o">(</span>
+                <span class="n">pkg</span><span class="o">,</span> <span class="n">PackageManager</span><span class="o">.</span><span class="na">MATCH_DEBUG_TRIAGED_MISSING</span><span class="o">,</span>
+                <span class="o">(</span><span class="n">userId</span> <span class="o">==</span> <span class="n">UserHandle</span><span class="o">.</span><span class="na">USER_ALL</span><span class="o">)</span> <span class="o">?</span> <span class="n">UserHandle</span><span class="o">.</span><span class="na">USER_SYSTEM</span> <span class="o">:</span> <span class="n">userId</span><span class="o">);</span>
+        <span class="n">Notification</span><span class="o">.</span><span class="na">addFieldsFromContext</span><span class="o">(</span><span class="n">ai</span><span class="o">,</span> <span class="n">userId</span><span class="o">,</span> <span class="n">notification</span><span class="o">);</span> <span class="c1">//向notification里添加应用信息, 和当前用户的信息</span>
+    <span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="n">NameNotFoundException</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
+        <span class="n">Slog</span><span class="o">.</span><span class="na">e</span><span class="o">(</span><span class="n">TAG</span><span class="o">,</span> <span class="s">"Cannot create a context for sending app"</span><span class="o">,</span> <span class="n">e</span><span class="o">);</span>
+        <span class="k">return</span><span class="o">;</span>
+    <span class="o">}</span>
+
+    <span class="n">mUsageStats</span><span class="o">.</span><span class="na">registerEnqueuedByApp</span><span class="o">(</span><span class="n">pkg</span><span class="o">);</span>
+
+    <span class="c1">// Limit the number of notifications that any given package except the android</span>
+    <span class="c1">// package or a registered listener can enqueue.  Prevents DOS attacks and deals with leaks.</span>
+    <span class="c1">//除了系统的通知或者是来自于注册监听的通知, 限制所有的通知数量, 防止DOS攻击和处理泄露</span>
+    <span class="k">if</span> <span class="o">(!</span><span class="n">isSystemNotification</span> <span class="o">&amp;&amp;</span> <span class="o">!</span><span class="n">isNotificationFromListener</span><span class="o">)</span> <span class="o">{</span>
+        <span class="kd">synchronized</span> <span class="o">(</span><span class="n">mNotificationList</span><span class="o">)</span> <span class="o">{</span>
+            <span class="kd">final</span> <span class="kt">float</span> <span class="n">appEnqueueRate</span> <span class="o">=</span> <span class="n">mUsageStats</span><span class="o">.</span><span class="na">getAppEnqueueRate</span><span class="o">(</span><span class="n">pkg</span><span class="o">);</span> <span class="c1">//统计当前包所有的通知的数量</span>
+            <span class="k">if</span> <span class="o">(</span><span class="n">appEnqueueRate</span> <span class="o">&gt;</span> <span class="n">mMaxPackageEnqueueRate</span><span class="o">)</span> <span class="o">{</span>
+                <span class="n">mUsageStats</span><span class="o">.</span><span class="na">registerOverRateQuota</span><span class="o">(</span><span class="n">pkg</span><span class="o">);</span>
+                <span class="kd">final</span> <span class="kt">long</span> <span class="n">now</span> <span class="o">=</span> <span class="n">SystemClock</span><span class="o">.</span><span class="na">elapsedRealtime</span><span class="o">();</span>
+                <span class="k">if</span> <span class="o">((</span><span class="n">now</span> <span class="o">-</span> <span class="n">mLastOverRateLogTime</span><span class="o">)</span> <span class="o">&gt;</span> <span class="n">MIN_PACKAGE_OVERRATE_LOG_INTERVAL</span><span class="o">)</span> <span class="o">{</span>
+                    <span class="n">Slog</span><span class="o">.</span><span class="na">e</span><span class="o">(</span><span class="n">TAG</span><span class="o">,</span> <span class="s">"Package enqueue rate is "</span> <span class="o">+</span> <span class="n">appEnqueueRate</span>
+                            <span class="o">+</span> <span class="s">". Shedding events. package="</span> <span class="o">+</span> <span class="n">pkg</span><span class="o">);</span>
+                    <span class="n">mLastOverRateLogTime</span> <span class="o">=</span> <span class="n">now</span><span class="o">;</span>
+                <span class="o">}</span>
+                <span class="k">return</span><span class="o">;</span>
+            <span class="o">}</span>
+
+            <span class="kt">int</span> <span class="n">count</span> <span class="o">=</span> <span class="mi">0</span><span class="o">;</span>
+            <span class="kd">final</span> <span class="kt">int</span> <span class="n">N</span> <span class="o">=</span> <span class="n">mNotificationList</span><span class="o">.</span><span class="na">size</span><span class="o">();</span>
+            <span class="k">for</span> <span class="o">(</span><span class="kt">int</span> <span class="n">i</span><span class="o">=</span><span class="mi">0</span><span class="o">;</span> <span class="n">i</span><span class="o">&lt;</span><span class="n">N</span><span class="o">;</span> <span class="n">i</span><span class="o">++)</span> <span class="o">{</span>
+                <span class="kd">final</span> <span class="n">NotificationRecord</span> <span class="n">r</span> <span class="o">=</span> <span class="n">mNotificationList</span><span class="o">.</span><span class="na">get</span><span class="o">(</span><span class="n">i</span><span class="o">);</span>
+                <span class="k">if</span> <span class="o">(</span><span class="n">r</span><span class="o">.</span><span class="na">sbn</span><span class="o">.</span><span class="na">getPackageName</span><span class="o">().</span><span class="na">equals</span><span class="o">(</span><span class="n">pkg</span><span class="o">)</span> <span class="o">&amp;&amp;</span> <span class="n">r</span><span class="o">.</span><span class="na">sbn</span><span class="o">.</span><span class="na">getUserId</span><span class="o">()</span> <span class="o">==</span> <span class="n">userId</span><span class="o">)</span> <span class="o">{</span>
+                    <span class="k">if</span> <span class="o">(</span><span class="n">r</span><span class="o">.</span><span class="na">sbn</span><span class="o">.</span><span class="na">getId</span><span class="o">()</span> <span class="o">==</span> <span class="n">id</span> <span class="o">&amp;&amp;</span> <span class="n">TextUtils</span><span class="o">.</span><span class="na">equals</span><span class="o">(</span><span class="n">r</span><span class="o">.</span><span class="na">sbn</span><span class="o">.</span><span class="na">getTag</span><span class="o">(),</span> <span class="n">tag</span><span class="o">))</span> <span class="o">{</span>
+                        <span class="k">break</span><span class="o">;</span>  <span class="c1">// Allow updating existing notification</span>
+                    <span class="o">}</span>
+                    <span class="n">count</span><span class="o">++;</span>
+                    <span class="k">if</span> <span class="o">(</span><span class="n">count</span> <span class="o">&gt;=</span> <span class="n">MAX_PACKAGE_NOTIFICATIONS</span><span class="o">)</span> <span class="o">{</span>
+                        <span class="n">mUsageStats</span><span class="o">.</span><span class="na">registerOverCountQuota</span><span class="o">(</span><span class="n">pkg</span><span class="o">);</span>
+                        <span class="n">Slog</span><span class="o">.</span><span class="na">e</span><span class="o">(</span><span class="n">TAG</span><span class="o">,</span> <span class="s">"Package has already posted "</span> <span class="o">+</span> <span class="n">count</span>
+                                <span class="o">+</span> <span class="s">" notifications.  Not showing more.  package="</span> <span class="o">+</span> <span class="n">pkg</span><span class="o">);</span>
+                        <span class="k">return</span><span class="o">;</span>
+                    <span class="o">}</span>
+                <span class="o">}</span>
+            <span class="o">}</span>
+        <span class="o">}</span>
+    <span class="o">}</span>
+
+    <span class="k">if</span> <span class="o">(</span><span class="n">pkg</span> <span class="o">==</span> <span class="kc">null</span> <span class="o">||</span> <span class="n">notification</span> <span class="o">==</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+        <span class="k">throw</span> <span class="k">new</span> <span class="nf">IllegalArgumentException</span><span class="o">(</span><span class="s">"null not allowed: pkg="</span> <span class="o">+</span> <span class="n">pkg</span>
+                <span class="o">+</span> <span class="s">" id="</span> <span class="o">+</span> <span class="n">id</span> <span class="o">+</span> <span class="s">" notification="</span> <span class="o">+</span> <span class="n">notification</span><span class="o">);</span>
+    <span class="o">}</span>
+
+    <span class="c1">// Whitelist pending intents.</span>
+    <span class="k">if</span> <span class="o">(</span><span class="n">notification</span><span class="o">.</span><span class="na">allPendingIntents</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+        <span class="kd">final</span> <span class="kt">int</span> <span class="n">intentCount</span> <span class="o">=</span> <span class="n">notification</span><span class="o">.</span><span class="na">allPendingIntents</span><span class="o">.</span><span class="na">size</span><span class="o">();</span>
+        <span class="k">if</span> <span class="o">(</span><span class="n">intentCount</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="o">)</span> <span class="o">{</span>
+            <span class="kd">final</span> <span class="n">ActivityManagerInternal</span> <span class="n">am</span> <span class="o">=</span> <span class="n">LocalServices</span>
+                    <span class="o">.</span><span class="na">getService</span><span class="o">(</span><span class="n">ActivityManagerInternal</span><span class="o">.</span><span class="na">class</span><span class="o">);</span>
+            <span class="kd">final</span> <span class="kt">long</span> <span class="n">duration</span> <span class="o">=</span> <span class="n">LocalServices</span><span class="o">.</span><span class="na">getService</span><span class="o">(</span>
+                    <span class="n">DeviceIdleController</span><span class="o">.</span><span class="na">LocalService</span><span class="o">.</span><span class="na">class</span><span class="o">).</span><span class="na">getNotificationWhitelistDuration</span><span class="o">();</span>
+            <span class="k">for</span> <span class="o">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="o">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">intentCount</span><span class="o">;</span> <span class="n">i</span><span class="o">++)</span> <span class="o">{</span>
+                <span class="n">PendingIntent</span> <span class="n">pendingIntent</span> <span class="o">=</span> <span class="n">notification</span><span class="o">.</span><span class="na">allPendingIntents</span><span class="o">.</span><span class="na">valueAt</span><span class="o">(</span><span class="n">i</span><span class="o">);</span>
+                <span class="k">if</span> <span class="o">(</span><span class="n">pendingIntent</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+                    <span class="n">am</span><span class="o">.</span><span class="na">setPendingIntentWhitelistDuration</span><span class="o">(</span><span class="n">pendingIntent</span><span class="o">.</span><span class="na">getTarget</span><span class="o">(),</span> <span class="n">duration</span><span class="o">);</span>
+                <span class="o">}</span>
+            <span class="o">}</span>
+        <span class="o">}</span>
+    <span class="o">}</span>
+
+    <span class="c1">// Sanitize inputs</span>
+    <span class="c1">//审查一下当前通知的优先级, 如果当前优先级小于通知的最小优先级则赋予最小的优先级, 如果当前通知的优先级大于通知的最大优先级则赋予他最大的优先级</span>
+    <span class="n">notification</span><span class="o">.</span><span class="na">priority</span> <span class="o">=</span> <span class="n">clamp</span><span class="o">(</span><span class="n">notification</span><span class="o">.</span><span class="na">priority</span><span class="o">,</span> <span class="n">Notification</span><span class="o">.</span><span class="na">PRIORITY_MIN</span><span class="o">,</span>
+            <span class="n">Notification</span><span class="o">.</span><span class="na">PRIORITY_MAX</span><span class="o">);</span>
+
+    <span class="c1">// setup local book-keeping</span>
+    <span class="c1">//将一个Notification封装成成一个StatusBarNotification.</span>
+    <span class="kd">final</span> <span class="n">StatusBarNotification</span> <span class="n">n</span> <span class="o">=</span> <span class="k">new</span> <span class="n">StatusBarNotification</span><span class="o">(</span>
+            <span class="n">pkg</span><span class="o">,</span> <span class="n">opPkg</span><span class="o">,</span> <span class="n">id</span><span class="o">,</span> <span class="n">tag</span><span class="o">,</span> <span class="n">callingUid</span><span class="o">,</span> <span class="n">callingPid</span><span class="o">,</span> <span class="mi">0</span><span class="o">,</span> <span class="n">notification</span><span class="o">,</span>
+            <span class="n">user</span><span class="o">);</span>
+    <span class="c1">//同时将StatusBarNotication记录下来</span>
+    <span class="kd">final</span> <span class="n">NotificationRecord</span> <span class="n">r</span> <span class="o">=</span> <span class="k">new</span> <span class="n">NotificationRecord</span><span class="o">(</span><span class="n">getContext</span><span class="o">(),</span> <span class="n">n</span><span class="o">);</span>
+    <span class="c1">//最后以Handler的post形式执行一个线程</span>
+    <span class="n">mHandler</span><span class="o">.</span><span class="na">post</span><span class="o">(</span><span class="k">new</span> <span class="n">EnqueueNotificationRunnable</span><span class="o">(</span><span class="n">userId</span><span class="o">,</span> <span class="n">r</span><span class="o">));</span>
+
+    <span class="n">idOut</span><span class="o">[</span><span class="mi">0</span><span class="o">]</span> <span class="o">=</span> <span class="n">id</span><span class="o">;</span>
+<span class="o">}</span>
+</code></pre>
+</div>
+
+<div class="language-java highlighter-rouge"><pre class="highlight"><code><span class="o">{</span>
+    <span class="kd">synchronized</span> <span class="o">(</span><span class="n">mNotificationList</span><span class="o">)</span> <span class="o">{</span>
+        <span class="kd">final</span> <span class="n">StatusBarNotification</span> <span class="n">n</span> <span class="o">=</span> <span class="n">r</span><span class="o">.</span><span class="na">sbn</span><span class="o">;</span>
+        <span class="k">if</span> <span class="o">(</span><span class="n">DBG</span><span class="o">)</span> <span class="n">Slog</span><span class="o">.</span><span class="na">d</span><span class="o">(</span><span class="n">TAG</span><span class="o">,</span> <span class="s">"EnqueueNotificationRunnable.run for: "</span> <span class="o">+</span> <span class="n">n</span><span class="o">.</span><span class="na">getKey</span><span class="o">());</span>
+        <span class="n">NotificationRecord</span> <span class="n">old</span> <span class="o">=</span> <span class="n">mNotificationsByKey</span><span class="o">.</span><span class="na">get</span><span class="o">(</span><span class="n">n</span><span class="o">.</span><span class="na">getKey</span><span class="o">());</span>
+        <span class="k">if</span> <span class="o">(</span><span class="n">old</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+            <span class="c1">// Retain ranking information from previous record</span>
+            <span class="n">r</span><span class="o">.</span><span class="na">copyRankingInformation</span><span class="o">(</span><span class="n">old</span><span class="o">);</span>
+        <span class="o">}</span>
+
+        <span class="kd">final</span> <span class="kt">int</span> <span class="n">callingUid</span> <span class="o">=</span> <span class="n">n</span><span class="o">.</span><span class="na">getUid</span><span class="o">();</span>
+        <span class="kd">final</span> <span class="kt">int</span> <span class="n">callingPid</span> <span class="o">=</span> <span class="n">n</span><span class="o">.</span><span class="na">getInitialPid</span><span class="o">();</span>
+        <span class="kd">final</span> <span class="n">Notification</span> <span class="n">notification</span> <span class="o">=</span> <span class="n">n</span><span class="o">.</span><span class="na">getNotification</span><span class="o">();</span>
+        <span class="kd">final</span> <span class="n">String</span> <span class="n">pkg</span> <span class="o">=</span> <span class="n">n</span><span class="o">.</span><span class="na">getPackageName</span><span class="o">();</span>
+        <span class="kd">final</span> <span class="kt">int</span> <span class="n">id</span> <span class="o">=</span> <span class="n">n</span><span class="o">.</span><span class="na">getId</span><span class="o">();</span>
+        <span class="kd">final</span> <span class="n">String</span> <span class="n">tag</span> <span class="o">=</span> <span class="n">n</span><span class="o">.</span><span class="na">getTag</span><span class="o">();</span>
+        <span class="kd">final</span> <span class="kt">boolean</span> <span class="n">isSystemNotification</span> <span class="o">=</span> <span class="n">isUidSystem</span><span class="o">(</span><span class="n">callingUid</span><span class="o">)</span> <span class="o">||</span>
+                <span class="o">(</span><span class="s">"android"</span><span class="o">.</span><span class="na">equals</span><span class="o">(</span><span class="n">pkg</span><span class="o">));</span>
+
+        <span class="c1">// Handle grouped notifications and bail out early if we</span>
+        <span class="c1">// can to avoid extracting signals.</span>
+        <span class="c1">//Notification以群组的方式显示, 就是Android N的Bundled notifications</span>
+        <span class="n">handleGroupedNotificationLocked</span><span class="o">(</span><span class="n">r</span><span class="o">,</span> <span class="n">old</span><span class="o">,</span> <span class="n">callingUid</span><span class="o">,</span> <span class="n">callingPid</span><span class="o">);</span>
+
+        <span class="c1">// This conditional is a dirty hack to limit the logging done on</span>
+        <span class="c1">//     behalf of the download manager without affecting other apps.</span>
+        <span class="c1">//这段解释见Dirty Hack参考文献</span>
+        <span class="c1">//主要是为了防止DownloadManager影响其他的应用, 这是临时的方法解决这个问题. </span>
+        <span class="c1">//那么DownloadManager是怎么影响其他的应用呢？</span>
+        <span class="k">if</span> <span class="o">(!</span><span class="n">pkg</span><span class="o">.</span><span class="na">equals</span><span class="o">(</span><span class="s">"com.android.providers.downloads"</span><span class="o">)</span>
+                <span class="o">||</span> <span class="n">Log</span><span class="o">.</span><span class="na">isLoggable</span><span class="o">(</span><span class="s">"DownloadManager"</span><span class="o">,</span> <span class="n">Log</span><span class="o">.</span><span class="na">VERBOSE</span><span class="o">))</span> <span class="o">{</span>
+            <span class="kt">int</span> <span class="n">enqueueStatus</span> <span class="o">=</span> <span class="n">EVENTLOG_ENQUEUE_STATUS_NEW</span><span class="o">;</span>
+            <span class="k">if</span> <span class="o">(</span><span class="n">old</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+                <span class="n">enqueueStatus</span> <span class="o">=</span> <span class="n">EVENTLOG_ENQUEUE_STATUS_UPDATE</span><span class="o">;</span>
+            <span class="o">}</span>
+            <span class="n">EventLogTags</span><span class="o">.</span><span class="na">writeNotificationEnqueue</span><span class="o">(</span><span class="n">callingUid</span><span class="o">,</span> <span class="n">callingPid</span><span class="o">,</span>
+                    <span class="n">pkg</span><span class="o">,</span> <span class="n">id</span><span class="o">,</span> <span class="n">tag</span><span class="o">,</span> <span class="n">userId</span><span class="o">,</span> <span class="n">notification</span><span class="o">.</span><span class="na">toString</span><span class="o">(),</span>
+                    <span class="n">enqueueStatus</span><span class="o">);</span>
+        <span class="o">}</span>
+
+        <span class="n">mRankingHelper</span><span class="o">.</span><span class="na">extractSignals</span><span class="o">(</span><span class="n">r</span><span class="o">);</span>
+
+        <span class="kd">final</span> <span class="kt">boolean</span> <span class="n">isPackageSuspended</span> <span class="o">=</span> <span class="n">isPackageSuspendedForUser</span><span class="o">(</span><span class="n">pkg</span><span class="o">,</span> <span class="n">callingUid</span><span class="o">);</span>
+
+        <span class="c1">// blocked apps</span>
+        <span class="c1">//阻止某些app的通知, 如果的通知的重要性为NONE, 当前应用不被允许弹出通知, 或者当前的应用没有权限, </span>
+        <span class="c1">//同时不是系统的通知</span>
+        <span class="k">if</span> <span class="o">(</span><span class="n">r</span><span class="o">.</span><span class="na">getImportance</span><span class="o">()</span> <span class="o">==</span> <span class="n">NotificationListenerService</span><span class="o">.</span><span class="na">Ranking</span><span class="o">.</span><span class="na">IMPORTANCE_NONE</span>
+                <span class="o">||</span> <span class="o">!</span><span class="n">noteNotificationOp</span><span class="o">(</span><span class="n">pkg</span><span class="o">,</span> <span class="n">callingUid</span><span class="o">)</span> <span class="o">||</span> <span class="n">isPackageSuspended</span><span class="o">)</span> <span class="o">{</span>
+            <span class="k">if</span> <span class="o">(!</span><span class="n">isSystemNotification</span><span class="o">)</span> <span class="o">{</span>
+                <span class="k">if</span> <span class="o">(</span><span class="n">isPackageSuspended</span><span class="o">)</span> <span class="o">{</span>
+                    <span class="n">Slog</span><span class="o">.</span><span class="na">e</span><span class="o">(</span><span class="n">TAG</span><span class="o">,</span> <span class="s">"Suppressing notification from package due to package "</span>
+                            <span class="o">+</span> <span class="s">"suspended by administrator."</span><span class="o">);</span>
+                    <span class="n">mUsageStats</span><span class="o">.</span><span class="na">registerSuspendedByAdmin</span><span class="o">(</span><span class="n">r</span><span class="o">);</span>
+                <span class="o">}</span> <span class="k">else</span> <span class="o">{</span>
+                    <span class="n">Slog</span><span class="o">.</span><span class="na">e</span><span class="o">(</span><span class="n">TAG</span><span class="o">,</span> <span class="s">"Suppressing notification from package by user request."</span><span class="o">);</span>
+                    <span class="n">mUsageStats</span><span class="o">.</span><span class="na">registerBlocked</span><span class="o">(</span><span class="n">r</span><span class="o">);</span>
+                <span class="o">}</span>
+                <span class="k">return</span><span class="o">;</span>
+            <span class="o">}</span>
+        <span class="o">}</span>
+
+        <span class="c1">// tell the ranker service about the notification</span>
+        <span class="k">if</span> <span class="o">(</span><span class="n">mRankerServices</span><span class="o">.</span><span class="na">isEnabled</span><span class="o">())</span> <span class="o">{</span>
+            <span class="n">mRankerServices</span><span class="o">.</span><span class="na">onNotificationEnqueued</span><span class="o">(</span><span class="n">r</span><span class="o">);</span>
+            <span class="c1">// TODO delay the code below here for 100ms or until there is an answer</span>
+        <span class="o">}</span>
+
+
+        <span class="kt">int</span> <span class="n">index</span> <span class="o">=</span> <span class="n">indexOfNotificationLocked</span><span class="o">(</span><span class="n">n</span><span class="o">.</span><span class="na">getKey</span><span class="o">());</span>
+        <span class="k">if</span> <span class="o">(</span><span class="n">index</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="o">)</span> <span class="o">{</span>
+            <span class="n">mNotificationList</span><span class="o">.</span><span class="na">add</span><span class="o">(</span><span class="n">r</span><span class="o">);</span>
+            <span class="n">mUsageStats</span><span class="o">.</span><span class="na">registerPostedByApp</span><span class="o">(</span><span class="n">r</span><span class="o">);</span>
+        <span class="o">}</span> <span class="k">else</span> <span class="o">{</span>
+            <span class="n">old</span> <span class="o">=</span> <span class="n">mNotificationList</span><span class="o">.</span><span class="na">get</span><span class="o">(</span><span class="n">index</span><span class="o">);</span>
+            <span class="n">mNotificationList</span><span class="o">.</span><span class="na">set</span><span class="o">(</span><span class="n">index</span><span class="o">,</span> <span class="n">r</span><span class="o">);</span>
+            <span class="n">mUsageStats</span><span class="o">.</span><span class="na">registerUpdatedByApp</span><span class="o">(</span><span class="n">r</span><span class="o">,</span> <span class="n">old</span><span class="o">);</span>
+            <span class="c1">// Make sure we don't lose the foreground service state.</span>
+            <span class="n">notification</span><span class="o">.</span><span class="na">flags</span> <span class="o">|=</span>
+                    <span class="n">old</span><span class="o">.</span><span class="na">getNotification</span><span class="o">().</span><span class="na">flags</span> <span class="o">&amp;</span> <span class="n">Notification</span><span class="o">.</span><span class="na">FLAG_FOREGROUND_SERVICE</span><span class="o">;</span>
+            <span class="n">r</span><span class="o">.</span><span class="na">isUpdate</span> <span class="o">=</span> <span class="kc">true</span><span class="o">;</span>
+        <span class="o">}</span>
+
+        <span class="n">mNotificationsByKey</span><span class="o">.</span><span class="na">put</span><span class="o">(</span><span class="n">n</span><span class="o">.</span><span class="na">getKey</span><span class="o">(),</span> <span class="n">r</span><span class="o">);</span>
+
+        <span class="c1">// Ensure if this is a foreground service that the proper additional</span>
+        <span class="c1">// flags are set.</span>
+        <span class="k">if</span> <span class="o">((</span><span class="n">notification</span><span class="o">.</span><span class="na">flags</span> <span class="o">&amp;</span> <span class="n">Notification</span><span class="o">.</span><span class="na">FLAG_FOREGROUND_SERVICE</span><span class="o">)</span> <span class="o">!=</span> <span class="mi">0</span><span class="o">)</span> <span class="o">{</span>
+            <span class="n">notification</span><span class="o">.</span><span class="na">flags</span> <span class="o">|=</span> <span class="n">Notification</span><span class="o">.</span><span class="na">FLAG_ONGOING_EVENT</span>
+                    <span class="o">|</span> <span class="n">Notification</span><span class="o">.</span><span class="na">FLAG_NO_CLEAR</span><span class="o">;</span>
+        <span class="o">}</span>
+
+        <span class="n">applyZenModeLocked</span><span class="o">(</span><span class="n">r</span><span class="o">);</span>
+        <span class="n">mRankingHelper</span><span class="o">.</span><span class="na">sort</span><span class="o">(</span><span class="n">mNotificationList</span><span class="o">);</span>
+
+        <span class="k">if</span> <span class="o">(</span><span class="n">notification</span><span class="o">.</span><span class="na">getSmallIcon</span><span class="o">()</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+            <span class="n">StatusBarNotification</span> <span class="n">oldSbn</span> <span class="o">=</span> <span class="o">(</span><span class="n">old</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span> <span class="o">?</span> <span class="n">old</span><span class="o">.</span><span class="na">sbn</span> <span class="o">:</span> <span class="kc">null</span><span class="o">;</span>
+            <span class="n">mListeners</span><span class="o">.</span><span class="na">notifyPostedLocked</span><span class="o">(</span><span class="n">n</span><span class="o">,</span> <span class="n">oldSbn</span><span class="o">);</span>
+        <span class="o">}</span> <span class="k">else</span> <span class="o">{</span>
+            <span class="n">Slog</span><span class="o">.</span><span class="na">e</span><span class="o">(</span><span class="n">TAG</span><span class="o">,</span> <span class="s">"Not posting notification without small icon: "</span> <span class="o">+</span> <span class="n">notification</span><span class="o">);</span>
+            <span class="k">if</span> <span class="o">(</span><span class="n">old</span> <span class="o">!=</span> <span class="kc">null</span> <span class="o">&amp;&amp;</span> <span class="o">!</span><span class="n">old</span><span class="o">.</span><span class="na">isCanceled</span><span class="o">)</span> <span class="o">{</span>
+                <span class="n">mListeners</span><span class="o">.</span><span class="na">notifyRemovedLocked</span><span class="o">(</span><span class="n">n</span><span class="o">);</span>
+            <span class="o">}</span>
+            <span class="c1">// ATTENTION: in a future release we will bail out here</span>
+            <span class="c1">// so that we do not play sounds, show lights, etc. for invalid</span>
+            <span class="c1">// notifications</span>
+            <span class="n">Slog</span><span class="o">.</span><span class="na">e</span><span class="o">(</span><span class="n">TAG</span><span class="o">,</span> <span class="s">"WARNING: In a future release this will crash the app: "</span>
+                    <span class="o">+</span> <span class="n">n</span><span class="o">.</span><span class="na">getPackageName</span><span class="o">());</span>
+        <span class="o">}</span>
+
+        <span class="n">buzzBeepBlinkLocked</span><span class="o">(</span><span class="n">r</span><span class="o">);</span>
+    <span class="o">}</span>
+<span class="o">}</span>
+
+</code></pre>
+</div>
+
+<div class="language-java highlighter-rouge"><pre class="highlight"><code><span class="kt">void</span> <span class="nf">buzzBeepBlinkLocked</span><span class="o">(</span><span class="n">NotificationRecord</span> <span class="n">record</span><span class="o">)</span> <span class="o">{</span>
+    <span class="kt">boolean</span> <span class="n">buzz</span> <span class="o">=</span> <span class="kc">false</span><span class="o">;</span>
+    <span class="kt">boolean</span> <span class="n">beep</span> <span class="o">=</span> <span class="kc">false</span><span class="o">;</span>
+    <span class="kt">boolean</span> <span class="n">blink</span> <span class="o">=</span> <span class="kc">false</span><span class="o">;</span>
+
+    <span class="kd">final</span> <span class="n">Notification</span> <span class="n">notification</span> <span class="o">=</span> <span class="n">record</span><span class="o">.</span><span class="na">sbn</span><span class="o">.</span><span class="na">getNotification</span><span class="o">();</span>
+    <span class="kd">final</span> <span class="n">String</span> <span class="n">key</span> <span class="o">=</span> <span class="n">record</span><span class="o">.</span><span class="na">getKey</span><span class="o">();</span>
+
+    <span class="c1">// Should this notification make noise, vibe, or use the LED?</span>
+    <span class="kd">final</span> <span class="kt">boolean</span> <span class="n">aboveThreshold</span> <span class="o">=</span> <span class="n">record</span><span class="o">.</span><span class="na">getImportance</span><span class="o">()</span> <span class="o">&gt;=</span> <span class="n">IMPORTANCE_DEFAULT</span><span class="o">;</span>
+    <span class="kd">final</span> <span class="kt">boolean</span> <span class="n">canInterrupt</span> <span class="o">=</span> <span class="n">aboveThreshold</span> <span class="o">&amp;&amp;</span> <span class="o">!</span><span class="n">record</span><span class="o">.</span><span class="na">isIntercepted</span><span class="o">();</span>
+    <span class="k">if</span> <span class="o">(</span><span class="n">DBG</span> <span class="o">||</span> <span class="n">record</span><span class="o">.</span><span class="na">isIntercepted</span><span class="o">())</span>
+        <span class="n">Slog</span><span class="o">.</span><span class="na">v</span><span class="o">(</span><span class="n">TAG</span><span class="o">,</span>
+                <span class="s">"pkg="</span> <span class="o">+</span> <span class="n">record</span><span class="o">.</span><span class="na">sbn</span><span class="o">.</span><span class="na">getPackageName</span><span class="o">()</span> <span class="o">+</span> <span class="s">" canInterrupt="</span> <span class="o">+</span> <span class="n">canInterrupt</span> <span class="o">+</span>
+                        <span class="s">" intercept="</span> <span class="o">+</span> <span class="n">record</span><span class="o">.</span><span class="na">isIntercepted</span><span class="o">()</span>
+        <span class="o">);</span>
+
+    <span class="kd">final</span> <span class="kt">int</span> <span class="n">currentUser</span><span class="o">;</span>
+    <span class="kd">final</span> <span class="kt">long</span> <span class="n">token</span> <span class="o">=</span> <span class="n">Binder</span><span class="o">.</span><span class="na">clearCallingIdentity</span><span class="o">();</span>
+    <span class="k">try</span> <span class="o">{</span>
+        <span class="n">currentUser</span> <span class="o">=</span> <span class="n">ActivityManager</span><span class="o">.</span><span class="na">getCurrentUser</span><span class="o">();</span>
+    <span class="o">}</span> <span class="k">finally</span> <span class="o">{</span>
+        <span class="n">Binder</span><span class="o">.</span><span class="na">restoreCallingIdentity</span><span class="o">(</span><span class="n">token</span><span class="o">);</span>
+    <span class="o">}</span>
+
+    <span class="c1">// If we're not supposed to beep, vibrate, etc. then don't.</span>
+    <span class="kd">final</span> <span class="n">String</span> <span class="n">disableEffects</span> <span class="o">=</span> <span class="n">disableNotificationEffects</span><span class="o">(</span><span class="n">record</span><span class="o">);</span>
+    <span class="k">if</span> <span class="o">(</span><span class="n">disableEffects</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+        <span class="n">ZenLog</span><span class="o">.</span><span class="na">traceDisableEffects</span><span class="o">(</span><span class="n">record</span><span class="o">,</span> <span class="n">disableEffects</span><span class="o">);</span>
+    <span class="o">}</span>
+
+    <span class="c1">// Remember if this notification already owns the notification channels.</span>
+    <span class="kt">boolean</span> <span class="n">wasBeep</span> <span class="o">=</span> <span class="n">key</span> <span class="o">!=</span> <span class="kc">null</span> <span class="o">&amp;&amp;</span> <span class="n">key</span><span class="o">.</span><span class="na">equals</span><span class="o">(</span><span class="n">mSoundNotificationKey</span><span class="o">);</span>
+    <span class="kt">boolean</span> <span class="n">wasBuzz</span> <span class="o">=</span> <span class="n">key</span> <span class="o">!=</span> <span class="kc">null</span> <span class="o">&amp;&amp;</span> <span class="n">key</span><span class="o">.</span><span class="na">equals</span><span class="o">(</span><span class="n">mVibrateNotificationKey</span><span class="o">);</span>
+
+    <span class="c1">// These are set inside the conditional if the notification is allowed to make noise.</span>
+    <span class="kt">boolean</span> <span class="n">hasValidVibrate</span> <span class="o">=</span> <span class="kc">false</span><span class="o">;</span>
+    <span class="kt">boolean</span> <span class="n">hasValidSound</span> <span class="o">=</span> <span class="kc">false</span><span class="o">;</span>
+    <span class="k">if</span> <span class="o">(</span><span class="n">disableEffects</span> <span class="o">==</span> <span class="kc">null</span>
+            <span class="o">&amp;&amp;</span> <span class="o">(</span><span class="n">record</span><span class="o">.</span><span class="na">getUserId</span><span class="o">()</span> <span class="o">==</span> <span class="n">UserHandle</span><span class="o">.</span><span class="na">USER_ALL</span> <span class="o">||</span>
+                <span class="n">record</span><span class="o">.</span><span class="na">getUserId</span><span class="o">()</span> <span class="o">==</span> <span class="n">currentUser</span> <span class="o">||</span>
+                <span class="n">mUserProfiles</span><span class="o">.</span><span class="na">isCurrentProfile</span><span class="o">(</span><span class="n">record</span><span class="o">.</span><span class="na">getUserId</span><span class="o">()))</span>
+            <span class="o">&amp;&amp;</span> <span class="n">canInterrupt</span>
+            <span class="o">&amp;&amp;</span> <span class="n">mSystemReady</span>
+            <span class="o">&amp;&amp;</span> <span class="n">mAudioManager</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+        <span class="k">if</span> <span class="o">(</span><span class="n">DBG</span><span class="o">)</span> <span class="n">Slog</span><span class="o">.</span><span class="na">v</span><span class="o">(</span><span class="n">TAG</span><span class="o">,</span> <span class="s">"Interrupting!"</span><span class="o">);</span>
+
+        <span class="c1">// should we use the default notification sound? (indicated either by</span>
+        <span class="c1">// DEFAULT_SOUND or because notification.sound is pointing at</span>
+        <span class="c1">// Settings.System.NOTIFICATION_SOUND)</span>
+        <span class="kd">final</span> <span class="kt">boolean</span> <span class="n">useDefaultSound</span> <span class="o">=</span>
+               <span class="o">(</span><span class="n">notification</span><span class="o">.</span><span class="na">defaults</span> <span class="o">&amp;</span> <span class="n">Notification</span><span class="o">.</span><span class="na">DEFAULT_SOUND</span><span class="o">)</span> <span class="o">!=</span> <span class="mi">0</span> <span class="o">||</span>
+                       <span class="n">Settings</span><span class="o">.</span><span class="na">System</span><span class="o">.</span><span class="na">DEFAULT_NOTIFICATION_URI</span>
+                               <span class="o">.</span><span class="na">equals</span><span class="o">(</span><span class="n">notification</span><span class="o">.</span><span class="na">sound</span><span class="o">);</span>
+
+        <span class="n">Uri</span> <span class="n">soundUri</span> <span class="o">=</span> <span class="kc">null</span><span class="o">;</span>
+        <span class="k">if</span> <span class="o">(</span><span class="n">useDefaultSound</span><span class="o">)</span> <span class="o">{</span>
+            <span class="n">soundUri</span> <span class="o">=</span> <span class="n">Settings</span><span class="o">.</span><span class="na">System</span><span class="o">.</span><span class="na">DEFAULT_NOTIFICATION_URI</span><span class="o">;</span>
+
+            <span class="c1">// check to see if the default notification sound is silent</span>
+            <span class="n">ContentResolver</span> <span class="n">resolver</span> <span class="o">=</span> <span class="n">getContext</span><span class="o">().</span><span class="na">getContentResolver</span><span class="o">();</span>
+            <span class="n">hasValidSound</span> <span class="o">=</span> <span class="n">Settings</span><span class="o">.</span><span class="na">System</span><span class="o">.</span><span class="na">getString</span><span class="o">(</span><span class="n">resolver</span><span class="o">,</span>
+                   <span class="n">Settings</span><span class="o">.</span><span class="na">System</span><span class="o">.</span><span class="na">NOTIFICATION_SOUND</span><span class="o">)</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">;</span>
+        <span class="o">}</span> <span class="k">else</span> <span class="k">if</span> <span class="o">(</span><span class="n">notification</span><span class="o">.</span><span class="na">sound</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+            <span class="n">soundUri</span> <span class="o">=</span> <span class="n">notification</span><span class="o">.</span><span class="na">sound</span><span class="o">;</span>
+            <span class="n">hasValidSound</span> <span class="o">=</span> <span class="o">(</span><span class="n">soundUri</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">);</span>
+        <span class="o">}</span>
+
+        <span class="c1">// Does the notification want to specify its own vibration?</span>
+        <span class="kd">final</span> <span class="kt">boolean</span> <span class="n">hasCustomVibrate</span> <span class="o">=</span> <span class="n">notification</span><span class="o">.</span><span class="na">vibrate</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">;</span>
+
+        <span class="c1">// new in 4.2: if there was supposed to be a sound and we're in vibrate</span>
+        <span class="c1">// mode, and no other vibration is specified, we fall back to vibration</span>
+        <span class="kd">final</span> <span class="kt">boolean</span> <span class="n">convertSoundToVibration</span> <span class="o">=</span>
+                <span class="o">!</span><span class="n">hasCustomVibrate</span>
+                        <span class="o">&amp;&amp;</span> <span class="n">hasValidSound</span>
+                        <span class="o">&amp;&amp;</span> <span class="o">(</span><span class="n">mAudioManager</span><span class="o">.</span><span class="na">getRingerModeInternal</span><span class="o">()</span> <span class="o">==</span> <span class="n">AudioManager</span><span class="o">.</span><span class="na">RINGER_MODE_VIBRATE</span><span class="o">);</span>
+
+        <span class="c1">// The DEFAULT_VIBRATE flag trumps any custom vibration AND the fallback.</span>
+        <span class="kd">final</span> <span class="kt">boolean</span> <span class="n">useDefaultVibrate</span> <span class="o">=</span>
+                <span class="o">(</span><span class="n">notification</span><span class="o">.</span><span class="na">defaults</span> <span class="o">&amp;</span> <span class="n">Notification</span><span class="o">.</span><span class="na">DEFAULT_VIBRATE</span><span class="o">)</span> <span class="o">!=</span> <span class="mi">0</span><span class="o">;</span>
+
+        <span class="n">hasValidVibrate</span> <span class="o">=</span> <span class="n">useDefaultVibrate</span> <span class="o">||</span> <span class="n">convertSoundToVibration</span> <span class="o">||</span>
+                <span class="n">hasCustomVibrate</span><span class="o">;</span>
+
+        <span class="c1">// We can alert, and we're allowed to alert, but if the developer asked us to only do</span>
+        <span class="c1">// it once, and we already have, then don't.</span>
+        <span class="k">if</span> <span class="o">(!(</span><span class="n">record</span><span class="o">.</span><span class="na">isUpdate</span>
+                <span class="o">&amp;&amp;</span> <span class="o">(</span><span class="n">notification</span><span class="o">.</span><span class="na">flags</span> <span class="o">&amp;</span> <span class="n">Notification</span><span class="o">.</span><span class="na">FLAG_ONLY_ALERT_ONCE</span><span class="o">)</span> <span class="o">!=</span> <span class="mi">0</span><span class="o">))</span> <span class="o">{</span>
+
+            <span class="n">sendAccessibilityEvent</span><span class="o">(</span><span class="n">notification</span><span class="o">,</span> <span class="n">record</span><span class="o">.</span><span class="na">sbn</span><span class="o">.</span><span class="na">getPackageName</span><span class="o">());</span>
+
+            <span class="k">if</span> <span class="o">(</span><span class="n">hasValidSound</span><span class="o">)</span> <span class="o">{</span>
+                <span class="kt">boolean</span> <span class="n">looping</span> <span class="o">=</span>
+                        <span class="o">(</span><span class="n">notification</span><span class="o">.</span><span class="na">flags</span> <span class="o">&amp;</span> <span class="n">Notification</span><span class="o">.</span><span class="na">FLAG_INSISTENT</span><span class="o">)</span> <span class="o">!=</span> <span class="mi">0</span><span class="o">;</span>
+                <span class="n">AudioAttributes</span> <span class="n">audioAttributes</span> <span class="o">=</span> <span class="n">audioAttributesForNotification</span><span class="o">(</span><span class="n">notification</span><span class="o">);</span>
+                <span class="n">mSoundNotificationKey</span> <span class="o">=</span> <span class="n">key</span><span class="o">;</span>
+                <span class="c1">// do not play notifications if stream volume is 0 (typically because</span>
+                <span class="c1">// ringer mode is silent) or if there is a user of exclusive audio focus</span>
+                <span class="k">if</span> <span class="o">((</span><span class="n">mAudioManager</span><span class="o">.</span><span class="na">getStreamVolume</span><span class="o">(</span>
+                        <span class="n">AudioAttributes</span><span class="o">.</span><span class="na">toLegacyStreamType</span><span class="o">(</span><span class="n">audioAttributes</span><span class="o">))</span> <span class="o">!=</span> <span class="mi">0</span><span class="o">)</span>
+                        <span class="o">&amp;&amp;</span> <span class="o">!</span><span class="n">mAudioManager</span><span class="o">.</span><span class="na">isAudioFocusExclusive</span><span class="o">())</span> <span class="o">{</span>
+                    <span class="kd">final</span> <span class="kt">long</span> <span class="n">identity</span> <span class="o">=</span> <span class="n">Binder</span><span class="o">.</span><span class="na">clearCallingIdentity</span><span class="o">();</span>
+                    <span class="k">try</span> <span class="o">{</span>
+                        <span class="kd">final</span> <span class="n">IRingtonePlayer</span> <span class="n">player</span> <span class="o">=</span>
+                                <span class="n">mAudioManager</span><span class="o">.</span><span class="na">getRingtonePlayer</span><span class="o">();</span>
+                        <span class="k">if</span> <span class="o">(</span><span class="n">player</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+                            <span class="k">if</span> <span class="o">(</span><span class="n">DBG</span><span class="o">)</span> <span class="n">Slog</span><span class="o">.</span><span class="na">v</span><span class="o">(</span><span class="n">TAG</span><span class="o">,</span> <span class="s">"Playing sound "</span> <span class="o">+</span> <span class="n">soundUri</span>
+                                    <span class="o">+</span> <span class="s">" with attributes "</span> <span class="o">+</span> <span class="n">audioAttributes</span><span class="o">);</span>
+                            <span class="n">player</span><span class="o">.</span><span class="na">playAsync</span><span class="o">(</span><span class="n">soundUri</span><span class="o">,</span> <span class="n">record</span><span class="o">.</span><span class="na">sbn</span><span class="o">.</span><span class="na">getUser</span><span class="o">(),</span> <span class="n">looping</span><span class="o">,</span>
+                                    <span class="n">audioAttributes</span><span class="o">);</span>
+                            <span class="n">beep</span> <span class="o">=</span> <span class="kc">true</span><span class="o">;</span>
+                        <span class="o">}</span>
+                    <span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="n">RemoteException</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
+                    <span class="o">}</span> <span class="k">finally</span> <span class="o">{</span>
+                        <span class="n">Binder</span><span class="o">.</span><span class="na">restoreCallingIdentity</span><span class="o">(</span><span class="n">identity</span><span class="o">);</span>
+                    <span class="o">}</span>
+                <span class="o">}</span>
+            <span class="o">}</span>
+
+            <span class="k">if</span> <span class="o">(</span><span class="n">hasValidVibrate</span> <span class="o">&amp;&amp;</span> <span class="o">!(</span><span class="n">mAudioManager</span><span class="o">.</span><span class="na">getRingerModeInternal</span><span class="o">()</span>
+                    <span class="o">==</span> <span class="n">AudioManager</span><span class="o">.</span><span class="na">RINGER_MODE_SILENT</span><span class="o">))</span> <span class="o">{</span>
+                <span class="n">mVibrateNotificationKey</span> <span class="o">=</span> <span class="n">key</span><span class="o">;</span>
+
+                <span class="k">if</span> <span class="o">(</span><span class="n">useDefaultVibrate</span> <span class="o">||</span> <span class="n">convertSoundToVibration</span><span class="o">)</span> <span class="o">{</span>
+                    <span class="c1">// Escalate privileges so we can use the vibrator even if the</span>
+                    <span class="c1">// notifying app does not have the VIBRATE permission.</span>
+                    <span class="kt">long</span> <span class="n">identity</span> <span class="o">=</span> <span class="n">Binder</span><span class="o">.</span><span class="na">clearCallingIdentity</span><span class="o">();</span>
+                    <span class="k">try</span> <span class="o">{</span>
+                        <span class="n">mVibrator</span><span class="o">.</span><span class="na">vibrate</span><span class="o">(</span><span class="n">record</span><span class="o">.</span><span class="na">sbn</span><span class="o">.</span><span class="na">getUid</span><span class="o">(),</span> <span class="n">record</span><span class="o">.</span><span class="na">sbn</span><span class="o">.</span><span class="na">getOpPkg</span><span class="o">(),</span>
+                                <span class="n">useDefaultVibrate</span> <span class="o">?</span> <span class="n">mDefaultVibrationPattern</span>
+                                        <span class="o">:</span> <span class="n">mFallbackVibrationPattern</span><span class="o">,</span>
+                                <span class="o">((</span><span class="n">notification</span><span class="o">.</span><span class="na">flags</span> <span class="o">&amp;</span> <span class="n">Notification</span><span class="o">.</span><span class="na">FLAG_INSISTENT</span><span class="o">)</span> <span class="o">!=</span> <span class="mi">0</span><span class="o">)</span>
+                                        <span class="o">?</span> <span class="mi">0</span><span class="o">:</span> <span class="o">-</span><span class="mi">1</span><span class="o">,</span> <span class="n">audioAttributesForNotification</span><span class="o">(</span><span class="n">notification</span><span class="o">));</span>
+                        <span class="n">buzz</span> <span class="o">=</span> <span class="kc">true</span><span class="o">;</span>
+                    <span class="o">}</span> <span class="k">finally</span> <span class="o">{</span>
+                        <span class="n">Binder</span><span class="o">.</span><span class="na">restoreCallingIdentity</span><span class="o">(</span><span class="n">identity</span><span class="o">);</span>
+                    <span class="o">}</span>
+                <span class="o">}</span> <span class="k">else</span> <span class="k">if</span> <span class="o">(</span><span class="n">notification</span><span class="o">.</span><span class="na">vibrate</span><span class="o">.</span><span class="na">length</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="o">)</span> <span class="o">{</span>
+                    <span class="c1">// If you want your own vibration pattern, you need the VIBRATE</span>
+                    <span class="c1">// permission</span>
+                    <span class="n">mVibrator</span><span class="o">.</span><span class="na">vibrate</span><span class="o">(</span><span class="n">record</span><span class="o">.</span><span class="na">sbn</span><span class="o">.</span><span class="na">getUid</span><span class="o">(),</span> <span class="n">record</span><span class="o">.</span><span class="na">sbn</span><span class="o">.</span><span class="na">getOpPkg</span><span class="o">(),</span>
+                            <span class="n">notification</span><span class="o">.</span><span class="na">vibrate</span><span class="o">,</span>
+                            <span class="o">((</span><span class="n">notification</span><span class="o">.</span><span class="na">flags</span> <span class="o">&amp;</span> <span class="n">Notification</span><span class="o">.</span><span class="na">FLAG_INSISTENT</span><span class="o">)</span> <span class="o">!=</span> <span class="mi">0</span><span class="o">)</span>
+                                    <span class="o">?</span> <span class="mi">0</span><span class="o">:</span> <span class="o">-</span><span class="mi">1</span><span class="o">,</span> <span class="n">audioAttributesForNotification</span><span class="o">(</span><span class="n">notification</span><span class="o">));</span>
+                    <span class="n">buzz</span> <span class="o">=</span> <span class="kc">true</span><span class="o">;</span>
+                <span class="o">}</span>
+            <span class="o">}</span>
+        <span class="o">}</span>
+
+    <span class="o">}</span>
+    <span class="c1">// If a notification is updated to remove the actively playing sound or vibrate,</span>
+    <span class="c1">// cancel that feedback now</span>
+    <span class="k">if</span> <span class="o">(</span><span class="n">wasBeep</span> <span class="o">&amp;&amp;</span> <span class="o">!</span><span class="n">hasValidSound</span><span class="o">)</span> <span class="o">{</span>
+        <span class="n">clearSoundLocked</span><span class="o">();</span>
+    <span class="o">}</span>
+    <span class="k">if</span> <span class="o">(</span><span class="n">wasBuzz</span> <span class="o">&amp;&amp;</span> <span class="o">!</span><span class="n">hasValidVibrate</span><span class="o">)</span> <span class="o">{</span>
+        <span class="n">clearVibrateLocked</span><span class="o">();</span>
+    <span class="o">}</span>
+
+    <span class="c1">// light</span>
+    <span class="c1">// release the light</span>
+    <span class="kt">boolean</span> <span class="n">wasShowLights</span> <span class="o">=</span> <span class="n">mLights</span><span class="o">.</span><span class="na">remove</span><span class="o">(</span><span class="n">key</span><span class="o">);</span>
+    <span class="k">if</span> <span class="o">((</span><span class="n">notification</span><span class="o">.</span><span class="na">flags</span> <span class="o">&amp;</span> <span class="n">Notification</span><span class="o">.</span><span class="na">FLAG_SHOW_LIGHTS</span><span class="o">)</span> <span class="o">!=</span> <span class="mi">0</span> <span class="o">&amp;&amp;</span> <span class="n">aboveThreshold</span>
+            <span class="o">&amp;&amp;</span> <span class="o">((</span><span class="n">record</span><span class="o">.</span><span class="na">getSuppressedVisualEffects</span><span class="o">()</span>
+            <span class="o">&amp;</span> <span class="n">NotificationListenerService</span><span class="o">.</span><span class="na">SUPPRESSED_EFFECT_SCREEN_OFF</span><span class="o">)</span> <span class="o">==</span> <span class="mi">0</span><span class="o">))</span> <span class="o">{</span>
+        <span class="n">mLights</span><span class="o">.</span><span class="na">add</span><span class="o">(</span><span class="n">key</span><span class="o">);</span>
+        <span class="n">updateLightsLocked</span><span class="o">();</span>
+        <span class="k">if</span> <span class="o">(</span><span class="n">mUseAttentionLight</span><span class="o">)</span> <span class="o">{</span>
+            <span class="n">mAttentionLight</span><span class="o">.</span><span class="na">pulse</span><span class="o">();</span>
+        <span class="o">}</span>
+        <span class="n">blink</span> <span class="o">=</span> <span class="kc">true</span><span class="o">;</span>
+    <span class="o">}</span> <span class="k">else</span> <span class="k">if</span> <span class="o">(</span><span class="n">wasShowLights</span><span class="o">)</span> <span class="o">{</span>
+        <span class="n">updateLightsLocked</span><span class="o">();</span>
+    <span class="o">}</span>
+    <span class="k">if</span> <span class="o">(</span><span class="n">buzz</span> <span class="o">||</span> <span class="n">beep</span> <span class="o">||</span> <span class="n">blink</span><span class="o">)</span> <span class="o">{</span>
+        <span class="k">if</span> <span class="o">(((</span><span class="n">record</span><span class="o">.</span><span class="na">getSuppressedVisualEffects</span><span class="o">()</span>
+                <span class="o">&amp;</span> <span class="n">NotificationListenerService</span><span class="o">.</span><span class="na">SUPPRESSED_EFFECT_SCREEN_OFF</span><span class="o">)</span> <span class="o">!=</span> <span class="mi">0</span><span class="o">))</span> <span class="o">{</span>
+            <span class="k">if</span> <span class="o">(</span><span class="n">DBG</span><span class="o">)</span> <span class="n">Slog</span><span class="o">.</span><span class="na">v</span><span class="o">(</span><span class="n">TAG</span><span class="o">,</span> <span class="s">"Suppressed SystemUI from triggering screen on"</span><span class="o">);</span>
+        <span class="o">}</span> <span class="k">else</span> <span class="o">{</span>
+            <span class="n">EventLogTags</span><span class="o">.</span><span class="na">writeNotificationAlert</span><span class="o">(</span><span class="n">key</span><span class="o">,</span>
+                    <span class="n">buzz</span> <span class="o">?</span> <span class="mi">1</span> <span class="o">:</span> <span class="mi">0</span><span class="o">,</span> <span class="n">beep</span> <span class="o">?</span> <span class="mi">1</span> <span class="o">:</span> <span class="mi">0</span><span class="o">,</span> <span class="n">blink</span> <span class="o">?</span> <span class="mi">1</span> <span class="o">:</span> <span class="mi">0</span><span class="o">);</span>
+            <span class="n">mHandler</span><span class="o">.</span><span class="na">post</span><span class="o">(</span><span class="n">mBuzzBeepBlinked</span><span class="o">);</span>
+        <span class="o">}</span>
+    <span class="o">}</span>
+<span class="o">}</span>
+
+
+</code></pre>
+</div>
+
+<div class="language-java highlighter-rouge"><pre class="highlight"><code><span class="kt">void</span> <span class="nf">buzzBeepBlinkLocked</span><span class="o">(</span><span class="n">NotificationRecord</span> <span class="n">record</span><span class="o">)</span> 
+</code></pre>
+</div>
+
+<div class="language-java highlighter-rouge"><pre class="highlight"><code><span class="n">mHandler</span><span class="o">.</span><span class="na">post</span><span class="o">(</span><span class="n">mBuzzBeepBlinked</span><span class="o">)</span>
+</code></pre>
+</div>
+
+<div class="language-java highlighter-rouge"><pre class="highlight"><code><span class="n">NotificationManagerService</span><span class="o">.</span><span class="na">java</span>
+<span class="kd">private</span> <span class="kd">final</span> <span class="n">Runnable</span> <span class="n">mBuzzBeepBlinked</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Runnable</span><span class="o">()</span> <span class="o">{</span>
+    <span class="nd">@Override</span>
+    <span class="kd">public</span> <span class="kt">void</span> <span class="nf">run</span><span class="o">()</span> <span class="o">{</span>
+        <span class="k">if</span> <span class="o">(</span><span class="n">mStatusBar</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+            <span class="n">mStatusBar</span><span class="o">.</span><span class="na">buzzBeepBlinked</span><span class="o">();</span>
+        <span class="o">}</span>
+    <span class="o">}</span>
+<span class="o">};</span>
+</code></pre>
+</div>
+
+<div class="language-java highlighter-rouge"><pre class="highlight"><code><span class="n">StatusBarManagerInternal</span><span class="o">.</span><span class="na">java</span>
+<span class="kt">void</span> <span class="nf">buzzBeepBlinked</span><span class="o">();</span>
+</code></pre>
+</div>
+
+<div class="language-java highlighter-rouge"><pre class="highlight"><code><span class="n">StatusBarManagerService</span><span class="o">.</span><span class="na">java</span>
+<span class="kd">public</span> <span class="kt">void</span> <span class="nf">buzzBeepBlinked</span><span class="o">()</span> <span class="o">{</span>
+    <span class="k">if</span> <span class="o">(</span><span class="n">mBar</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+        <span class="k">try</span> <span class="o">{</span>
+            <span class="n">mBar</span><span class="o">.</span><span class="na">buzzBeepBlinked</span><span class="o">();</span>
+        <span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="n">RemoteException</span> <span class="n">ex</span><span class="o">)</span> <span class="o">{</span>
+        <span class="o">}</span>
+    <span class="o">}</span>
+<span class="o">}</span>
+
+</code></pre>
+</div>
+
+<p>负责通知灯闪烁的方法</p>
+<div class="language-java highlighter-rouge"><pre class="highlight"><code><span class="n">IStatusBar</span><span class="o">.</span><span class="na">aidl</span>
+<span class="kt">void</span> <span class="nf">buzzBeepBlinked</span><span class="o">();</span>
+
+</code></pre>
+</div>
+
+<div class="language-java highlighter-rouge"><pre class="highlight"><code><span class="n">CommandQueue</span><span class="o">.</span><span class="na">java</span>
+<span class="kd">public</span> <span class="kt">void</span> <span class="nf">buzzBeepBlinked</span><span class="o">()</span> 
+
+</code></pre>
+</div>
+
+<div class="language-java highlighter-rouge"><pre class="highlight"><code><span class="n">CommandQueue</span><span class="o">.</span><span class="na">java</span> <span class="n">CallBacks</span>
+<span class="kt">void</span> <span class="nf">buzzBeepBlinked</span><span class="o">();</span>
+
+</code></pre>
+</div>
+
+<div class="language-java highlighter-rouge"><pre class="highlight"><code><span class="n">PhoneStatusBar</span><span class="o">.</span><span class="na">java</span>
+<span class="kd">public</span> <span class="kt">void</span> <span class="nf">buzzBeepBlinked</span><span class="o">()</span>
+</code></pre>
+</div>
+
+<div class="language-java highlighter-rouge"><pre class="highlight"><code><span class="n">PhoneStatusBar</span><span class="o">.</span><span class="na">java</span>
+<span class="kd">public</span> <span class="kt">void</span> <span class="nf">fireBuzzBeepBlinked</span><span class="o">()</span>
+</code></pre>
+</div>
+
+<div class="language-java highlighter-rouge"><pre class="highlight"><code><span class="n">DozeHost</span><span class="o">.</span><span class="na">java</span>
+<span class="kt">void</span> <span class="nf">onBuzzBeepBlinked</span><span class="o">()</span>
+
+</code></pre>
+</div>
+
+<div class="language-java highlighter-rouge"><pre class="highlight"><code><span class="n">DozeService</span><span class="o">.</span><span class="na">java</span>
+<span class="kd">public</span> <span class="kt">void</span> <span class="nf">onBuzzBeepBlinked</span><span class="o">()</span> <span class="o">{</span>
+    <span class="k">if</span> <span class="o">(</span><span class="n">DEBUG</span><span class="o">)</span> <span class="n">Log</span><span class="o">.</span><span class="na">d</span><span class="o">(</span><span class="n">mTag</span><span class="o">,</span> <span class="s">"onBuzzBeepBlinked"</span><span class="o">);</span>
+    <span class="n">updateNotificationPulse</span><span class="o">(</span><span class="n">System</span><span class="o">.</span><span class="na">currentTimeMillis</span><span class="o">());</span>
+<span class="o">}</span>
+
+</code></pre>
+</div>
+
+<div class="language-java highlighter-rouge"><pre class="highlight"><code><span class="n">DozeService</span><span class="o">.</span><span class="na">java</span>
+<span class="kd">private</span> <span class="kt">void</span> <span class="nf">updateNotificationPulse</span><span class="o">(</span><span class="kt">long</span> <span class="n">notificationTimeMs</span><span class="o">)</span>
+</code></pre>
+</div>
+
+<p>通知灯闪烁的地方, 不太确定?????</p>
+<div class="language-java highlighter-rouge"><pre class="highlight"><code><span class="n">DozeService</span><span class="o">.</span><span class="na">java</span>
+<span class="kd">private</span> <span class="kt">void</span> <span class="nf">rescheduleNotificationPulse</span><span class="o">(</span><span class="kt">boolean</span> <span class="n">predicate</span><span class="o">)</span> 
+</code></pre>
+</div>
+
+<div class="language-java highlighter-rouge"><pre class="highlight"><code><span class="n">AlarmManager</span><span class="o">.</span><span class="na">java</span>
+<span class="kd">public</span> <span class="kt">void</span> <span class="nf">setExact</span><span class="o">(</span><span class="kt">int</span> <span class="n">type</span><span class="o">,</span> <span class="kt">long</span> <span class="n">triggerAtMillis</span><span class="o">,</span> <span class="n">PendingIntent</span> <span class="n">operation</span><span class="o">)</span>
+</code></pre>
+</div>
+
+<div class="language-java highlighter-rouge"><pre class="highlight"><code><span class="n">AlarmManager</span><span class="o">.</span><span class="na">java</span>
+<span class="kd">private</span> <span class="kt">void</span> <span class="nf">setImpl</span><span class="o">(</span><span class="kt">int</span> <span class="n">type</span><span class="o">,</span> <span class="kt">long</span> <span class="n">triggerAtMillis</span><span class="o">,</span> <span class="kt">long</span> <span class="n">windowMillis</span><span class="o">,</span> <span class="kt">long</span> <span class="n">intervalMillis</span><span class="o">,</span>
+        <span class="kt">int</span> <span class="n">flags</span><span class="o">,</span> <span class="n">PendingIntent</span> <span class="n">operation</span><span class="o">,</span> <span class="kd">final</span> <span class="n">OnAlarmListener</span> <span class="n">listener</span><span class="o">,</span> <span class="n">String</span> <span class="n">listenerTag</span><span class="o">,</span>
+        <span class="n">Handler</span> <span class="n">targetHandler</span><span class="o">,</span> <span class="n">WorkSource</span> <span class="n">workSource</span><span class="o">,</span> <span class="n">AlarmClockInfo</span> <span class="n">alarmClock</span><span class="o">)</span> 
+</code></pre>
+</div>
+
+<div class="language-java highlighter-rouge"><pre class="highlight"><code><span class="n">IAlarmManager</span><span class="o">.</span><span class="na">aidl</span>
+<span class="kt">void</span> <span class="nf">set</span><span class="o">(</span><span class="n">String</span> <span class="n">callingPackage</span><span class="o">,</span> <span class="kt">int</span> <span class="n">type</span><span class="o">,</span> <span class="kt">long</span> <span class="n">triggerAtTime</span><span class="o">,</span> <span class="kt">long</span> <span class="n">windowLength</span><span class="o">,</span>
+            <span class="kt">long</span> <span class="n">interval</span><span class="o">,</span> <span class="kt">int</span> <span class="n">flags</span><span class="o">,</span> <span class="n">in</span> <span class="n">PendingIntent</span> <span class="n">operation</span><span class="o">,</span> <span class="n">in</span> <span class="n">IAlarmListener</span> <span class="n">listener</span><span class="o">,</span>
+            <span class="n">String</span> <span class="n">listenerTag</span><span class="o">,</span> <span class="n">in</span> <span class="n">WorkSource</span> <span class="n">workSource</span><span class="o">,</span> <span class="n">in</span> <span class="n">AlarmManager</span><span class="o">.</span><span class="na">AlarmClockInfo</span> <span class="n">alarmClock</span><span class="o">)</span>
+</code></pre>
+</div>
+
+<h3 id="播放声音的地方">播放声音的地方</h3>
+
+<div class="language-java highlighter-rouge"><pre class="highlight"><code><span class="k">if</span> <span class="o">(</span><span class="n">hasValidSound</span><span class="o">)</span> <span class="o">{</span> <span class="c1">//确定设置了声音, 如果是静音模式就不必播放呻吟了</span>
+    <span class="kt">boolean</span> <span class="n">looping</span> <span class="o">=</span>
+            <span class="o">(</span><span class="n">notification</span><span class="o">.</span><span class="na">flags</span> <span class="o">&amp;</span> <span class="n">Notification</span><span class="o">.</span><span class="na">FLAG_INSISTENT</span><span class="o">)</span> <span class="o">!=</span> <span class="mi">0</span><span class="o">;</span>
+    <span class="n">AudioAttributes</span> <span class="n">audioAttributes</span> <span class="o">=</span> <span class="n">audioAttributesForNotification</span><span class="o">(</span><span class="n">notification</span><span class="o">);</span>
+    <span class="n">mSoundNotificationKey</span> <span class="o">=</span> <span class="n">key</span><span class="o">;</span>
+    <span class="c1">// do not play notifications if stream volume is 0 (typically because</span>
+    <span class="c1">// ringer mode is silent) or if there is a user of exclusive audio focus</span>
+    <span class="k">if</span> <span class="o">((</span><span class="n">mAudioManager</span><span class="o">.</span><span class="na">getStreamVolume</span><span class="o">(</span>
+            <span class="n">AudioAttributes</span><span class="o">.</span><span class="na">toLegacyStreamType</span><span class="o">(</span><span class="n">audioAttributes</span><span class="o">))</span> <span class="o">!=</span> <span class="mi">0</span><span class="o">)</span>
+            <span class="o">&amp;&amp;</span> <span class="o">!</span><span class="n">mAudioManager</span><span class="o">.</span><span class="na">isAudioFocusExclusive</span><span class="o">())</span> <span class="o">{</span>
+        <span class="kd">final</span> <span class="kt">long</span> <span class="n">identity</span> <span class="o">=</span> <span class="n">Binder</span><span class="o">.</span><span class="na">clearCallingIdentity</span><span class="o">();</span>
+        <span class="k">try</span> <span class="o">{</span>
+            <span class="kd">final</span> <span class="n">IRingtonePlayer</span> <span class="n">player</span> <span class="o">=</span>
+                    <span class="n">mAudioManager</span><span class="o">.</span><span class="na">getRingtonePlayer</span><span class="o">();</span> <span class="c1">//获取RingtonePlayer对象</span>
+            <span class="k">if</span> <span class="o">(</span><span class="n">player</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+                <span class="k">if</span> <span class="o">(</span><span class="n">DBG</span><span class="o">)</span> <span class="n">Slog</span><span class="o">.</span><span class="na">v</span><span class="o">(</span><span class="n">TAG</span><span class="o">,</span> <span class="s">"Playing sound "</span> <span class="o">+</span> <span class="n">soundUri</span>
+                        <span class="o">+</span> <span class="s">" with attributes "</span> <span class="o">+</span> <span class="n">audioAttributes</span><span class="o">);</span>
+                <span class="n">player</span><span class="o">.</span><span class="na">playAsync</span><span class="o">(</span><span class="n">soundUri</span><span class="o">,</span> <span class="n">record</span><span class="o">.</span><span class="na">sbn</span><span class="o">.</span><span class="na">getUser</span><span class="o">(),</span> <span class="n">looping</span><span class="o">,</span>
+                        <span class="n">audioAttributes</span><span class="o">);</span> <span class="c1">//转至SystemUI里的RingtonePlayer播放声音</span>
+                <span class="n">beep</span> <span class="o">=</span> <span class="kc">true</span><span class="o">;</span>
+            <span class="o">}</span>
+        <span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="n">RemoteException</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
+        <span class="o">}</span> <span class="k">finally</span> <span class="o">{</span>
+            <span class="n">Binder</span><span class="o">.</span><span class="na">restoreCallingIdentity</span><span class="o">(</span><span class="n">identity</span><span class="o">);</span>
+        <span class="o">}</span>
+    <span class="o">}</span>
+<span class="o">}</span>
+</code></pre>
+</div>
+
+<div class="language-java highlighter-rouge"><pre class="highlight"><code><span class="kd">public</span> <span class="kt">void</span> <span class="nf">playAsync</span><span class="o">(</span><span class="n">Uri</span> <span class="n">uri</span><span class="o">,</span> <span class="n">UserHandle</span> <span class="n">user</span><span class="o">,</span> <span class="kt">boolean</span> <span class="n">looping</span><span class="o">,</span> <span class="n">AudioAttributes</span> <span class="n">aa</span><span class="o">)</span> 
+
+</code></pre>
+</div>
+
+<div class="language-java highlighter-rouge"><pre class="highlight"><code><span class="kd">public</span> <span class="kt">void</span> <span class="nf">play</span><span class="o">(</span><span class="n">Context</span> <span class="n">context</span><span class="o">,</span> <span class="n">Uri</span> <span class="n">uri</span><span class="o">,</span> <span class="kt">boolean</span> <span class="n">looping</span><span class="o">,</span> <span class="n">AudioAttributes</span> <span class="n">attributes</span><span class="o">)</span>
+</code></pre>
+</div>
+
+<div class="language-java highlighter-rouge"><pre class="highlight"><code><span class="kd">private</span> <span class="kt">void</span> <span class="nf">enqueueLocked</span><span class="o">(</span><span class="n">Command</span> <span class="n">cmd</span><span class="o">)</span>
+</code></pre>
+</div>
+
+<div class="language-java highlighter-rouge"><pre class="highlight"><code> <span class="kd">public</span> <span class="kt">void</span> <span class="nf">run</span><span class="o">()</span>
+</code></pre>
+</div>
+
+<div class="language-java highlighter-rouge"><pre class="highlight"><code><span class="kd">private</span> <span class="kt">void</span> <span class="nf">startSound</span><span class="o">(</span><span class="n">Command</span> <span class="n">cmd</span><span class="o">)</span>
+</code></pre>
+</div>
+
+<div class="language-java highlighter-rouge"><pre class="highlight"><code><span class="n">CreationAndCompletionThread</span><span class="o">.</span><span class="na">java</span>
+<span class="kd">public</span> <span class="kt">void</span> <span class="nf">run</span><span class="o">()</span>
+
+</code></pre>
+</div>
+
+<h3 id="震动的地方">震动的地方</h3>
+
+<div class="language-java highlighter-rouge"><pre class="highlight"><code><span class="k">if</span> <span class="o">(</span><span class="n">hasValidVibrate</span> <span class="o">&amp;&amp;</span> <span class="o">!(</span><span class="n">mAudioManager</span><span class="o">.</span><span class="na">getRingerModeInternal</span><span class="o">()</span>
+        <span class="o">==</span> <span class="n">AudioManager</span><span class="o">.</span><span class="na">RINGER_MODE_SILENT</span><span class="o">))</span> <span class="o">{</span>
+    <span class="n">mVibrateNotificationKey</span> <span class="o">=</span> <span class="n">key</span><span class="o">;</span>
+
+    <span class="k">if</span> <span class="o">(</span><span class="n">useDefaultVibrate</span> <span class="o">||</span> <span class="n">convertSoundToVibration</span><span class="o">)</span> <span class="o">{</span>
+        <span class="c1">// Escalate privileges so we can use the vibrator even if the</span>
+        <span class="c1">// notifying app does not have the VIBRATE permission.</span>
+        <span class="kt">long</span> <span class="n">identity</span> <span class="o">=</span> <span class="n">Binder</span><span class="o">.</span><span class="na">clearCallingIdentity</span><span class="o">();</span>
+        <span class="k">try</span> <span class="o">{</span>
+            <span class="n">mVibrator</span><span class="o">.</span><span class="na">vibrate</span><span class="o">(</span><span class="n">record</span><span class="o">.</span><span class="na">sbn</span><span class="o">.</span><span class="na">getUid</span><span class="o">(),</span> <span class="n">record</span><span class="o">.</span><span class="na">sbn</span><span class="o">.</span><span class="na">getOpPkg</span><span class="o">(),</span>
+                    <span class="n">useDefaultVibrate</span> <span class="o">?</span> <span class="n">mDefaultVibrationPattern</span>
+                            <span class="o">:</span> <span class="n">mFallbackVibrationPattern</span><span class="o">,</span>
+                    <span class="o">((</span><span class="n">notification</span><span class="o">.</span><span class="na">flags</span> <span class="o">&amp;</span> <span class="n">Notification</span><span class="o">.</span><span class="na">FLAG_INSISTENT</span><span class="o">)</span> <span class="o">!=</span> <span class="mi">0</span><span class="o">)</span>
+                            <span class="o">?</span> <span class="mi">0</span><span class="o">:</span> <span class="o">-</span><span class="mi">1</span><span class="o">,</span> <span class="n">audioAttributesForNotification</span><span class="o">(</span><span class="n">notification</span><span class="o">));</span>
+            <span class="n">buzz</span> <span class="o">=</span> <span class="kc">true</span><span class="o">;</span>
+        <span class="o">}</span> <span class="k">finally</span> <span class="o">{</span>
+            <span class="n">Binder</span><span class="o">.</span><span class="na">restoreCallingIdentity</span><span class="o">(</span><span class="n">identity</span><span class="o">);</span>
+        <span class="o">}</span>
+    <span class="o">}</span> <span class="k">else</span> <span class="k">if</span> <span class="o">(</span><span class="n">notification</span><span class="o">.</span><span class="na">vibrate</span><span class="o">.</span><span class="na">length</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="o">)</span> <span class="o">{</span>
+        <span class="c1">// If you want your own vibration pattern, you need the VIBRATE</span>
+        <span class="c1">// permission</span>
+        <span class="n">mVibrator</span><span class="o">.</span><span class="na">vibrate</span><span class="o">(</span><span class="n">record</span><span class="o">.</span><span class="na">sbn</span><span class="o">.</span><span class="na">getUid</span><span class="o">(),</span> <span class="n">record</span><span class="o">.</span><span class="na">sbn</span><span class="o">.</span><span class="na">getOpPkg</span><span class="o">(),</span>
+                <span class="n">notification</span><span class="o">.</span><span class="na">vibrate</span><span class="o">,</span>
+                <span class="o">((</span><span class="n">notification</span><span class="o">.</span><span class="na">flags</span> <span class="o">&amp;</span> <span class="n">Notification</span><span class="o">.</span><span class="na">FLAG_INSISTENT</span><span class="o">)</span> <span class="o">!=</span> <span class="mi">0</span><span class="o">)</span>
+                        <span class="o">?</span> <span class="mi">0</span><span class="o">:</span> <span class="o">-</span><span class="mi">1</span><span class="o">,</span> <span class="n">audioAttributesForNotification</span><span class="o">(</span><span class="n">notification</span><span class="o">));</span>
+        <span class="n">buzz</span> <span class="o">=</span> <span class="kc">true</span><span class="o">;</span>
+    <span class="o">}</span>
+<span class="o">}</span>
+</code></pre>
+</div>
+
+<div class="language-java highlighter-rouge"><pre class="highlight"><code><span class="n">Vibrator</span><span class="o">.</span><span class="na">java</span>
+<span class="kd">public</span> <span class="kd">abstract</span> <span class="kt">void</span> <span class="nf">vibrate</span><span class="o">(</span><span class="kt">int</span> <span class="n">uid</span><span class="o">,</span> <span class="n">String</span> <span class="n">opPkg</span><span class="o">,</span> <span class="kt">long</span><span class="o">[]</span> <span class="n">pattern</span><span class="o">,</span> <span class="kt">int</span> <span class="n">repeat</span><span class="o">,</span>
+        <span class="n">AudioAttributes</span> <span class="n">attributes</span><span class="o">)</span>
+
+</code></pre>
+</div>
+
+<div class="language-java highlighter-rouge"><pre class="highlight"><code><span class="n">SystemVibrator</span><span class="o">.</span><span class="na">java</span>
+<span class="kd">public</span> <span class="kt">void</span> <span class="nf">vibrate</span><span class="o">(</span><span class="kt">int</span> <span class="n">uid</span><span class="o">,</span> <span class="n">String</span> <span class="n">opPkg</span><span class="o">,</span> <span class="kt">long</span><span class="o">[]</span> <span class="n">pattern</span><span class="o">,</span> <span class="kt">int</span> <span class="n">repeat</span><span class="o">,</span>
+        <span class="n">AudioAttributes</span> <span class="n">attributes</span><span class="o">)</span>
+
+</code></pre>
+</div>
+
+<h3 id="通知灯亮的地方">通知灯亮的地方</h3>
+<div class="language-java highlighter-rouge"><pre class="highlight"><code><span class="n">NotificationManagerService</span><span class="o">.</span><span class="na">java</span>
+<span class="kt">void</span> <span class="nf">updateLightsLocked</span><span class="o">()</span>
+</code></pre>
+</div>
+
+<div class="language-java highlighter-rouge"><pre class="highlight"><code><span class="n">Light</span><span class="o">.</span><span class="na">java</span>
+<span class="kd">public</span> <span class="kd">abstract</span> <span class="kt">void</span> <span class="nf">setFlashing</span><span class="o">(</span><span class="kt">int</span> <span class="n">color</span><span class="o">,</span> <span class="kt">int</span> <span class="n">mode</span><span class="o">,</span> <span class="kt">int</span> <span class="n">onMS</span><span class="o">,</span> <span class="kt">int</span> <span class="n">offMS</span><span class="o">);</span>
+</code></pre>
+</div>
+
+<div class="language-java highlighter-rouge"><pre class="highlight"><code><span class="n">LightsService</span><span class="o">.</span><span class="na">java</span>
+<span class="kd">public</span> <span class="kt">void</span> <span class="nf">setFlashing</span><span class="o">(</span><span class="kt">int</span> <span class="n">color</span><span class="o">,</span> <span class="kt">int</span> <span class="n">mode</span><span class="o">,</span> <span class="kt">int</span> <span class="n">onMS</span><span class="o">,</span> <span class="kt">int</span> <span class="n">offMS</span><span class="o">)</span>
+</code></pre>
+</div>
+
+<div class="language-java highlighter-rouge"><pre class="highlight"><code><span class="n">LightsService</span><span class="o">.</span><span class="na">java</span>
+<span class="kd">private</span> <span class="kt">void</span> <span class="nf">setLightLocked</span><span class="o">(</span><span class="kt">int</span> <span class="n">color</span><span class="o">,</span> <span class="kt">int</span> <span class="n">mode</span><span class="o">,</span> <span class="kt">int</span> <span class="n">onMS</span><span class="o">,</span> <span class="kt">int</span> <span class="n">offMS</span><span class="o">,</span> <span class="kt">int</span> <span class="n">brightnessMode</span><span class="o">)</span>
+</code></pre>
+</div>
+
+<div class="language-java highlighter-rouge"><pre class="highlight"><code><span class="n">LightsService</span><span class="o">.</span><span class="na">java</span>
+<span class="kd">static</span> <span class="kd">native</span> <span class="kt">void</span> <span class="nf">setLight_native</span><span class="o">(</span><span class="kt">long</span> <span class="n">ptr</span><span class="o">,</span> <span class="kt">int</span> <span class="n">light</span><span class="o">,</span> <span class="kt">int</span> <span class="n">color</span><span class="o">,</span> <span class="kt">int</span> <span class="n">mode</span><span class="o">,</span>
+            <span class="kt">int</span> <span class="n">onMS</span><span class="o">,</span> <span class="kt">int</span> <span class="n">offMS</span><span class="o">,</span> <span class="kt">int</span> <span class="n">brightnessMode</span><span class="o">)</span>
+</code></pre>
+</div>
+
+<div class="language-java highlighter-rouge"><pre class="highlight"><code><span class="n">StatusBarManagerInternal</span><span class="o">.</span><span class="na">java</span>
+<span class="kt">void</span> <span class="nf">notificationLightPulse</span><span class="o">(</span><span class="kt">int</span> <span class="n">argb</span><span class="o">,</span> <span class="kt">int</span> <span class="n">onMillis</span><span class="o">,</span> <span class="kt">int</span> <span class="n">offMillis</span><span class="o">)</span>
+</code></pre>
+</div>
+
+<div class="language-java highlighter-rouge"><pre class="highlight"><code><span class="n">StatusBarManagerService</span><span class="o">.</span><span class="na">java</span>
+<span class="kd">public</span> <span class="kt">void</span> <span class="nf">notificationLightPulse</span><span class="o">(</span><span class="kt">int</span> <span class="n">argb</span><span class="o">,</span> <span class="kt">int</span> <span class="n">onMillis</span><span class="o">,</span> <span class="kt">int</span> <span class="n">offMillis</span><span class="o">)</span>
+</code></pre>
+</div>
+
+<div class="language-java highlighter-rouge"><pre class="highlight"><code><span class="n">IStatusBar</span><span class="o">.</span><span class="na">aidl</span>
+<span class="kt">void</span> <span class="nf">notificationLightPulse</span><span class="o">(</span><span class="kt">int</span> <span class="n">argb</span><span class="o">,</span> <span class="kt">int</span> <span class="n">millisOn</span><span class="o">,</span> <span class="kt">int</span> <span class="n">millisOff</span><span class="o">);</span>
+</code></pre>
+</div>
+
+<div class="language-java highlighter-rouge"><pre class="highlight"><code><span class="n">CommandQueue</span><span class="o">.</span><span class="na">java</span>
+<span class="kd">public</span> <span class="kt">void</span> <span class="nf">notificationLightPulse</span><span class="o">(</span><span class="kt">int</span> <span class="n">argb</span><span class="o">,</span> <span class="kt">int</span> <span class="n">onMillis</span><span class="o">,</span> <span class="kt">int</span> <span class="n">offMillis</span><span class="o">)</span>
+</code></pre>
+</div>
+
+<div class="language-java highlighter-rouge"><pre class="highlight"><code><span class="n">CommandQueue</span><span class="o">.</span><span class="na">java</span>
+<span class="kt">void</span> <span class="nf">notificationLightPulse</span><span class="o">(</span><span class="kt">int</span> <span class="n">argb</span><span class="o">,</span> <span class="kt">int</span> <span class="n">onMillis</span><span class="o">,</span> <span class="kt">int</span> <span class="n">offMillis</span><span class="o">);</span>
+</code></pre>
+</div>
+
+<div class="language-java highlighter-rouge"><pre class="highlight"><code><span class="n">PhoneStatusBar</span><span class="o">.</span><span class="na">java</span>
+<span class="kd">public</span> <span class="kt">void</span> <span class="nf">notificationLightPulse</span><span class="o">(</span><span class="kt">int</span> <span class="n">argb</span><span class="o">,</span> <span class="kt">int</span> <span class="n">onMillis</span><span class="o">,</span> <span class="kt">int</span> <span class="n">offMillis</span><span class="o">)</span>
+</code></pre>
+</div>
+
+<div class="language-java highlighter-rouge"><pre class="highlight"><code><span class="n">PhoneStatusBar</span><span class="o">.</span><span class="na">java</span>
+<span class="kd">public</span> <span class="kt">void</span> <span class="nf">fireNotificationLight</span><span class="o">(</span><span class="kt">boolean</span> <span class="n">on</span><span class="o">)</span>
+</code></pre>
+</div>
+
+<div class="language-java highlighter-rouge"><pre class="highlight"><code><span class="n">DozeHost</span><span class="o">.</span><span class="na">java</span>
+<span class="kt">void</span> <span class="nf">onNotificationLight</span><span class="o">(</span><span class="kt">boolean</span> <span class="n">on</span><span class="o">)</span>
+</code></pre>
+</div>
+
+<div class="language-java highlighter-rouge"><pre class="highlight"><code><span class="n">DozeSerivce</span><span class="o">.</span><span class="na">java</span>
+<span class="kd">public</span> <span class="kt">void</span> <span class="nf">onNotificationLight</span><span class="o">(</span><span class="kt">boolean</span> <span class="n">on</span><span class="o">)</span>
+</code></pre>
+</div>
+
+<div class="language-java highlighter-rouge"><pre class="highlight"><code><span class="n">DozeSerivce</span><span class="o">.</span><span class="na">java</span>
+<span class="kd">private</span> <span class="kt">void</span> <span class="nf">updateNotificationPulseDueToLight</span><span class="o">()</span>
+</code></pre>
+</div>
+
+<div class="language-java highlighter-rouge"><pre class="highlight"><code><span class="n">DozeSerivce</span><span class="o">.</span><span class="na">java</span>
+<span class="kd">private</span> <span class="kt">void</span> <span class="nf">updateNotificationPulse</span><span class="o">(</span><span class="kt">long</span> <span class="n">notificationTimeMs</span><span class="o">)</span>
+</code></pre>
+</div>
+
+<div class="language-java highlighter-rouge"><pre class="highlight"><code><span class="n">DozeSerivce</span><span class="o">.</span><span class="na">java</span>
+<span class="kd">private</span> <span class="kt">void</span> <span class="nf">rescheduleNotificationPulse</span><span class="o">(</span><span class="kt">boolean</span> <span class="n">predicate</span><span class="o">)</span> <span class="o">{</span>
+</code></pre>
+</div>
+
+<div class="language-java highlighter-rouge"><pre class="highlight"><code><span class="n">AlarmManager</span><span class="o">.</span><span class="na">java</span>
+ <span class="kd">public</span> <span class="kt">void</span> <span class="nf">setExact</span><span class="o">(</span><span class="kt">int</span> <span class="n">type</span><span class="o">,</span> <span class="kt">long</span> <span class="n">triggerAtMillis</span><span class="o">,</span> <span class="n">PendingIntent</span> <span class="n">operation</span><span class="o">)</span> <span class="o">{</span>
+        <span class="n">setImpl</span><span class="o">(</span><span class="n">type</span><span class="o">,</span> <span class="n">triggerAtMillis</span><span class="o">,</span> <span class="n">WINDOW_EXACT</span><span class="o">,</span> <span class="mi">0</span><span class="o">,</span> <span class="mi">0</span><span class="o">,</span> <span class="n">operation</span><span class="o">,</span> <span class="kc">null</span><span class="o">,</span> <span class="kc">null</span><span class="o">,</span> <span class="kc">null</span><span class="o">,</span>
+                <span class="kc">null</span><span class="o">,</span> <span class="kc">null</span><span class="o">);</span>
+    <span class="o">}</span>
+</code></pre>
+</div>
+
+<h3 id="通知的显示">通知的显示</h3>
+<div class="language-java highlighter-rouge"><pre class="highlight"><code><span class="n">NotificationManagerService</span><span class="o">.</span><span class="na">java</span>
+<span class="n">EnqueueNotificationRunnable</span>
+<span class="kd">public</span> <span class="kt">void</span> <span class="nf">run</span><span class="o">()</span> 
+</code></pre>
+</div>
+
+<div class="language-java highlighter-rouge"><pre class="highlight"><code><span class="n">NotificationManagerService</span><span class="o">.</span><span class="na">java</span>
+<span class="kd">public</span> <span class="kt">void</span> <span class="nf">notifyPostedLocked</span><span class="o">(</span><span class="n">StatusBarNotification</span> <span class="n">sbn</span><span class="o">,</span> <span class="n">StatusBarNotification</span> <span class="n">oldSbn</span><span class="o">)</span>
+</code></pre>
+</div>
+
+<div class="language-java highlighter-rouge"><pre class="highlight"><code><span class="n">NotificationManagerService</span><span class="o">.</span><span class="na">java</span>
+<span class="kd">private</span> <span class="kt">void</span> <span class="nf">notifyPosted</span><span class="o">(</span><span class="kd">final</span> <span class="n">ManagedServiceInfo</span> <span class="n">info</span><span class="o">,</span>
+                <span class="kd">final</span> <span class="n">StatusBarNotification</span> <span class="n">sbn</span><span class="o">,</span> <span class="n">NotificationRankingUpdate</span> <span class="n">rankingUpdate</span><span class="o">)</span>
+</code></pre>
+</div>
+
+<div class="language-java highlighter-rouge"><pre class="highlight"><code><span class="n">INotificationListener</span><span class="o">.</span><span class="na">aidl</span>
+<span class="kt">void</span> <span class="nf">onNotificationPosted</span><span class="o">(</span><span class="n">in</span> <span class="n">IStatusBarNotificationHolder</span> <span class="n">notificationHolder</span><span class="o">,</span>
+        <span class="n">in</span> <span class="n">NotificationRankingUpdate</span> <span class="n">update</span>
+</code></pre>
+</div>
+
+<div class="language-java highlighter-rouge"><pre class="highlight"><code><span class="n">NotificationListenerService</span><span class="o">.</span><span class="na">java</span>
+<span class="kd">public</span> <span class="kt">void</span> <span class="nf">onNotificationPosted</span><span class="o">(</span><span class="n">IStatusBarNotificationHolder</span> <span class="n">sbnHolder</span><span class="o">,</span>
+                <span class="n">NotificationRankingUpdate</span> <span class="n">update</span><span class="o">)</span>
+</code></pre>
+</div>
+
+<div class="language-java highlighter-rouge"><pre class="highlight"><code><span class="n">NotificationListenerService</span><span class="o">.</span><span class="na">java</span>
+<span class="kd">public</span> <span class="kt">void</span> <span class="nf">handleMessage</span><span class="o">(</span><span class="n">Message</span> <span class="n">msg</span><span class="o">);</span>
+</code></pre>
+</div>
+
+<div class="language-java highlighter-rouge"><pre class="highlight"><code><span class="n">NotificationListenerService</span><span class="o">.</span><span class="na">java</span>
+<span class="kd">public</span> <span class="kt">void</span> <span class="nf">onNotificationPosted</span><span class="o">(</span><span class="n">StatusBarNotification</span> <span class="n">sbn</span><span class="o">,</span> <span class="n">RankingMap</span> <span class="n">rankingMap</span><span class="o">)</span>
+</code></pre>
+</div>
+
+<div class="language-java highlighter-rouge"><pre class="highlight"><code><span class="n">NotificationListenerService</span><span class="o">.</span><span class="na">java</span>
+<span class="kd">public</span> <span class="kt">void</span> <span class="nf">onNotificationPosted</span><span class="o">(</span><span class="n">StatusBarNotification</span> <span class="n">sbn</span><span class="o">)</span>
+</code></pre>
+</div>
+
+<div class="language-java highlighter-rouge"><pre class="highlight"><code><span class="n">BaseStatusBar</span><span class="o">.</span><span class="na">java</span>
+<span class="kd">public</span> <span class="kt">void</span> <span class="nf">onNotificationPosted</span><span class="o">(</span><span class="kd">final</span> <span class="n">StatusBarNotification</span> <span class="n">sbn</span><span class="o">,</span>
+                <span class="kd">final</span> <span class="n">RankingMap</span> <span class="n">rankingMap</span><span class="o">)</span>
+
+</code></pre>
+</div>
+
+<div class="language-java highlighter-rouge"><pre class="highlight"><code><span class="n">PhoneStatusBar</span><span class="o">.</span><span class="na">java</span>
+<span class="kd">public</span> <span class="kt">void</span> <span class="nf">addNotification</span><span class="o">(</span><span class="n">StatusBarNotification</span> <span class="n">notification</span><span class="o">,</span> <span class="n">RankingMap</span> <span class="n">ranking</span><span class="o">,</span>
+            <span class="n">Entry</span> <span class="n">oldEntry</span><span class="o">)</span> 
+</code></pre>
+</div>
+
+<div class="language-java highlighter-rouge"><pre class="highlight"><code><span class="n">PhoneStatusBar</span><span class="o">.</span><span class="na">java</span>
+<span class="kd">protected</span> <span class="kt">void</span> <span class="nf">addNotificationViews</span><span class="o">(</span><span class="n">Entry</span> <span class="n">entry</span><span class="o">,</span> <span class="n">RankingMap</span> <span class="n">ranking</span><span class="o">)</span> 
+<span class="c1">//决定这通知是否下拉时在StatusBar上显示, 以及是否以弹出式的方式显示通知</span>
+</code></pre>
+</div>
+
+<div class="language-java highlighter-rouge"><pre class="highlight"><code><span class="kd">protected</span> <span class="kt">void</span> <span class="nf">updateNotifications</span><span class="o">()</span>
+</code></pre>
+</div>
+
+<div class="language-java highlighter-rouge"><pre class="highlight"><code><span class="kd">private</span> <span class="kt">void</span> <span class="nf">updateNotificationShade</span><span class="o">()</span>
+</code></pre>
+</div>
+
+<div class="language-java highlighter-rouge"><pre class="highlight"><code><span class="n">StatusBarIconController</span><span class="o">.</span><span class="na">java</span>
+<span class="kd">public</span> <span class="kt">void</span> <span class="nf">updateNotificationIcons</span><span class="o">(</span><span class="n">NotificationData</span> <span class="n">notificationData</span><span class="o">)</span>
+</code></pre>
+</div>
+
+<div class="language-java highlighter-rouge"><pre class="highlight"><code><span class="kd">public</span> <span class="kt">void</span> <span class="nf">updateNotificationIcons</span><span class="o">(</span><span class="n">NotificationData</span> <span class="n">notificationData</span><span class="o">)</span>
+<span class="c1">//Updates the notifications with the given list of notifications to display.</span>
+</code></pre>
+</div>
+
+<div class="language-java highlighter-rouge"><pre class="highlight"><code><span class="n">NotificationIconAreaController</span><span class="o">.</span><span class="na">java</span>
+<span class="kd">private</span> <span class="kt">void</span> <span class="nf">applyNotificationIconsTint</span><span class="o">()</span> 
+</code></pre>
+</div>
+
+<div class="language-java highlighter-rouge"><pre class="highlight"><code><span class="kd">protected</span> <span class="kt">void</span> <span class="nf">setAreThereNotifications</span><span class="o">()</span> <span class="c1">//允许浮动式通知弹出</span>
+</code></pre>
+</div>
+
+<div class="language-java highlighter-rouge"><pre class="highlight"><code><span class="n">PhoneStatusBar</span><span class="o">.</span><span class="na">java</span>
+<span class="kd">public</span> <span class="kt">void</span> <span class="nf">findAndUpdateMediaNotifications</span><span class="o">()</span>
+</code></pre>
+</div>
+
+<div class="language-java highlighter-rouge"><pre class="highlight"><code><span class="n">PhoneStatusBar</span><span class="o">.</span><span class="na">java</span>
+<span class="kd">public</span> <span class="kt">void</span> <span class="nf">updateMediaMetaData</span><span class="o">(</span><span class="kt">boolean</span> <span class="n">metaDataChanged</span><span class="o">,</span> <span class="kt">boolean</span> <span class="n">allowEnterAnimation</span><span class="o">)</span> 
+<span class="c1">//更新或者是移除来自于媒体元数据的锁屏艺术封面或者锁屏壁纸</span>
+<span class="c1">//Refresh or remove lockscreen artwork from media metadata or the lockscreen wallpaper.</span>
+</code></pre>
+</div>
+
+<h3 id="通知的更新">通知的更新</h3>
+
+<div class="language-java highlighter-rouge"><pre class="highlight"><code><span class="n">BaseStatusBar</span><span class="o">.</span><span class="na">java</span>
+<span class="kt">boolean</span> <span class="n">isUpdate</span> <span class="o">=</span> <span class="n">mNotificationData</span><span class="o">.</span><span class="na">get</span><span class="o">(</span><span class="n">key</span><span class="o">)</span> <span class="o">!=</span> <span class="kc">null</span>  <span class="c1">//通过这个条件来决定是否更新</span>
+</code></pre>
+</div>
+
+<div class="language-java highlighter-rouge"><pre class="highlight"><code><span class="n">BaseStatusBar</span><span class="o">.</span><span class="na">java</span>
+<span class="kd">public</span> <span class="kt">void</span> <span class="nf">updateNotification</span><span class="o">(</span><span class="n">StatusBarNotification</span> <span class="n">notification</span><span class="o">,</span> <span class="n">RankingMap</span> <span class="n">ranking</span><span class="o">)</span>
+</code></pre>
+</div>
+
+<div class="language-java highlighter-rouge"><pre class="highlight"><code><span class="n">BaseStatusBar</span><span class="o">.</span><span class="na">java</span>
+<span class="kd">private</span> <span class="kt">void</span> <span class="nf">updateNotificationViews</span><span class="o">(</span><span class="n">Entry</span> <span class="n">entry</span><span class="o">,</span> <span class="n">StatusBarNotification</span> <span class="n">sbn</span><span class="o">)</span>
+</code></pre>
+</div>
+
+<h3 id="通知的取消">通知的取消</h3>
+<div class="language-java highlighter-rouge"><pre class="highlight"><code><span class="n">NotificationManager</span><span class="o">.</span><span class="na">java</span>
+<span class="kd">public</span> <span class="kt">void</span> <span class="nf">cancel</span><span class="o">(</span><span class="kt">int</span> <span class="n">id</span><span class="o">)</span>
+</code></pre>
+</div>
+
+<div class="language-java highlighter-rouge"><pre class="highlight"><code><span class="n">NotificationManager</span><span class="o">.</span><span class="na">java</span>
+<span class="kd">public</span> <span class="kt">void</span> <span class="nf">cancel</span><span class="o">(</span><span class="n">String</span> <span class="n">tag</span><span class="o">,</span> <span class="kt">int</span> <span class="n">id</span><span class="o">)</span>
+</code></pre>
+</div>
+
+<div class="language-java highlighter-rouge"><pre class="highlight"><code><span class="n">NotificationManager</span><span class="o">.</span><span class="na">java</span>
+<span class="kd">public</span> <span class="kt">void</span> <span class="nf">cancelAsUser</span><span class="o">(</span><span class="n">String</span> <span class="n">tag</span><span class="o">,</span> <span class="kt">int</span> <span class="n">id</span><span class="o">,</span> <span class="n">UserHandle</span> <span class="n">user</span><span class="o">)</span>
+</code></pre>
+</div>
+
+<div class="language-java highlighter-rouge"><pre class="highlight"><code><span class="n">NotificationManagerService</span><span class="o">.</span><span class="na">java</span>
+<span class="kd">public</span> <span class="kt">void</span> <span class="nf">cancelNotificationWithTag</span><span class="o">(</span><span class="n">String</span> <span class="n">pkg</span><span class="o">,</span> <span class="n">String</span> <span class="n">tag</span><span class="o">,</span> <span class="kt">int</span> <span class="n">id</span><span class="o">,</span> <span class="kt">int</span> <span class="n">userId</span><span class="o">)</span>
+</code></pre>
+</div>
+
+<div class="language-java highlighter-rouge"><pre class="highlight"><code><span class="n">NotificationManagerService</span><span class="o">.</span><span class="na">java</span>
+<span class="kt">void</span> <span class="nf">cancelNotification</span><span class="o">(</span><span class="kd">final</span> <span class="kt">int</span> <span class="n">callingUid</span><span class="o">,</span> <span class="kd">final</span> <span class="kt">int</span> <span class="n">callingPid</span><span class="o">,</span>
+            <span class="kd">final</span> <span class="n">String</span> <span class="n">pkg</span><span class="o">,</span> <span class="kd">final</span> <span class="n">String</span> <span class="n">tag</span><span class="o">,</span> <span class="kd">final</span> <span class="kt">int</span> <span class="n">id</span><span class="o">,</span>
+            <span class="kd">final</span> <span class="kt">int</span> <span class="n">mustHaveFlags</span><span class="o">,</span> <span class="kd">final</span> <span class="kt">int</span> <span class="n">mustNotHaveFlags</span><span class="o">,</span> <span class="kd">final</span> <span class="kt">boolean</span> <span class="n">sendDelete</span><span class="o">,</span>
+            <span class="kd">final</span> <span class="kt">int</span> <span class="n">userId</span><span class="o">,</span> <span class="kd">final</span> <span class="kt">int</span> <span class="n">reason</span><span class="o">,</span> <span class="kd">final</span> <span class="n">ManagedServiceInfo</span> <span class="n">listener</span><span class="o">)</span>
+</code></pre>
+</div>
+
+<div class="language-java highlighter-rouge"><pre class="highlight"><code><span class="n">NotificationManagerService</span><span class="o">.</span><span class="na">java</span>
+<span class="kd">private</span> <span class="kt">void</span> <span class="nf">cancelNotificationLocked</span><span class="o">(</span><span class="n">NotificationRecord</span> <span class="n">r</span><span class="o">,</span> <span class="kt">boolean</span> <span class="n">sendDelete</span><span class="o">,</span> <span class="kt">int</span> <span class="n">reason</span><span class="o">)</span>
+</code></pre>
+</div>
+
+<div class="language-java highlighter-rouge"><pre class="highlight"><code><span class="n">PendingIntent</span><span class="o">.</span><span class="na">java</span>
+<span class="kd">public</span> <span class="kt">void</span> <span class="nf">send</span><span class="o">()</span> <span class="kd">throws</span> <span class="n">CanceledException</span>
+</code></pre>
+</div>
+
+<div class="language-java highlighter-rouge"><pre class="highlight"><code><span class="n">PendingIntent</span><span class="o">.</span><span class="na">java</span>
+<span class="kd">public</span> <span class="kt">void</span> <span class="nf">send</span><span class="o">(</span><span class="n">Context</span> <span class="n">context</span><span class="o">,</span> <span class="kt">int</span> <span class="n">code</span><span class="o">,</span> <span class="nd">@Nullable</span> <span class="n">Intent</span> <span class="n">intent</span><span class="o">,</span>
+            <span class="nd">@Nullable</span> <span class="n">OnFinished</span> <span class="n">onFinished</span><span class="o">,</span> <span class="nd">@Nullable</span> <span class="n">Handler</span> <span class="n">handler</span><span class="o">,</span>
+            <span class="nd">@Nullable</span> <span class="n">String</span> <span class="n">requiredPermission</span><span class="o">,</span> <span class="nd">@Nullable</span> <span class="n">Bundle</span> <span class="n">options</span><span class="o">)</span>
+            <span class="kd">throws</span> <span class="n">CanceledException</span>
+
+</code></pre>
+</div>
+
+<div class="language-java highlighter-rouge"><pre class="highlight"><code><span class="kd">public</span> <span class="kt">int</span> <span class="nf">sendIntentSender</span><span class="o">(</span><span class="n">IIntentSender</span> <span class="n">target</span><span class="o">,</span> <span class="kt">int</span> <span class="n">code</span><span class="o">,</span> <span class="n">Intent</span> <span class="n">intent</span><span class="o">,</span> <span class="n">String</span> <span class="n">resolvedType</span><span class="o">,</span>
+        <span class="n">IIntentReceiver</span> <span class="n">finishedReceiver</span><span class="o">,</span> <span class="n">String</span> <span class="n">requiredPermission</span><span class="o">,</span> <span class="n">Bundle</span> <span class="n">options</span><span class="o">)</span>
+        <span class="kd">throws</span> <span class="n">RemoteException</span> 
+</code></pre>
+</div>
+
+<h3 id="notification-duck">Notification Duck</h3>
+
+<h3 id="notificationusagestats">NotificationUsageStats</h3>
+<div class="language-java highlighter-rouge"><pre class="highlight"><code><span class="n">NotificationUsageStats</span><span class="o">.</span><span class="na">java</span>
+<span class="kd">public</span> <span class="kd">synchronized</span> <span class="kt">void</span> <span class="nf">registerEnqueuedByApp</span><span class="o">(</span><span class="n">String</span> <span class="n">packageName</span><span class="o">)</span>
+</code></pre>
+</div>
+
+<div class="language-java highlighter-rouge"><pre class="highlight"><code><span class="n">NotificationUsageStats</span><span class="o">.</span><span class="na">java</span>
+<span class="kd">private</span> <span class="n">AggregatedStats</span><span class="o">[]</span> <span class="nf">getAggregatedStatsLocked</span><span class="o">(</span><span class="n">String</span> <span class="n">packageName</span><span class="o">)</span>
+</code></pre>
+</div>
+
+<div class="language-java highlighter-rouge"><pre class="highlight"><code><span class="n">NotificationUsageStats</span><span class="o">.</span><span class="na">java</span>
+<span class="kd">private</span> <span class="n">AggregatedStats</span> <span class="nf">getOrCreateAggregatedStatsLocked</span><span class="o">(</span><span class="n">String</span> <span class="n">key</span><span class="o">)</span>
+</code></pre>
+</div>
+
+<div class="language-java highlighter-rouge"><pre class="highlight"><code><span class="n">NotificationUsageStats</span><span class="o">.</span><span class="na">java</span>
+<span class="kd">public</span> <span class="nf">AggregatedStats</span><span class="o">(</span><span class="n">Context</span> <span class="n">context</span><span class="o">,</span> <span class="n">String</span> <span class="n">key</span><span class="o">)</span>
+</code></pre>
+</div>
+
+<h3 id="notification点击跳转">Notification点击跳转</h3>
+
+<div class="language-java highlighter-rouge"><pre class="highlight"><code><span class="kd">private</span> <span class="kd">final</span> <span class="kd">class</span> <span class="nc">NotificationClicker</span> <span class="kd">implements</span> <span class="n">View</span><span class="o">.</span><span class="na">OnClickListener</span> <span class="o">{</span>
+    <span class="kd">public</span> <span class="kt">void</span> <span class="nf">onClick</span><span class="o">(</span><span class="kd">final</span> <span class="n">View</span> <span class="n">v</span><span class="o">)</span> <span class="o">{</span>
+        <span class="n">Log</span><span class="o">.</span><span class="na">d</span><span class="o">(</span><span class="n">TAG</span><span class="o">,</span> <span class="s">"BaseStatusBar: NotificationClicker: onClick: "</span><span class="o">);</span>
+        <span class="k">if</span> <span class="o">(!(</span><span class="n">v</span> <span class="k">instanceof</span> <span class="n">ExpandableNotificationRow</span><span class="o">))</span> <span class="o">{</span>
+            <span class="n">Log</span><span class="o">.</span><span class="na">e</span><span class="o">(</span><span class="n">TAG</span><span class="o">,</span> <span class="s">"NotificationClicker called on a view that is not a notification row."</span><span class="o">);</span>
+            <span class="k">return</span><span class="o">;</span>
+        <span class="o">}</span>
+
+        <span class="kd">final</span> <span class="n">ExpandableNotificationRow</span> <span class="n">row</span> <span class="o">=</span> <span class="o">(</span><span class="n">ExpandableNotificationRow</span><span class="o">)</span> <span class="n">v</span><span class="o">;</span>
+        <span class="kd">final</span> <span class="n">StatusBarNotification</span> <span class="n">sbn</span> <span class="o">=</span> <span class="n">row</span><span class="o">.</span><span class="na">getStatusBarNotification</span><span class="o">();</span>
+        <span class="k">if</span> <span class="o">(</span><span class="n">sbn</span> <span class="o">==</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+            <span class="n">Log</span><span class="o">.</span><span class="na">e</span><span class="o">(</span><span class="n">TAG</span><span class="o">,</span> <span class="s">"NotificationClicker called on an unclickable notification,"</span><span class="o">);</span>
+            <span class="k">return</span><span class="o">;</span>
+        <span class="o">}</span>
+
+        <span class="c1">// Check if the notification is displaying the gear, if so slide notification back</span>
+        <span class="k">if</span> <span class="o">(</span><span class="n">row</span><span class="o">.</span><span class="na">getSettingsRow</span><span class="o">()</span> <span class="o">!=</span> <span class="kc">null</span> <span class="o">&amp;&amp;</span> <span class="n">row</span><span class="o">.</span><span class="na">getSettingsRow</span><span class="o">().</span><span class="na">isVisible</span><span class="o">())</span> <span class="o">{</span>
+            <span class="n">row</span><span class="o">.</span><span class="na">animateTranslateNotification</span><span class="o">(</span><span class="mi">0</span><span class="o">);</span>
+            <span class="k">return</span><span class="o">;</span>
+        <span class="o">}</span>
+
+        <span class="n">Notification</span> <span class="n">notification</span> <span class="o">=</span> <span class="n">sbn</span><span class="o">.</span><span class="na">getNotification</span><span class="o">();</span>
+        <span class="kd">final</span> <span class="n">PendingIntent</span> <span class="n">intent</span> <span class="o">=</span> <span class="n">notification</span><span class="o">.</span><span class="na">contentIntent</span> <span class="o">!=</span> <span class="kc">null</span>
+                <span class="o">?</span> <span class="n">notification</span><span class="o">.</span><span class="na">contentIntent</span>
+                <span class="o">:</span> <span class="n">notification</span><span class="o">.</span><span class="na">fullScreenIntent</span><span class="o">;</span>
+        <span class="kd">final</span> <span class="n">String</span> <span class="n">notificationKey</span> <span class="o">=</span> <span class="n">sbn</span><span class="o">.</span><span class="na">getKey</span><span class="o">();</span>
+
+        <span class="c1">// Mark notification for one frame.</span>
+        <span class="n">row</span><span class="o">.</span><span class="na">setJustClicked</span><span class="o">(</span><span class="kc">true</span><span class="o">);</span>
+        <span class="n">DejankUtils</span><span class="o">.</span><span class="na">postAfterTraversal</span><span class="o">(</span><span class="k">new</span> <span class="n">Runnable</span><span class="o">()</span> <span class="o">{</span>
+            <span class="nd">@Override</span>
+            <span class="kd">public</span> <span class="kt">void</span> <span class="nf">run</span><span class="o">()</span> <span class="o">{</span>
+                <span class="n">row</span><span class="o">.</span><span class="na">setJustClicked</span><span class="o">(</span><span class="kc">false</span><span class="o">);</span>
+            <span class="o">}</span>
+        <span class="o">});</span>
+
+        <span class="kd">final</span> <span class="kt">boolean</span> <span class="n">keyguardShowing</span> <span class="o">=</span> <span class="n">mStatusBarKeyguardViewManager</span><span class="o">.</span><span class="na">isShowing</span><span class="o">();</span>
+        <span class="kd">final</span> <span class="kt">boolean</span> <span class="n">afterKeyguardGone</span> <span class="o">=</span> <span class="n">intent</span><span class="o">.</span><span class="na">isActivity</span><span class="o">()</span>
+                <span class="o">&amp;&amp;</span> <span class="n">PreviewInflater</span><span class="o">.</span><span class="na">wouldLaunchResolverActivity</span><span class="o">(</span><span class="n">mContext</span><span class="o">,</span> <span class="n">intent</span><span class="o">.</span><span class="na">getIntent</span><span class="o">(),</span>
+                        <span class="n">mCurrentUserId</span><span class="o">);</span>
+        <span class="n">dismissKeyguardThenExecute</span><span class="o">(</span><span class="k">new</span> <span class="n">OnDismissAction</span><span class="o">()</span> <span class="o">{</span>
+            <span class="kd">public</span> <span class="kt">boolean</span> <span class="nf">onDismiss</span><span class="o">()</span> <span class="o">{</span>
+                <span class="k">if</span> <span class="o">(</span><span class="n">mHeadsUpManager</span> <span class="o">!=</span> <span class="kc">null</span> <span class="o">&amp;&amp;</span> <span class="n">mHeadsUpManager</span><span class="o">.</span><span class="na">isHeadsUp</span><span class="o">(</span><span class="n">notificationKey</span><span class="o">))</span> <span class="o">{</span>
+                    <span class="c1">// Release the HUN notification to the shade.</span>
+
+                    <span class="k">if</span> <span class="o">(</span><span class="n">isPanelFullyCollapsed</span><span class="o">())</span> <span class="o">{</span>
+                        <span class="n">HeadsUpManager</span><span class="o">.</span><span class="na">setIsClickedNotification</span><span class="o">(</span><span class="n">row</span><span class="o">,</span> <span class="kc">true</span><span class="o">);</span>
+                    <span class="o">}</span>
+                    <span class="c1">//</span>
+                    <span class="c1">// In most cases, when FLAG_AUTO_CANCEL is set, the notification will</span>
+                    <span class="c1">// become canceled shortly by NoMan, but we can't assume that.</span>
+                    <span class="n">mHeadsUpManager</span><span class="o">.</span><span class="na">releaseImmediately</span><span class="o">(</span><span class="n">notificationKey</span><span class="o">);</span>
+                <span class="o">}</span>
+                <span class="n">StatusBarNotification</span> <span class="n">parentToCancel</span> <span class="o">=</span> <span class="kc">null</span><span class="o">;</span>
+                <span class="k">if</span> <span class="o">(</span><span class="n">shouldAutoCancel</span><span class="o">(</span><span class="n">sbn</span><span class="o">)</span> <span class="o">&amp;&amp;</span> <span class="n">mGroupManager</span><span class="o">.</span><span class="na">isOnlyChildInGroup</span><span class="o">(</span><span class="n">sbn</span><span class="o">))</span> <span class="o">{</span>
+                    <span class="n">StatusBarNotification</span> <span class="n">summarySbn</span> <span class="o">=</span> <span class="n">mGroupManager</span><span class="o">.</span><span class="na">getLogicalGroupSummary</span><span class="o">(</span><span class="n">sbn</span><span class="o">)</span>
+                                    <span class="o">.</span><span class="na">getStatusBarNotification</span><span class="o">();</span>
+                    <span class="k">if</span> <span class="o">(</span><span class="n">shouldAutoCancel</span><span class="o">(</span><span class="n">summarySbn</span><span class="o">))</span> <span class="o">{</span>
+                        <span class="n">parentToCancel</span> <span class="o">=</span> <span class="n">summarySbn</span><span class="o">;</span>
+                    <span class="o">}</span>
+                <span class="o">}</span>
+                <span class="kd">final</span> <span class="n">StatusBarNotification</span> <span class="n">parentToCancelFinal</span> <span class="o">=</span> <span class="n">parentToCancel</span><span class="o">;</span>
+                <span class="k">new</span> <span class="nf">Thread</span><span class="o">()</span> <span class="o">{</span>
+                    <span class="nd">@Override</span>
+                    <span class="kd">public</span> <span class="kt">void</span> <span class="nf">run</span><span class="o">()</span> <span class="o">{</span>
+                        <span class="k">try</span> <span class="o">{</span>
+                            <span class="k">if</span> <span class="o">(</span><span class="n">keyguardShowing</span> <span class="o">&amp;&amp;</span> <span class="o">!</span><span class="n">afterKeyguardGone</span><span class="o">)</span> <span class="o">{</span>
+                                <span class="n">ActivityManagerNative</span><span class="o">.</span><span class="na">getDefault</span><span class="o">()</span>
+                                        <span class="o">.</span><span class="na">keyguardWaitingForActivityDrawn</span><span class="o">();</span>
+                            <span class="o">}</span>
+
+                            <span class="c1">// The intent we are sending is for the application, which</span>
+                            <span class="c1">// won't have permission to immediately start an activity after</span>
+                            <span class="c1">// the user switches to home.  We know it is safe to do at this</span>
+                            <span class="c1">// point, so make sure new activity switches are now allowed.</span>
+                            <span class="n">ActivityManagerNative</span><span class="o">.</span><span class="na">getDefault</span><span class="o">().</span><span class="na">resumeAppSwitches</span><span class="o">();</span>
+                        <span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="n">RemoteException</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
+                        <span class="o">}</span>
+                        <span class="k">if</span> <span class="o">(</span><span class="n">intent</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+                            <span class="c1">// If we are launching a work activity and require to launch</span>
+                            <span class="c1">// separate work challenge, we defer the activity action and cancel</span>
+                            <span class="c1">// notification until work challenge is unlocked.</span>
+                            <span class="k">if</span> <span class="o">(</span><span class="n">intent</span><span class="o">.</span><span class="na">isActivity</span><span class="o">())</span> <span class="o">{</span>
+                                <span class="kd">final</span> <span class="kt">int</span> <span class="n">userId</span> <span class="o">=</span> <span class="n">intent</span><span class="o">.</span><span class="na">getCreatorUserHandle</span><span class="o">()</span>
+                                        <span class="o">.</span><span class="na">getIdentifier</span><span class="o">();</span>
+                                <span class="k">if</span> <span class="o">(</span><span class="n">mLockPatternUtils</span><span class="o">.</span><span class="na">isSeparateProfileChallengeEnabled</span><span class="o">(</span><span class="n">userId</span><span class="o">)</span>
+                                        <span class="o">&amp;&amp;</span> <span class="n">mKeyguardManager</span><span class="o">.</span><span class="na">isDeviceLocked</span><span class="o">(</span><span class="n">userId</span><span class="o">))</span> <span class="o">{</span>
+                                    <span class="k">if</span> <span class="o">(</span><span class="n">startWorkChallengeIfNecessary</span><span class="o">(</span><span class="n">userId</span><span class="o">,</span>
+                                            <span class="n">intent</span><span class="o">.</span><span class="na">getIntentSender</span><span class="o">(),</span> <span class="n">notificationKey</span><span class="o">))</span> <span class="o">{</span>
+                                        <span class="c1">// Show work challenge, do not run pendingintent and</span>
+                                        <span class="c1">// remove notification</span>
+                                        <span class="k">return</span><span class="o">;</span>
+                                    <span class="o">}</span>
+                                <span class="o">}</span>
+                            <span class="o">}</span>
+                            <span class="k">try</span> <span class="o">{</span>
+                                <span class="n">intent</span><span class="o">.</span><span class="na">send</span><span class="o">(</span><span class="kc">null</span><span class="o">,</span> <span class="mi">0</span><span class="o">,</span> <span class="kc">null</span><span class="o">,</span> <span class="kc">null</span><span class="o">,</span> <span class="kc">null</span><span class="o">,</span> <span class="kc">null</span><span class="o">,</span>
+                                        <span class="n">getActivityOptions</span><span class="o">());</span>
+                            <span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="n">PendingIntent</span><span class="o">.</span><span class="na">CanceledException</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
+                                <span class="c1">// the stack trace isn't very helpful here.</span>
+                                <span class="c1">// Just log the exception message.</span>
+                                <span class="n">Log</span><span class="o">.</span><span class="na">w</span><span class="o">(</span><span class="n">TAG</span><span class="o">,</span> <span class="s">"Sending contentIntent failed: "</span> <span class="o">+</span> <span class="n">e</span><span class="o">);</span>
+
+                                <span class="c1">// TODO: Dismiss Keyguard.</span>
+                            <span class="o">}</span>
+                            <span class="k">if</span> <span class="o">(</span><span class="n">intent</span><span class="o">.</span><span class="na">isActivity</span><span class="o">())</span> <span class="o">{</span>
+                                <span class="n">mAssistManager</span><span class="o">.</span><span class="na">hideAssist</span><span class="o">();</span>
+                                <span class="n">overrideActivityPendingAppTransition</span><span class="o">(</span><span class="n">keyguardShowing</span>
+                                        <span class="o">&amp;&amp;</span> <span class="o">!</span><span class="n">afterKeyguardGone</span><span class="o">);</span>
+                            <span class="o">}</span>
+                        <span class="o">}</span>
+
+                        <span class="k">try</span> <span class="o">{</span>
+                            <span class="n">mBarService</span><span class="o">.</span><span class="na">onNotificationClick</span><span class="o">(</span><span class="n">notificationKey</span><span class="o">);</span>
+                        <span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="n">RemoteException</span> <span class="n">ex</span><span class="o">)</span> <span class="o">{</span>
+                            <span class="c1">// system process is dead if we're here.</span>
+                        <span class="o">}</span>
+                        <span class="k">if</span> <span class="o">(</span><span class="n">parentToCancelFinal</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+                            <span class="c1">// We have to post it to the UI thread for synchronization</span>
+                            <span class="n">mHandler</span><span class="o">.</span><span class="na">post</span><span class="o">(</span><span class="k">new</span> <span class="n">Runnable</span><span class="o">()</span> <span class="o">{</span>
+                                <span class="nd">@Override</span>
+                                <span class="kd">public</span> <span class="kt">void</span> <span class="nf">run</span><span class="o">()</span> <span class="o">{</span>
+                                    <span class="n">Runnable</span> <span class="n">removeRunnable</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Runnable</span><span class="o">()</span> <span class="o">{</span>
+                                        <span class="nd">@Override</span>
+                                        <span class="kd">public</span> <span class="kt">void</span> <span class="nf">run</span><span class="o">()</span> <span class="o">{</span>
+                                            <span class="n">performRemoveNotification</span><span class="o">(</span><span class="n">parentToCancelFinal</span><span class="o">,</span>
+                                                    <span class="kc">true</span><span class="o">);</span>
+                                        <span class="o">}</span>
+                                    <span class="o">};</span>
+                                    <span class="k">if</span> <span class="o">(</span><span class="n">isCollapsing</span><span class="o">())</span> <span class="o">{</span>
+                                        <span class="c1">// To avoid lags we're only performing the remove</span>
+                                        <span class="c1">// after the shade was collapsed</span>
+                                        <span class="n">addPostCollapseAction</span><span class="o">(</span><span class="n">removeRunnable</span><span class="o">);</span>
+                                    <span class="o">}</span> <span class="k">else</span> <span class="o">{</span>
+                                        <span class="n">removeRunnable</span><span class="o">.</span><span class="na">run</span><span class="o">();</span>
+                                    <span class="o">}</span>
+                                <span class="o">}</span>
+                            <span class="o">});</span>
+                        <span class="o">}</span>
+                    <span class="o">}</span>
+                <span class="o">}.</span><span class="na">start</span><span class="o">();</span>
+
+                <span class="c1">// close the shade if it was open</span>
+                <span class="n">animateCollapsePanels</span><span class="o">(</span><span class="n">CommandQueue</span><span class="o">.</span><span class="na">FLAG_EXCLUDE_RECENTS_PANEL</span><span class="o">,</span>
+                        <span class="kc">true</span> <span class="cm">/* force */</span><span class="o">,</span> <span class="kc">true</span> <span class="cm">/* delayed */</span><span class="o">);</span>
+                <span class="n">visibilityChanged</span><span class="o">(</span><span class="kc">false</span><span class="o">);</span>
+
+                <span class="k">return</span> <span class="kc">true</span><span class="o">;</span>
+            <span class="o">}</span>
+        <span class="o">},</span> <span class="n">afterKeyguardGone</span><span class="o">);</span>
+    <span class="o">}</span>
+
+    <span class="kd">private</span> <span class="kt">boolean</span> <span class="nf">shouldAutoCancel</span><span class="o">(</span><span class="n">StatusBarNotification</span> <span class="n">sbn</span><span class="o">)</span> <span class="o">{</span>
+        <span class="kt">int</span> <span class="n">flags</span> <span class="o">=</span> <span class="n">sbn</span><span class="o">.</span><span class="na">getNotification</span><span class="o">().</span><span class="na">flags</span><span class="o">;</span>
+        <span class="k">if</span> <span class="o">((</span><span class="n">flags</span> <span class="o">&amp;</span> <span class="n">Notification</span><span class="o">.</span><span class="na">FLAG_AUTO_CANCEL</span><span class="o">)</span> <span class="o">!=</span> <span class="n">Notification</span><span class="o">.</span><span class="na">FLAG_AUTO_CANCEL</span><span class="o">)</span> <span class="o">{</span>
+            <span class="k">return</span> <span class="kc">false</span><span class="o">;</span>
+        <span class="o">}</span>
+        <span class="k">if</span> <span class="o">((</span><span class="n">flags</span> <span class="o">&amp;</span> <span class="n">Notification</span><span class="o">.</span><span class="na">FLAG_FOREGROUND_SERVICE</span><span class="o">)</span> <span class="o">!=</span> <span class="mi">0</span><span class="o">)</span> <span class="o">{</span>
+            <span class="k">return</span> <span class="kc">false</span><span class="o">;</span>
+        <span class="o">}</span>
+        <span class="k">return</span> <span class="kc">true</span><span class="o">;</span>
+    <span class="o">}</span>
+
+    <span class="kd">public</span> <span class="kt">void</span> <span class="nf">register</span><span class="o">(</span><span class="n">ExpandableNotificationRow</span> <span class="n">row</span><span class="o">,</span> <span class="n">StatusBarNotification</span> <span class="n">sbn</span><span class="o">)</span> <span class="o">{</span>
+        <span class="n">Notification</span> <span class="n">notification</span> <span class="o">=</span> <span class="n">sbn</span><span class="o">.</span><span class="na">getNotification</span><span class="o">();</span>
+        <span class="k">if</span> <span class="o">(</span><span class="n">notification</span><span class="o">.</span><span class="na">contentIntent</span> <span class="o">!=</span> <span class="kc">null</span> <span class="o">||</span> <span class="n">notification</span><span class="o">.</span><span class="na">fullScreenIntent</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+            <span class="n">row</span><span class="o">.</span><span class="na">setOnClickListener</span><span class="o">(</span><span class="k">this</span><span class="o">);</span>
+        <span class="o">}</span> <span class="k">else</span> <span class="o">{</span>
+            <span class="n">row</span><span class="o">.</span><span class="na">setOnClickListener</span><span class="o">(</span><span class="kc">null</span><span class="o">);</span>
+        <span class="o">}</span>
+    <span class="o">}</span>
+<span class="o">}</span>
+
+</code></pre>
+</div>
+
+<h3 id="notification没有小图标">Notification没有小图标</h3>
+<div class="language-java highlighter-rouge"><pre class="highlight"><code><span class="kd">public</span> <span class="kt">void</span> <span class="nf">notifyRemovedLocked</span><span class="o">(</span><span class="n">StatusBarNotification</span> <span class="n">sbn</span><span class="o">)</span>
+</code></pre>
+</div>
+
+<div class="language-java highlighter-rouge"><pre class="highlight"><code><span class="kd">private</span> <span class="kt">void</span> <span class="nf">notifyRemoved</span><span class="o">(</span><span class="n">ManagedServiceInfo</span> <span class="n">info</span><span class="o">,</span> <span class="n">StatusBarNotification</span> <span class="n">sbn</span><span class="o">,</span>
+        <span class="n">NotificationRankingUpdate</span> <span class="n">rankingUpdate</span><span class="o">)</span>
+</code></pre>
+</div>
+
+<h3 id="record思考">Record思考</h3>
+<div class="highlighter-rouge"><pre class="highlight"><code>am/ActivityRecord.java
+am/AppBindRecord.java
+am/BackupRecord.java
+am/BroadcastRecord.java
+am/ConnectionRecord.java
+am/ContentProviderRecord.java
+am/IntentBindRecord.java
+am/PendingIntentRecord.java
+am/ProcessRecord.java
+am/ServiceRecord.java
+am/TaskRecord.java
+UidRecord.java
+media/MediaSessionRecord.java
+notification/NotificationRecord.java
+</code></pre>
+</div>
+
+<h2 id="从架构上了解notification">从架构上了解Notification</h2>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>1. 查看notification经过了几个进程
+2. 各个进程之间使用了哪些AIDL 来通讯
+3. 通讯之间使用了哪些类作为参数
+4. 
+
+</code></pre>
+</div>
+
+<p>Notification经过的进程</p>
+<div class="highlighter-rouge"><pre class="highlight"><code>1. CallerPID: 调用了Notificationmanager 的notify方法, 这个仍属于调用的所在的进程, 跨进程使用了INotificationManager.aidl
+2. system_server: NotificationManagerService 所在的进程是system_server, 在这里进行了逻辑的处理, 跨进程采用了INotificationListener.aidl
+3. com.android.systemui: SystemUI进行界面处理. 是com.android.systemui 进程
+4. com.android.systemui: SystemUI 播放铃声, 是com.android.systemui 进程. 跨进程使用了IRingtonePlayer.aidl
+5. com.android.systemui: SystemUI Notification灯亮, 是com.android.systemui 进程. 跨进程使用了IStatusBar.aidl
+6. 
+
+</code></pre>
+</div>
+
+<p>涉及到的AIDL, 因为AIDL是进程间的通信,一次可能涉及到多个进程</p>
+<div class="highlighter-rouge"><pre class="highlight"><code>IStatusBar.aidl
+IStatusBarNotificationHolder.aidl
+IStatusBarService.aidl
+Notification.aidl
+INotificationManager
+IRingtonePlayer.aidl
+INotificationListener.aidl
+IStatusBarService.aidl
+IStatusBarNotificationHolder.aidl
+
+</code></pre>
+</div>
+
+<h3 id="相关问题">相关问题</h3>
+<div class="highlighter-rouge"><pre class="highlight"><code>1. 通知是如何发出去的
+2. 通知是如何播放铃声的
+3. 发通知的方式
+4. 发完通知没看通知, 通知灯的闪烁
+5. android的framework生成的几个进程, system_process, com.android.systemui, android.ext.services, android.process_acore, android.process.media
+6. 通知是如何更新的
+7. 通知是如何显示的
+8. 同一个应用的多个通知是如何被组织到一起的
+9. Notification的架构
+10. StatusBarIconView的显示, 被包围在IconMerger里面
+11. 通知更新的条件是什么
+12. 通知以组的形式显示的条件是什么
+13. 通知的种类
+14. Notification Duck
+15. NotificationRecord的作用
+16. NotificationListenerService的作用
+17. 认识Notification
+18. PendingIntent是如何添加button的
+19. Notification的样式
+
+</code></pre>
+</div>
+<div class="highlighter-rouge"><pre class="highlight"><code>NotificationRecord  在NotificationManagerService里用此类来记录Notification
+Notification  
+Ranking 存储着当前正在活跃的notification的等级信息
+NotificationListenerService  
+NotificationRankerService 继承于NotificationListenerService
+
+</code></pre>
+</div>
+<p>涉及到的模块</p>
+<div class="highlighter-rouge"><pre class="highlight"><code>SystemUI
+services.core
+
+</code></pre>
+</div>
+
+<div class="language-java highlighter-rouge"><pre class="highlight"><code><span class="n">mNotificationData</span><span class="o">.</span><span class="na">add</span><span class="o">(</span><span class="n">entry</span><span class="o">,</span> <span class="n">ranking</span><span class="o">);</span>  <span class="c1">//注释掉来通知的时候， 出现两个StatusBar， 下拉没有通知</span>
+<span class="n">updateNotifications</span><span class="o">();</span>  <span class="c1">//注释没有下拉通知， 重启SystemUI通知会出来</span>
+</code></pre>
+</div>
+
+<div class="language-java highlighter-rouge"><pre class="highlight"><code><span class="kd">final</span> <span class="n">ArrayList</span><span class="o">&lt;</span><span class="n">NotificationRecord</span><span class="o">&gt;</span> <span class="n">mNotificationList</span> <span class="o">=</span>
+    <span class="k">new</span> <span class="n">ArrayList</span><span class="o">&lt;</span><span class="n">NotificationRecord</span><span class="o">&gt;();</span>
+<span class="kd">final</span> <span class="n">ArrayMap</span><span class="o">&lt;</span><span class="n">String</span><span class="o">,</span> <span class="n">NotificationRecord</span><span class="o">&gt;</span> <span class="n">mNotificationsByKey</span> <span class="o">=</span>
+    <span class="k">new</span> <span class="n">ArrayMap</span><span class="o">&lt;</span><span class="n">String</span><span class="o">,</span> <span class="n">NotificationRecord</span><span class="o">&gt;();</span>
+<span class="kd">final</span> <span class="n">ArrayMap</span><span class="o">&lt;</span><span class="n">Integer</span><span class="o">,</span> <span class="n">ArrayMap</span><span class="o">&lt;</span><span class="n">String</span><span class="o">,</span> <span class="n">String</span><span class="o">&gt;&gt;</span> <span class="n">mAutobundledSummaries</span> <span class="o">=</span> <span class="k">new</span> <span class="n">ArrayMap</span><span class="o">&lt;&gt;();</span>
+<span class="kd">final</span> <span class="n">ArrayList</span><span class="o">&lt;</span><span class="n">ToastRecord</span><span class="o">&gt;</span> <span class="n">mToastQueue</span> <span class="o">=</span> <span class="k">new</span> <span class="n">ArrayList</span><span class="o">&lt;</span><span class="n">ToastRecord</span><span class="o">&gt;();</span>
+<span class="kd">final</span> <span class="n">ArrayMap</span><span class="o">&lt;</span><span class="n">String</span><span class="o">,</span> <span class="n">NotificationRecord</span><span class="o">&gt;</span> <span class="n">mSummaryByGroupKey</span> <span class="o">=</span> <span class="k">new</span> <span class="n">ArrayMap</span><span class="o">&lt;&gt;();</span>
+<span class="kd">final</span> <span class="n">PolicyAccess</span> <span class="n">mPolicyAccess</span> <span class="o">=</span> <span class="k">new</span> <span class="n">PolicyAccess</span><span class="o">();</span>
+
+<span class="c1">// The last key in this list owns the hardware.</span>
+<span class="n">ArrayList</span><span class="o">&lt;</span><span class="n">String</span><span class="o">&gt;</span> <span class="n">mLights</span> <span class="o">=</span> <span class="k">new</span> <span class="n">ArrayList</span><span class="o">&lt;&gt;();</span>
+
+
+</code></pre>
+</div>
+
+<h3 id="锁屏通知布局">锁屏通知布局</h3>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>StatusBarWindowView  //整个下拉通知,包括状态栏, 锁屏通知
+NotificationPanelView //包含所有的显示的通知, 包含状态栏
+NotificationsQuickSettingsContainer//包含所有的显示的通知, 包含状态栏, 不包含底部的锁屏KeyGuradBottom
+NotificationStackScrollLayout //只包含所有的通知ExpandableNotificationRow以及过多的通知显示栏OverflowContainer,
+ExpandableNotificationRow
+NotificationBackgroundView// 一个normal状态， 一个dimmed状态
+NotificationContentView
+
+
+</code></pre>
+</div>
+<p>文档有待整理</p>
+
+<h2 id="参考文献">参考文献</h2>
+
+<ol>
+  <li><a href="https://developer.android.com/reference/android/app/Notification.html">Notification</a></li>
+  <li><a href="https://developer.android.com/design/patterns/notifications_k.html">Notifications, Android 4.4 and Lower</a></li>
+  <li><a href="http://blog.csdn.net/yihongyuelan/article/details/40977323">Android 4.4 KitKat NotificationManagerService使用详解与原理分析(一)__使用详解</a></li>
+  <li><a href="http://blog.csdn.net/yihongyuelan/article/details/41084165"> Android 4.4 KitKat NotificationManagerService使用详解与原理分析(二)__原理分析</a></li>
+  <li><a href="http://www.jianshu.com/p/d9fbcb0db013">Android N 通知概览及example</a></li>
+  <li><a href="https://gank.io/post/56e0b83c67765963436fcb94">从开发者角度解析 Android N 新特性！</a></li>
+  <li><a href="https://gold.xitu.io/entry/577a27e76be3ff006a1ef870">译探寻 Android N 中通知的新变化</a></li>
+  <li><a href="http://blog.csdn.net/elder_sword/article/details/50809642">Android5.1应用统计源码分析</a></li>
+  <li><a href="http://blog.csdn.net/yihongyuelan/article/details/7751013"> Android 4.0 ICS SystemUI浅析——StatusBar加载流程之Notification</a></li>
+  <li><a href="http://blog.csdn.net/vipzjyno1/article/details/25248021"> Android 通知栏Notification的整合 全面学习 </a></li>
+  <li><a href="https://segunfamisa.com/posts/notifications-direct-reply-android-nougat">Improved notifications with Direct reply in Android N</a></li>
+  <li><a href="http://connorlin.github.io/2016/04/21/%E4%BD%A0%E7%9C%9F%E7%9A%84%E4%BA%86%E8%A7%A3Android-Notification%E5%90%97/">你真的了解Android Notification吗?</a></li>
+  <li><a href="http://glgjing.github.io/blog/2015/11/18/android-kai-fa-zhi-notification-xiang-jie/">Android 开发之 Notification 详解</a></li>
+  <li><a href="http://yuweiguocn.github.io/android-basic-notification/">Android基础——Notification</a></li>
+  <li><a href="http://mahong978.top/2016/09/08/Android-DRN/">Android N新特性：direct reply notification</a></li>
+  <li><a href="https://shoewann0402.github.io/2016/05/12/Android-Notification-%E9%80%9A%E7%9F%A5%E6%A0%B7%E5%BC%8F%E6%80%BB%E7%BB%93/">Android Notification 通知样式总结</a></li>
+  <li><a href="http://canglangwenyue.com/2014/12/08/android-notification%E5%AE%8C%E5%85%A8%E8%A7%A3%E6%9E%90/">android notification完全解析</a></li>
+  <li><a href="http://haoxiqiang.github.io/blog/20150129-AndroidNotification.html">Android的Notification</a></li>
+  <li><a href="http://lovenight.github.io/2015/12/10/Android%E7%AC%94%E8%AE%B0%E4%B9%8BNotification/">Android笔记之Notification</a></li>
+  <li><a href="http://ghvn7777.github.io/2016/05/27/Notification/">Notification通知</a></li>
+  <li><a href="http://wn398.github.io/2015/03/16/android/android%E9%80%9A%E7%9F%A5%E3%80%81PendingIntent%E3%80%81%E5%AE%9A%E6%97%B6%E6%9C%BA%E5%88%B6/">android通知、PendingIntent、定时机制</a></li>
+  <li><a href="http://chendd.com/blog/2013/03/25/android_study_21/">Android学习日记21–消息提示之Toast和Notification</a></li>
+  <li><a href="http://blog.csdn.net/jdsjlzx/article/details/6916533">Android的StatusBar分析</a></li>
+  <li><a href="http://light3moon.com/2015/02/06/Android%20SystemUI%20%E5%88%86%E6%9E%90%E2%80%94%E2%80%94%E9%80%9A%E7%9F%A5/">Android SystemUI 分析——通知</a></li>
+  <li><a href="http://blog.csdn.net/jamikabin/article/details/22950735">Notification数据结构和功能处理流程分析</a></li>
+  <li><a href="http://blog.csdn.net/yueqian_scut/article/details/51417547"> Android NotificationListenerService原理简介</a></li>
+  <li><a href="https://www.zhihu.com/question/20372589">什么是 Dirty hack</a></li>
+  <li><a href="http://blog.csdn.net/self_study/article/details/51055769">android 特殊用户通知用法汇总–Notification源码分析</a></li>
+  <li><a href="http://blog.csdn.net/thinkingword/article/details/7769621">Notification的显示过程</a></li>
+  <li><a href="https://yq.aliyun.com/ziliao/98493">Notification与NotificationManager详细 _Android</a></li>
+  <li><a href="http://blog.csdn.net/itachi85/article/details/50096609"> Android5.x Notification应用解析 </a></li>
+  <li><a href="http://www.jianshu.com/p/3ed68162e1f5">Notification机制浅析（基于SDK23）</a></li>
+  <li><a href="http://blog.csdn.net/guoqifa29/article/details/44133905"> NotificationManagerService笔记</a></li>
+  <li><a href="https://www.zybuluo.com/coder-pig/note/183026">Android基础入门教程——2.5.2 Notification(状态栏通知)详解</a></li>
+  <li><a href="http://blog.csdn.net/qq_31530015/article/details/53507968">Android 7.0 SystemUI 之启动和状态栏和导航栏简介</a></li>
+  <li><a href="http://fortianwei.iteye.com/blog/1180020">Notification framework层的处理流程分析</a></li>
+  <li><a href="http://iluhcm.com/2017/03/12/experience-of-adapting-to-android-notifications/">Android通知栏介绍与适配总结</a>
+<a href=""></a>
+<a href=""></a>
+<a href=""></a>
+<a href=""></a>
+<a href=""></a>
+<a href=""></a>
+<a href=""></a>
+<a href=""></a>
+<a href=""></a>
+<a href=""></a></li>
+</ol>
+
+
+                <hr>
+
+                
+
+
+                <ul class="pager">
+                    
+                    <li class="previous">
+                        <a href="/2017/01/01/hello-2017/" data-toggle="tooltip" data-placement="top" title="Welcome to My World">&larr; Previous Post</a>
+                    </li>
+                    
+                    
+                </ul>
+
+
+                
+
+                
+
+            </div>
+
+    <!-- Sidebar Container -->
+            <div class="
+                col-lg-8 col-lg-offset-2
+                col-md-10 col-md-offset-1
+                sidebar-container">
+
+                <!-- Featured Tags -->
+                
+                <section>
+                    <hr class="hidden-sm hidden-xs">
+                    <h5><a href="/tags/">FEATURED TAGS</a></h5>
+                    <div class="tags">
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+        			</div>
+                </section>
+                
+
+                <!-- Friends Blog -->
+                
+                <hr>
+                <h5>FRIENDS</h5>
+                <ul class="list-inline">
+                    
+                        <li><a href="http://huangxuan.me">Hux Blog</a></li>
+                    
+                </ul>
+                
+            </div>
+        </div>
+    </div>
+</article>
+
+
+
+
+
+
+
+
+<!-- async load function -->
+<script>
+    function async(u, c) {
+      var d = document, t = 'script',
+          o = d.createElement(t),
+          s = d.getElementsByTagName(t)[0];
+      o.src = u;
+      if (c) { o.addEventListener('load', function (e) { c(null, e); }, false); }
+      s.parentNode.insertBefore(o, s);
+    }
+</script>
+<!-- anchor-js, Doc:http://bryanbraun.github.io/anchorjs/ -->
+<script>
+    async("http://cdn.bootcss.com/anchor-js/1.1.1/anchor.min.js",function(){
+        anchors.options = {
+          visible: 'always',
+          placement: 'right',
+          icon: '#'
+        };
+        anchors.add().remove('.intro-header h1').remove('.subheading').remove('.sidebar-container h5');
+    })
+</script>
+<style>
+    /* place left on bigger screen */
+    @media all and (min-width: 800px) {
+        .anchorjs-link{
+            position: absolute;
+            left: -0.75em;
+            font-size: 1.1em;
+            margin-top : -0.1em;
+        }
+    }
+</style>
+
+
+
+    <!-- Footer -->
+<footer>
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                <ul class="list-inline text-center">
+                    
+                    
+                    <li>
+                        <a href="https://twitter.com/WanJinXu">
+                            <span class="fa-stack fa-lg">
+                                <i class="fa fa-circle fa-stack-2x"></i>
+                                <i class="fa fa-twitter fa-stack-1x fa-inverse"></i>
+                            </span>
+                        </a>
+                    </li>
+                    
+
+                    <!-- add Weibo, Zhihu by Hux, add target = "_blank" to <a> by Hux -->
+                    
+                    <li>
+                        <a target="_blank" href="https://www.zhihu.com/people/xu-wan-jin-6">
+                            <span class="fa-stack fa-lg">
+                                <i class="fa fa-circle fa-stack-2x"></i>
+                                <i class="fa  fa-stack-1x fa-inverse">知</i>
+                            </span>
+                        </a>
+                    </li>
+                    
+                    
+                    <li>
+                        <a target="_blank" href="http://weibo.com/JackHarkness1991">
+                            <span class="fa-stack fa-lg">
+                                <i class="fa fa-circle fa-stack-2x"></i>
+                                <i class="fa fa-weibo fa-stack-1x fa-inverse"></i>
+                            </span>
+                        </a>
+                    </li>
+                    
+
+
+                    
+                    <li>
+                        <a target="_blank" href="https://www.facebook.com/Wanjin.xu">
+                            <span class="fa-stack fa-lg">
+                                <i class="fa fa-circle fa-stack-2x"></i>
+                                <i class="fa fa-facebook fa-stack-1x fa-inverse"></i>
+                            </span>
+                        </a>
+                    </li>
+                    
+                    
+                    <li>
+                        <a target="_blank" href="https://github.com/xuwanjin">
+                            <span class="fa-stack fa-lg">
+                                <i class="fa fa-circle fa-stack-2x"></i>
+                                <i class="fa fa-github fa-stack-1x fa-inverse"></i>
+                            </span>
+                        </a>
+                    </li>
+                    
+                </ul>
+                <p class="copyright text-muted">
+                    Copyright &copy; 秋叶 Blog 2017
+                    <br>
+                    Theme by <a href="http://huangxuan.me">Hux</a> |
+                    <iframe
+                        style="margin-left: 2px; margin-bottom:-5px;"
+                        frameborder="0" scrolling="0" width="91px" height="20px"
+                        src="https://ghbtns.com/github-btn.html?user=huxpro&repo=huxpro.github.io&type=star&count=true" >
+                    </iframe>
+                </p>
+            </div>
+        </div>
+    </div>
+</footer>
+
+<!-- jQuery -->
+<script src="/js/jquery.min.js "></script>
+
+<!-- Bootstrap Core JavaScript -->
+<script src="/js/bootstrap.min.js "></script>
+
+<!-- Custom Theme JavaScript -->
+<script src="/js/hux-blog.min.js "></script>
+
+
+<!-- async load function -->
+<script>
+    function async(u, c) {
+      var d = document, t = 'script',
+          o = d.createElement(t),
+          s = d.getElementsByTagName(t)[0];
+      o.src = u;
+      if (c) { o.addEventListener('load', function (e) { c(null, e); }, false); }
+      s.parentNode.insertBefore(o, s);
+    }
+</script>
+
+<!-- 
+     Because of the native support for backtick-style fenced code blocks 
+     right within the Markdown is landed in Github Pages, 
+     From V1.6, There is no need for Highlight.js, 
+     so Huxblog drops it officially.
+
+     - https://github.com/blog/2100-github-pages-now-faster-and-simpler-with-jekyll-3-0  
+     - https://help.github.com/articles/creating-and-highlighting-code-blocks/    
+-->
+<!--
+    <script>
+        async("http://cdn.bootcss.com/highlight.js/8.6/highlight.min.js", function(){
+            hljs.initHighlightingOnLoad();
+        })
+    </script>
+    <link href="http://cdn.bootcss.com/highlight.js/8.6/styles/github.min.css" rel="stylesheet">
+-->
+
+
+<!-- jquery.tagcloud.js -->
+<script>
+    // only load tagcloud.js in tag.html
+    if($('#tag_cloud').length !== 0){
+        async("/js/jquery.tagcloud.js",function(){
+            $.fn.tagcloud.defaults = {
+                //size: {start: 1, end: 1, unit: 'em'},
+                color: {start: '#bbbbee', end: '#0085a1'},
+            };
+            $('#tag_cloud a').tagcloud();
+        })
+    }
+</script>
+
+<!--fastClick.js -->
+<script>
+    async("http://cdn.bootcss.com/fastclick/1.0.6/fastclick.min.js", function(){
+        var $nav = document.querySelector("nav");
+        if($nav) FastClick.attach($nav);
+    })
+</script>
+
+
+<!-- Google Analytics -->
+
+
+
+<!-- Baidu Tongji -->
+
+
+
+
+<!-- Image to hack wechat -->
+<img src="/img/icon_wechat.png" width="0" height="0" />
+<!-- Migrate from head to bottom, no longer block render and still work -->
+
+</body>
+
+</html>
