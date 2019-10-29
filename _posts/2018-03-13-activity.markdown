@@ -1,0 +1,1910 @@
+---
+layout:     post
+title:      "Activity分析"
+subtitle:   "Android Activity分析"
+date:       2018-03-18 00:10:40
+author:     "Mathew"
+catalog: true
+header-img: "img/post-bg-2017.jpg"
+tags:
+    - Android
+    - Activity
+---
+
+# Activity分析
+
+## Activity启动流程
+Activity的启动， 当在一个界面Activity A到Activity B的显示，无外乎Activity A的失去交互， Activity B的可交互。 失去交互必然是onPause, onStop(可能会出现)， 变成可交互必然是onCreate, onStart。中间则是一系列的权限检验， 启动方式校验， Activity的复用， 任务栈的创建及复用， 结果回传， Activity检查是否存在， 进程间通信， 动画显示， 特殊情形（语音交互， 重量级线程）等等。 如果这个是从Launcher启动的话， 就要分好哪些是Launcher进程需要干的， 哪些是目标进程需要干的， 哪些是系统应该干的。 同时进程之间传递的数据ActivityRecord. 同时对Activity在不同状态下的以不同的数据结构的管理。 从ActivityInfo, ActivityRecord, TaskRecord, ActivityStack, ActivityDisplay, ActivityStackSupervisor. 同时基于Activity不同的状态下的数据结构ActivityState。一共九种状态。 
+
+
+```
+应该还有activity栈的操作，新建栈或者压入栈
+activity的启动过程应该分情形描述，中间各种check过程应该是存在window创建之类的，不过你泛泛描述的部分应该没啥问题看起来
+弹出dialog activity onpause但是还有部分能看到，所以隐藏不太准确，直接说是否与用户交互更准确一些
+最好顺序换一换以免引起误会
+```
+### startActivity
+ 首先我们是最简单的StartActivity(Intent) 只有一个参数开始. 
+ 一般我们给了一个Intent, 可能是直接打开了一个应用, 或者找出了很多应用的Activity, 然后选择你需要的Activity(后面会介绍这种情况). [单个或者是多个Activity]()
+```java
+//Activity
+public void startActivity(Intent intent);
+```
+options参数是用来两个Activity传递数据的. [Activity之间传递的数据]()
+```java
+public void startActivity(Intent intent, @Nullable Bundle options)
+```
+
+requestCode 只有发生跳转Activity的时候, 需要返回给之前的一个Activity相关的状态.
+```java
+public void startActivityForResult(@RequiresPermission Intent intent, int requestCode)
+```
+
+```java
+public void startActivityForResult(@RequiresPermission Intent intent, int requestCode,
+                                   @Nullable Bundle options)
+```
+
+```java
+//Activity.java
+public void startActivityForResult(@RequiresPermission Intent intent, int requestCode,
+        @Nullable Bundle options) {
+    if (mParent == null) {
+        options = transferSpringboardActivityOptions(options);
+        Instrumentation.ActivityResult ar =
+        // 这里的this, mMainThread.getApplicationThread(), mToken, 
+        //都是前一个Activity的参数
+        // 那么第一个Activity, 即HomeActivity这些参数怎么来的呢? 稍后分析
+        // mToken 是一个IBinder对象, 一个Activity在Attach的是被赋值
+        //Attach发生在ActivityThread执行启动Activity是执行, 
+        //即performLaunchActivity方法
+        // 
+            mInstrumentation.execStartActivity(
+                this, mMainThread.getApplicationThread(), mToken, this,
+                intent, requestCode, options);
+	        // 如果这调用时, 返回的是有结果的, 那么进行结果的回传, 否则不进行结果回传
+	        //mMainThread  表示当前的Application的ActivityThread, 有且只有一个. 
+	        //主要看requestCode, 如果小于零结果就不回传了
+        if (ar != null) {
+            mMainThread.sendActivityResult(
+                mToken, mEmbeddedID, requestCode, ar.getResultCode(),
+                ar.getResultData());
+        }
+        if (requestCode >= 0) {
+            // If this start is requesting a result, we can avoid making
+            // the activity visible until the result is received.  Setting
+            // this code during onCreate(Bundle savedInstanceState) or onResume() will keep the
+            // activity hidden during this time, to avoid flickering.
+            // This can only be done when a result is requested because
+            // that guarantees we will get information back when the
+            // activity is finished, no matter what happens to it.
+            mStartedActivity = true;
+        }
+		
+		
+        cancelInputsAndStartExitTransition(options);
+        // TODO Consider clearing/flushing other event sources and events for child windows.
+    } else {
+        if (options != null) {
+            mParent.startActivityFromChild(this, intent, requestCode, options);
+        } else {
+            // Note we want to go through this method for compatibility with
+            // existing applications that may have overridden it.
+            mParent.startActivityFromChild(this, intent, requestCode);
+        }
+    }
+}
+```
+
+### Instrumentation
+实现应用的Instrumentation的基本类, 当一个应用的Instrumentation的功能被打开时, 这个类将在一个应用的任何类之前初始化(包括Application类) [代码中的体现](Instrumentation实例化的时间),为了让你监控系统和该应用的所有的交互. 一个Instrumentation的实现应该通过android的清单文件描述给系统.
+```java
+mMainThread.getInstrumentation().execStartActivity(
+        getOuterContext(), mMainThread.getApplicationThread(), null,
+        (Activity) null, intent, -1, options);
+```
+
+```java
+//Instrumentation.java
+public ActivityResult execStartActivity(
+        Context who, IBinder contextThread, IBinder token, Activity target,
+        Intent intent, int requestCode, Bundle options) 
+```
+
+```java
+//Instrumentation.java  execStartActivity的具体实现
+public ActivityResult execStartActivity(
+        Context who, IBinder contextThread, IBinder token, Activity target,
+        Intent intent, int requestCode, Bundle options) {
+    IApplicationThread whoThread = (IApplicationThread) contextThread;
+    Uri referrer = target != null ? target.onProvideReferrer() : null;
+    if (referrer != null) {
+        intent.putExtra(Intent.EXTRA_REFERRER, referrer);
+    }
+    if (mActivityMonitors != null) {
+        synchronized (mSync) {
+            final int N = mActivityMonitors.size();
+            for (int i=0; i<N; i++) {
+                final ActivityMonitor am = mActivityMonitors.get(i);
+                ActivityResult result = null;
+                if (am.ignoreMatchingSpecificIntents()) {
+                    result = am.onStartActivity(intent);
+                }
+                if (result != null) {
+                    am.mHits++;
+                    return result;
+                } else if (am.match(who, null, intent)) {
+                    am.mHits++;
+                    if (am.isBlocking()) {
+                        return requestCode >= 0 ? am.getResult() : null;
+                    }
+                    break;
+                }
+            }
+        }
+    }
+    try {
+        intent.migrateExtraStreamToClipData();
+        intent.prepareToLeaveProcess(who);
+        Log.d(TAG, "execStartActivity: token = " + token);
+        // whoThread  上一个应用的ApplicationThread实例
+        // who.getBasePackageName() 
+        // 
+        //requestCode 对于不需要返回结果的, 请求码为-1
+        //options 为放到bundle里的数据,
+            int result = ActivityManager.getService()
+                .startActivity(whoThread, who.getBasePackageName(), intent,
+                        intent.resolveTypeIfNeeded(who.getContentResolver()) /* resolvedType */,
+                        token /* resultTo */,
+                        target != null ? target.mEmbeddedID : null /* resultWho */,
+                        requestCode, 0 /* startFlags */, null /*ProfilerInfo */, options);
+        checkStartActivityResult(result, intent);
+    } catch (RemoteException e) {
+        throw new RuntimeException("Failure from system", e);
+    }
+    return null;
+}
+```
+
+```java
+int result = ActivityManagerNative.getDefault()
+    .startActivity(whoThread, who.getBasePackageName(), intent,
+            intent.resolveTypeIfNeeded(who.getContentResolver()),
+            token, target != null ? target.mEmbeddedID : null,
+            requestCode, 0, null, options);
+```
+
+### ActivityManagerProxy
+
+```java
+ActivityManagerProxy
+public int startActivity(IApplicationThread caller, String callingPackage, Intent intent,
+        String resolvedType, IBinder resultTo, String resultWho, int requestCode, int flags,
+        ProfilerInfo profilerInfo, Bundle options) throws RemoteException;
+```
+
+### ActivityManagerService
+
+```java
+ActivityManagerService.java
+public int startActivity(IApplicationThread caller, String callingPackage, Intent intent,
+        String resolvedType, IBinder resultTo, String resultWho, int requestCode,
+        int startFlags, ProfilerInfo profilerInfo, Bundle options) throws RemoteException 
+```
+
+
+```java
+{
+    data.enforceInterface(IActivityManager.descriptor);
+    IBinder b = data.readStrongBinder();
+    IApplicationThread app = ApplicationThreadNative.asInterface(b);
+    String callingPackage = data.readString();
+    Intent intent = Intent.CREATOR.createFromParcel(data);
+    String resolvedType = data.readString();
+    IBinder resultTo = data.readStrongBinder();
+    String resultWho = data.readString();
+    int requestCode = data.readInt();
+    int startFlags = data.readInt();
+    ProfilerInfo profilerInfo = data.readInt() != 0
+            ? ProfilerInfo.CREATOR.createFromParcel(data) : null;
+    Bundle options = data.readInt() != 0
+            ? Bundle.CREATOR.createFromParcel(data) : null;
+    int result = startActivity(app, callingPackage, intent, resolvedType,
+            resultTo, resultWho, requestCode, startFlags, profilerInfo, options);
+    reply.writeNoException();
+    reply.writeInt(result);
+    return true;
+}
+```
+
+```java
+ActivityManagerService.java
+public final int startActivity(IApplicationThread caller, String callingPackage,
+        Intent intent, String resolvedType, IBinder resultTo, String resultWho, int requestCode,
+        int startFlags, ProfilerInfo profilerInfo, Bundle bOptions) {
+    return startActivityAsUser(caller, callingPackage, intent, resolvedType, resultTo,
+            resultWho, requestCode, startFlags, profilerInfo, bOptions,
+            UserHandle.getCallingUserId());
+}
+
+```
+
+```java
+ActivityManagerService.java
+Override
+public final int startActivityAsUser(IApplicationThread caller, String callingPackage,
+        Intent intent, String resolvedType, IBinder resultTo, String resultWho, int requestCode,
+        int startFlags, ProfilerInfo profilerInfo, Bundle bOptions, int userId) {
+// 安全性检查, 如果App在安装的时候就被PMS打上标记, 表示App不安全, 
+// 为被隔离的对象, 他将没有任何权限启动其他的Activity
+    enforceNotIsolatedCaller("startActivity");
+    userId = mUserController.handleIncomingUser(Binder.getCallingPid(), Binder.getCallingUid(),
+            userId, false, ALLOW_FULL_ONLY, "startActivity", null);
+    // TODO: Switch to user app stacks here.
+    return mActivityStarter.startActivityMayWait(caller, -1, callingPackage, intent,
+            resolvedType, null, null, resultTo, resultWho, requestCode, startFlags,
+            profilerInfo, null, null, bOptions, false, userId, null, null);
+}
+```
+
+### startActivityMayWait
+```java
+ActivityStarter.java
+final int startActivityMayWait(IApplicationThread caller, int callingUid,
+        String callingPackage, Intent intent, String resolvedType,
+        IVoiceInteractionSession voiceSession, IVoiceInteractor voiceInteractor,
+        IBinder resultTo, String resultWho, int requestCode, int startFlags,
+        ProfilerInfo profilerInfo, IActivityManager.WaitResult outResult, Configuration config,
+        Bundle bOptions, boolean ignoreTargetSecurity, int userId,
+        IActivityContainer iContainer, TaskRecord inTask)
+        
+```
+
+主要是
+1. 查询了目标的Activity是否存在
+2. 对特殊的的应用(重量级进程)进行了ActivityInfo特殊处理
+3. 继续启动Activity
+4. 对启动的Activity的返回结果进行回传
+
+```
+final int startActivityMayWait(IApplicationThread caller, int callingUid,
+            String callingPackage, Intent intent, String resolvedType,
+            IVoiceInteractionSession voiceSession, IVoiceInteractor voiceInteractor,
+            IBinder resultTo, String resultWho, int requestCode, int startFlags,
+            ProfilerInfo profilerInfo, IActivityManager.WaitResult outResult, Configuration config,
+            Bundle bOptions, boolean ignoreTargetSecurity, int userId,
+            IActivityContainer iContainer, TaskRecord inTask) {
+  // Refuse possible leaked file descriptors
+    if (intent != null && intent.hasFileDescriptors()) {
+        throw new IllegalArgumentException("File descriptors passed in Intent");
+    }
+    mSupervisor.mActivityMetricsLogger.notifyActivityLaunching();
+    boolean componentSpecified = intent.getComponent() != null;
+
+    // Save a copy in case ephemeral needs it
+    final Intent ephemeralIntent = new Intent(intent);
+    // Don't modify the client's object!
+    intent = new Intent(intent);
+
+// 获取所要启动的Activity的ResolveInfo, ResolveInfo是对三大组件的
+(ActivityInfo, ServiceInfo, ProviderInfo)Info类的封装, 主要是通过PKMS来查询
+    ResolveInfo rInfo = mSupervisor.resolveIntent(intent, resolvedType, userId);
+    if (rInfo == null) {
+        UserInfo userInfo = mSupervisor.getUserInfo(userId);
+        if (userInfo != null && userInfo.isManagedProfile()) {
+            // Special case for managed profiles, if attempting to launch non-cryto aware
+            // app in a locked managed profile from an unlocked parent allow it to resolve
+            // as user will be sent via confirm credentials to unlock the profile.
+            UserManager userManager = UserManager.get(mService.mContext);
+            boolean profileLockedAndParentUnlockingOrUnlocked = false;
+            long token = Binder.clearCallingIdentity();
+            try {
+                UserInfo parent = userManager.getProfileParent(userId);
+                profileLockedAndParentUnlockingOrUnlocked = (parent != null)
+                        && userManager.isUserUnlockingOrUnlocked(parent.id)
+                        && !userManager.isUserUnlockingOrUnlocked(userId);
+            } finally {
+                Binder.restoreCallingIdentity(token);
+            }
+            if (profileLockedAndParentUnlockingOrUnlocked) {
+                rInfo = mSupervisor.resolveIntent(intent, resolvedType, userId,
+                        PackageManager.MATCH_DIRECT_BOOT_AWARE
+                                | PackageManager.MATCH_DIRECT_BOOT_UNAWARE);
+            }
+        }
+    }
+    // Collect information about the target of the Intent.
+    // 收集目标activity的相关信息, 并将其封装在ActivityInfo里面,
+    // 一般来说查找到了对应的Activity了, 
+    // 会把AndroidManifest文件里的Activity设置的信息封装成一个ActivityInfo, 
+    // 通过ResolveInfo来获取ActivityInfo
+    ActivityInfo aInfo = mSupervisor.resolveActivity(intent, rInfo, startFlags, profilerInfo);
+	//对于直接调用StartActivity(Intent)方法, 的bOptions是为null, requestCode为-1
+	//实际上直接从ResolveInfo里面直接获取了ActivityInfo
+    ActivityOptions options = ActivityOptions.fromBundle(bOptions);
+    ActivityStackSupervisor.ActivityContainer container =
+            (ActivityStackSupervisor.ActivityContainer)iContainer;
+    synchronized (mService) {
+        if (container != null && container.mParentActivity != null &&
+                container.mParentActivity.state != RESUMED) {
+            // Cannot start a child activity if the parent is not resumed.
+            return ActivityManager.START_CANCELED;
+        }
+        final int realCallingPid = Binder.getCallingPid();
+        final int realCallingUid = Binder.getCallingUid();
+        int callingPid;
+        //从应用里走过来的, 这里的callingUid 为-1;
+        if (callingUid >= 0) {
+            callingPid = -1;
+        } else if (caller == null) {
+            callingPid = realCallingPid;
+            callingUid = realCallingUid;
+        } else {
+            callingPid = callingUid = -1;
+        }
+
+        final ActivityStack stack;
+        if (container == null || container.mStack.isOnHomeDisplay()) {
+            stack = mSupervisor.mFocusedStack;
+        } else {
+            stack = container.mStack;
+        }
+        stack.mConfigWillChange = config != null && mService.mConfiguration.diff(config) != 0;
+        if (DEBUG_CONFIGURATION) Slog.v(TAG_CONFIGURATION,
+                "Starting activity when config will change = " + stack.mConfigWillChange);
+
+        final long origId = Binder.clearCallingIdentity();
+	// aInfo上面目标Activity的封装. 在这里看看是不是重量级进程.
+	// 一般来说都不是重量级进程, 因此不会进入到这里
+        if (aInfo != null &&
+                (aInfo.applicationInfo.privateFlags
+                        & ApplicationInfo.PRIVATE_FLAG_CANT_SAVE_STATE) != 0) {
+            // This may be a heavy-weight process!  Check to see if we already
+            // have another, different heavy-weight process running.
+            if (aInfo.processName.equals(aInfo.applicationInfo.packageName)) {
+                final ProcessRecord heavy = mService.mHeavyWeightProcess;
+                if (heavy != null && (heavy.info.uid != aInfo.applicationInfo.uid
+                        || !heavy.processName.equals(aInfo.processName))) {
+                    int appCallingUid = callingUid;
+                    if (caller != null) {
+                    // 获取调用这的的 ProcessRecord, 在mLruProcesses或者在mProcessNames里
+                    //查询这个调用着
+                        ProcessRecord callerApp = mService.getRecordForAppLocked(caller);
+                        if (callerApp != null) {
+                            appCallingUid = callerApp.info.uid;
+                        } else {
+                            Slog.w(TAG, "Unable to find app for caller " + caller
+                                    + " (pid=" + callingPid + ") when starting: "
+                                    + intent.toString());
+                            ActivityOptions.abort(options);
+                            return ActivityManager.START_PERMISSION_DENIED;
+                        }
+                    }
+
+                    IIntentSender target = mService.getIntentSenderLocked(
+                            ActivityManager.INTENT_SENDER_ACTIVITY, "android",
+                            appCallingUid, userId, null, null, 0, new Intent[] { intent },
+                            new String[] { resolvedType }, PendingIntent.FLAG_CANCEL_CURRENT
+                                    | PendingIntent.FLAG_ONE_SHOT, null);
+
+                    Intent newIntent = new Intent();
+                    if (requestCode >= 0) {
+                        // Caller is requesting a result.
+                        newIntent.putExtra(HeavyWeightSwitcherActivity.KEY_HAS_RESULT, true);
+                    }
+                    newIntent.putExtra(HeavyWeightSwitcherActivity.KEY_INTENT,
+                            new IntentSender(target));
+                    if (heavy.activities.size() > 0) {
+                        ActivityRecord hist = heavy.activities.get(0);
+                        newIntent.putExtra(HeavyWeightSwitcherActivity.KEY_CUR_APP,
+                                hist.packageName);
+                        newIntent.putExtra(HeavyWeightSwitcherActivity.KEY_CUR_TASK,
+                                hist.task.taskId);
+                    }
+                    newIntent.putExtra(HeavyWeightSwitcherActivity.KEY_NEW_APP,
+                            aInfo.packageName);
+                    newIntent.setFlags(intent.getFlags());
+                    newIntent.setClassName("android",
+                            HeavyWeightSwitcherActivity.class.getName());
+                    intent = newIntent;
+                    resolvedType = null;
+                    caller = null;
+                    callingUid = Binder.getCallingUid();
+                    callingPid = Binder.getCallingPid();
+                    componentSpecified = true;
+                    rInfo = mSupervisor.resolveIntent(intent, null /*resolvedType*/, userId);
+                    aInfo = rInfo != null ? rInfo.activityInfo : null;
+                    if (aInfo != null) {
+                        aInfo = mService.getActivityInfoForUser(aInfo, userId);
+                    }
+                }
+            }
+        }
+
+        final ActivityRecord[] outRecord = new ActivityRecord[1];
+        // 这里才是进一步启动Activity的地方， 从返回的结果得知启动的结果，
+        // 有找不到启动类， 有没有权限等等
+        int res = startActivityLocked(caller, intent, ephemeralIntent, resolvedType,
+                aInfo, rInfo, voiceSession, voiceInteractor,
+                resultTo, resultWho, requestCode, callingPid,
+                callingUid, callingPackage, realCallingPid, realCallingUid, startFlags,
+                options, ignoreTargetSecurity, componentSpecified, outRecord, container,
+                inTask);
+
+        Binder.restoreCallingIdentity(origId);
+
+        if (stack.mConfigWillChange) {
+            // If the caller also wants to switch to a new configuration,
+            // do so now.  This allows a clean switch, as we are waiting
+            // for the current activity to pause (so we will not destroy
+            // it), and have not yet started the next activity.
+            mService.enforceCallingPermission(android.Manifest.permission.CHANGE_CONFIGURATION,
+                    "updateConfiguration()");
+            stack.mConfigWillChange = false;
+            if (DEBUG_CONFIGURATION) Slog.v(TAG_CONFIGURATION,
+                    "Updating to new configuration after starting activity.");
+            mService.updateConfigurationLocked(config, null, false);
+        }
+		// outResult表示启动的返回的信息是否给调用着， 典型的是startActivityForResult
+        if (outResult != null) {
+            outResult.result = res;
+            if (res == ActivityManager.START_SUCCESS) {
+                mSupervisor.mWaitingActivityLaunched.add(outResult);
+                do {
+                    try {
+                        mService.wait();
+                    } catch (InterruptedException e) {
+                    }
+                } while (outResult.result != START_TASK_TO_FRONT
+                        && !outResult.timeout && outResult.who == null);
+                if (outResult.result == START_TASK_TO_FRONT) {
+                    res = START_TASK_TO_FRONT;
+                }
+            }
+            if (res == START_TASK_TO_FRONT) {
+                ActivityRecord r = stack.topRunningActivityLocked();
+                if (r.nowVisible && r.state == RESUMED) {
+                    outResult.timeout = false;
+                    outResult.who = new ComponentName(r.info.packageName, r.info.name);
+                    outResult.totalTime = 0;
+                    outResult.thisTime = 0;
+                } else {
+                    outResult.thisTime = SystemClock.uptimeMillis();
+                    mSupervisor.mWaitingActivityVisible.add(outResult);
+                    do {
+                        try {
+                            mService.wait();
+                        } catch (InterruptedException e) {
+                        }
+                    } while (!outResult.timeout && outResult.who == null);
+                }
+            }
+        }
+
+        final ActivityRecord launchedActivity = mReusedActivity != null
+                ? mReusedActivity : outRecord[0];
+        mSupervisor.mActivityMetricsLogger.notifyActivityLaunched(res, launchedActivity);
+        return res;
+    }
+}
+```
+
+### startActivityLocked
+
+```java
+ActivityStarter.java
+final int startActivityLocked(IApplicationThread caller, Intent intent, Intent ephemeralIntent,
+        String resolvedType, ActivityInfo aInfo, ResolveInfo rInfo,
+        IVoiceInteractionSession voiceSession, IVoiceInteractor voiceInteractor,
+        IBinder resultTo, String resultWho, int requestCode, int callingPid, int callingUid,
+        String callingPackage, int realCallingPid, int realCallingUid, int startFlags,
+        ActivityOptions options, boolean ignoreTargetSecurity, boolean componentSpecified,
+        ActivityRecord[] outActivity, ActivityStackSupervisor.ActivityContainer container,
+        TaskRecord inTask) 
+
+```
+
+```java
+// ActivityStarter.java
+int startActivityLocked(IApplicationThread caller, Intent intent, Intent ephemeralIntent,
+        String resolvedType, ActivityInfo aInfo, ResolveInfo rInfo,
+        IVoiceInteractionSession voiceSession, IVoiceInteractor voiceInteractor,
+        IBinder resultTo, String resultWho, int requestCode, int callingPid, int callingUid,
+        String callingPackage, int realCallingPid, int realCallingUid, int startFlags,
+        ActivityOptions options, boolean ignoreTargetSecurity, boolean componentSpecified,
+        ActivityRecord[] outActivity, ActivityStackSupervisor.ActivityContainer container,
+        TaskRecord inTask, String reason) {
+
+    if (TextUtils.isEmpty(reason)) {
+        throw new IllegalArgumentException("Need to specify a reason.");
+    }
+    mLastStartReason = reason;
+    mLastStartActivityTimeMs = System.currentTimeMillis();
+    mLastStartActivityRecord[0] = null;
+
+    mLastStartActivityResult = startActivity(caller, intent, ephemeralIntent, resolvedType,
+            aInfo, rInfo, voiceSession, voiceInteractor, resultTo, resultWho, requestCode,
+            callingPid, callingUid, callingPackage, realCallingPid, realCallingUid, startFlags,
+            options, ignoreTargetSecurity, componentSpecified, mLastStartActivityRecord,
+            container, inTask);
+
+    if (outActivity != null) {
+        // mLastStartActivityRecord[0] is set in the call to startActivity above.
+        outActivity[0] = mLastStartActivityRecord[0];
+    }
+    return mLastStartActivityResult;
+}
+```
+```java
+// ActivityStarter.java
+/** DO NOT call this method directly. Use {@link #startActivityLocked} instead. */
+private int startActivity(IApplicationThread caller, Intent intent, Intent ephemeralIntent,
+        String resolvedType, ActivityInfo aInfo, ResolveInfo rInfo,
+        IVoiceInteractionSession voiceSession, IVoiceInteractor voiceInteractor,
+        IBinder resultTo, String resultWho, int requestCode, int callingPid, int callingUid,
+        String callingPackage, int realCallingPid, int realCallingUid, int startFlags,
+        ActivityOptions options, boolean ignoreTargetSecurity, boolean componentSpecified,
+        ActivityRecord[] outActivity, ActivityStackSupervisor.ActivityContainer container,
+        TaskRecord inTask) 
+```
+主要是
+1. 对FLAG_ACTIVITY_FORWARD_RESULT特殊参数进行sourcerecord
+2. 对传递的一些参数进行非空检验, 必要时抛出异常, 比如voiceSession, sourceRecord, aInfo, intent.getComponent()
+3. Activity启动权限检查 
+4. ephemeral application检查, 暂时不知道这个是干啥的, 有人说这个android的测试程序准备的. 为的是app不需要安装也可以
+	目前来看这个是Google为了不安装也能使用APP做准备的
+5. 然后进入下一步的startActivityUnchecked
+```java
+//ActivityStarter.java
+// 	doResume 是否把Activity启动到Resume, 即执行onResume方法, 显然我们是需要的
+private int startActivity(IApplicationThread caller, Intent intent, Intent ephemeralIntent,
+        String resolvedType, ActivityInfo aInfo, ResolveInfo rInfo,
+        IVoiceInteractionSession voiceSession, IVoiceInteractor voiceInteractor,
+        IBinder resultTo, String resultWho, int requestCode, int callingPid, int callingUid,
+        String callingPackage, int realCallingPid, int realCallingUid, int startFlags,
+        ActivityOptions options, boolean ignoreTargetSecurity, boolean componentSpecified,
+        ActivityRecord[] outActivity, ActivityStackSupervisor.ActivityContainer container,
+        TaskRecord inTask) {
+  int err = ActivityManager.START_SUCCESS;
+// 检查想启动的Activity的app是否存在，不存在的话， 直接是异常
+  ProcessRecord callerApp = null;
+  if (caller != null) {
+      callerApp = mService.getRecordForAppLocked(caller);
+      if (callerApp != null) {
+          callingPid = callerApp.pid;
+          callingUid = callerApp.info.uid;
+      } else {
+          Slog.w(TAG, "Unable to find app for caller " + caller
+                  + " (pid=" + callingPid + ") when starting: "
+                  + intent.toString());
+          err = ActivityManager.START_PERMISSION_DENIED;
+      }
+  }
+
+  final int userId = aInfo != null ? UserHandle.getUserId(aInfo.applicationInfo.uid) : 0;
+// 启动的一个Acitivty的log， 很重要. 到这里基本上表示这个Activity启动成功了
+  if (err == ActivityManager.START_SUCCESS) {
+      Slog.i(TAG, "START u" + userId + " {" + intent.toShortString(true, true, true, false)
+              + "} from uid " + callingUid
+              + " on display " + (container == null ? (mSupervisor.mFocusedStack == null ?
+              Display.DEFAULT_DISPLAY : mSupervisor.mFocusedStack.mDisplayId) :
+              (container.mActivityDisplay == null ? Display.DEFAULT_DISPLAY :
+                      container.mActivityDisplay.mDisplayId)));
+  }
+
+      ActivityRecord sourceRecord = null;
+      ActivityRecord resultRecord = null;
+      if (resultTo != null) {
+          sourceRecord = mSupervisor.isInAnyStackLocked(resultTo);
+          if (DEBUG_RESULTS) Slog.v(TAG_RESULTS,
+                  "Will send result to " + resultTo + " " + sourceRecord);
+          if (sourceRecord != null) {
+              if (requestCode >= 0 && !sourceRecord.finishing) {
+                  resultRecord = sourceRecord;
+              }
+          }
+      }
+
+      final int launchFlags = intent.getFlags();
+	// 连续启动两个Activity， 把最后一个Activity的返回结果给第一个Activity出现的情况
+	//中间的哪个Activity只是过渡一下, 传递一下信息
+      if ((launchFlags & Intent.FLAG_ACTIVITY_FORWARD_RESULT) != 0 && sourceRecord != null) {
+          // Transfer the result target from the source activity to the new
+          // one being started, including any failures.
+          if (requestCode >= 0) {
+              ActivityOptions.abort(options);
+              return ActivityManager.START_FORWARD_AND_REQUEST_CONFLICT;
+          }
+          resultRecord = sourceRecord.resultTo;
+          if (resultRecord != null && !resultRecord.isInStackLocked()) {
+              resultRecord = null;
+          }
+          resultWho = sourceRecord.resultWho;
+          requestCode = sourceRecord.requestCode;
+          sourceRecord.resultTo = null;
+          if (resultRecord != null) {
+              resultRecord.removeResultsLocked(sourceRecord, resultWho, requestCode);
+          }
+          if (sourceRecord.launchedFromUid == callingUid) {
+              // The new activity is being launched from the same uid as the previous
+              // activity in the flow, and asking to forward its result back to the
+              // previous.  In this case the activity is serving as a trampoline between
+              // the two, so we also want to update its launchedFromPackage to be the
+              // same as the previous activity.  Note that this is safe, since we know
+              // these two packages come from the same uid; the caller could just as
+              // well have supplied that same package name itself.  This specifially
+              // deals with the case of an intent picker/chooser being launched in the app
+              // flow to redirect to an activity picked by the user, where we want the final
+              // activity to consider it to have been launched by the previous app activity.
+              callingPackage = sourceRecord.launchedFromPackage;
+          }
+      }
+	// 针对各种启动的Intent的组件信息不全面的， 找不到组件的
+      if (err == ActivityManager.START_SUCCESS && intent.getComponent() == null) {
+          // We couldn't find a class that can handle the given Intent.
+          // That's the end of that!
+          err = ActivityManager.START_INTENT_NOT_RESOLVED;
+      }
+
+      if (err == ActivityManager.START_SUCCESS && aInfo == null) {
+          // We couldn't find the specific class specified in the Intent.
+          // Also the end of the line.
+          err = ActivityManager.START_CLASS_NOT_FOUND;
+      }
+
+      if (err == ActivityManager.START_SUCCESS && sourceRecord != null
+              && sourceRecord.task.voiceSession != null) {
+          // If this activity is being launched as part of a voice session, we need
+          // to ensure that it is safe to do so.  If the upcoming activity will also
+          // be part of the voice session, we can only launch it if it has explicitly
+          // said it supports the VOICE category, or it is a part of the calling app.
+          if ((launchFlags & FLAG_ACTIVITY_NEW_TASK) == 0
+                  && sourceRecord.info.applicationInfo.uid != aInfo.applicationInfo.uid) {
+              try {
+                  intent.addCategory(Intent.CATEGORY_VOICE);
+                  if (!AppGlobals.getPackageManager().activitySupportsIntent(
+                          intent.getComponent(), intent, resolvedType)) {
+                      Slog.w(TAG,
+                              "Activity being started in current voice task does not support voice: "
+                                      + intent);
+                      err = ActivityManager.START_NOT_VOICE_COMPATIBLE;
+                  }
+              } catch (RemoteException e) {
+                  Slog.w(TAG, "Failure checking voice capabilities", e);
+                  err = ActivityManager.START_NOT_VOICE_COMPATIBLE;
+              }
+          }
+      }
+//voiceSession表示语音启动这个Activity， 一般情况下都是为空的, 使用 Google 语音助手
+      if (err == ActivityManager.START_SUCCESS && voiceSession != null) {
+          // If the caller is starting a new voice session, just make sure the target
+          // is actually allowing it to run this way.
+          try {
+              if (!AppGlobals.getPackageManager().activitySupportsIntent(intent.getComponent(),
+                      intent, resolvedType)) {
+                  Slog.w(TAG,
+                          "Activity being started in new voice task does not support: "
+                                  + intent);
+                  err = ActivityManager.START_NOT_VOICE_COMPATIBLE;
+              }
+          } catch (RemoteException e) {
+              Slog.w(TAG, "Failure checking voice capabilities", e);
+              err = ActivityManager.START_NOT_VOICE_COMPATIBLE;
+          }
+      }
+
+      final ActivityStack resultStack = resultRecord == null ? null : resultRecord.task.stack;
+
+      if (err != START_SUCCESS) {
+          if (resultRecord != null) {
+              resultStack.sendActivityResultLocked(
+                      -1, resultRecord, resultWho, requestCode, RESULT_CANCELED, null);
+          }
+          ActivityOptions.abort(options);
+          return err;
+      }
+
+      boolean abort = !mSupervisor.checkStartAnyActivityPermission(intent, aInfo, resultWho,
+              requestCode, callingPid, callingUid, callingPackage, ignoreTargetSecurity, callerApp,
+              resultRecord, resultStack, options);
+      abort |= !mService.mIntentFirewall.checkStartActivity(intent, callingUid,
+              callingPid, resolvedType, aInfo.applicationInfo);
+
+      if (mService.mController != null) {
+          try {
+              // The Intent we give to the watcher has the extra data
+              // stripped off, since it can contain private information.
+              Intent watchIntent = intent.cloneFilter();
+              abort |= !mService.mController.activityStarting(watchIntent,
+                      aInfo.applicationInfo.packageName);
+          } catch (RemoteException e) {
+              mService.mController = null;
+          }
+      }
+
+      mInterceptor.setStates(userId, realCallingPid, realCallingUid, startFlags, callingPackage);
+      mInterceptor.intercept(intent, rInfo, aInfo, resolvedType, inTask, callingPid, callingUid,
+              options);
+      intent = mInterceptor.mIntent;
+      rInfo = mInterceptor.mRInfo;
+      aInfo = mInterceptor.mAInfo;
+      resolvedType = mInterceptor.mResolvedType;
+      inTask = mInterceptor.mInTask;
+      callingPid = mInterceptor.mCallingPid;
+      callingUid = mInterceptor.mCallingUid;
+      options = mInterceptor.mActivityOptions;
+      if (abort) {
+          if (resultRecord != null) {
+              resultStack.sendActivityResultLocked(-1, resultRecord, resultWho, requestCode,
+                      RESULT_CANCELED, null);
+          }
+          // We pretend to the caller that it was really started, but
+          // they will just get a cancel result.
+          ActivityOptions.abort(options);
+          return START_SUCCESS;
+      }
+// AOSP源码应该没有这个, 应该是和MTK的数据保护有关系
+      // If permissions need a review before any of the app components can run, we
+      // launch the review activity and pass a pending intent to start the activity
+      // we are to launching now after the review is completed.
+      if (Build.PERMISSIONS_REVIEW_REQUIRED && aInfo != null) {
+          if (mService.getPackageManagerInternalLocked().isPermissionsReviewRequired(
+                  aInfo.packageName, userId)) {
+              IIntentSender target = mService.getIntentSenderLocked(
+                      ActivityManager.INTENT_SENDER_ACTIVITY, callingPackage,
+                      callingUid, userId, null, null, 0, new Intent[]{intent},
+                      new String[]{resolvedType}, PendingIntent.FLAG_CANCEL_CURRENT
+                              | PendingIntent.FLAG_ONE_SHOT, null);
+
+              final int flags = intent.getFlags();
+              Intent newIntent = new Intent(Intent.ACTION_REVIEW_PERMISSIONS);
+              newIntent.setFlags(flags
+                      | Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS);
+              newIntent.putExtra(Intent.EXTRA_PACKAGE_NAME, aInfo.packageName);
+              newIntent.putExtra(Intent.EXTRA_INTENT, new IntentSender(target));
+              if (resultRecord != null) {
+                  newIntent.putExtra(Intent.EXTRA_RESULT_NEEDED, true);
+              }
+              intent = newIntent;
+
+              resolvedType = null;
+              callingUid = realCallingUid;
+              callingPid = realCallingPid;
+
+              rInfo = mSupervisor.resolveIntent(intent, resolvedType, userId);
+              aInfo = mSupervisor.resolveActivity(intent, rInfo, startFlags,
+                      null /*profilerInfo*/);
+
+              if (DEBUG_PERMISSIONS_REVIEW) {
+                  Slog.i(TAG, "START u" + userId + " {" + intent.toShortString(true, true,
+                          true, false) + "} from uid " + callingUid + " on display "
+                          + (container == null ? (mSupervisor.mFocusedStack == null ?
+                          Display.DEFAULT_DISPLAY : mSupervisor.mFocusedStack.mDisplayId) :
+                          (container.mActivityDisplay == null ? Display.DEFAULT_DISPLAY :
+                                  container.mActivityDisplay.mDisplayId)));
+              }
+          }
+      }
+
+      // If we have an ephemeral app, abort the process of launching the resolved intent.
+      // Instead, launch the ephemeral installer. Once the installer is finished, it
+      // starts either the intent we resolved here [on install error] or the ephemeral
+      // app [on install success].
+      if (rInfo != null && rInfo.ephemeralResolveInfo != null) {
+          intent = buildEphemeralInstallerIntent(intent, ephemeralIntent,
+                  rInfo.ephemeralResolveInfo.getPackageName(), callingPackage, resolvedType,
+                  userId);
+          resolvedType = null;
+          callingUid = realCallingUid;
+          callingPid = realCallingPid;
+
+          aInfo = mSupervisor.resolveActivity(intent, rInfo, startFlags, null /*profilerInfo*/);
+      }
+
+      ActivityRecord r = new ActivityRecord(mService, callerApp, callingUid, callingPackage,
+              intent, resolvedType, aInfo, mService.mConfiguration, resultRecord, resultWho,
+              requestCode, componentSpecified, voiceSession != null, mSupervisor, container,
+              options, sourceRecord);
+      if (outActivity != null) {
+          outActivity[0] = r;
+      }
+
+      if (r.appTimeTracker == null && sourceRecord != null) {
+          // If the caller didn't specify an explicit time tracker, we want to continue
+          // tracking under any it has.
+          r.appTimeTracker = sourceRecord.appTimeTracker;
+      }
+
+      final ActivityStack stack = mSupervisor.mFocusedStack;
+      if (voiceSession == null && (stack.mResumedActivity == null
+              || stack.mResumedActivity.info.applicationInfo.uid != callingUid)) {
+          if (!mService.checkAppSwitchAllowedLocked(callingPid, callingUid,
+                  realCallingPid, realCallingUid, "Activity start")) {
+              PendingActivityLaunch pal =  new PendingActivityLaunch(r,
+                      sourceRecord, startFlags, stack, callerApp);
+              mPendingActivityLaunches.add(pal);
+            ActivityOptions.abort(options);
+            return ActivityManager.START_SWITCHES_CANCELED;
+        }
+    }
+
+    if (mService.mDidAppSwitch) {
+        // This is the second allowed switch since we stopped switches,
+        // so now just generally allow switches.  Use case: user presses
+        // home (switches disabled, switch to home, mDidAppSwitch now true);
+        // user taps a home icon (coming from home so allowed, we hit here
+        // and now allow anyone to switch again).
+        mService.mAppSwitchesAllowedTime = 0;
+    } else {
+        mService.mDidAppSwitch = true;
+    }
+
+    doPendingActivityLaunchesLocked(false);
+    doPendingActivityLaunchesLocked(false);
+
+    return startActivity(r, sourceRecord, voiceSession, voiceInteractor, startFlags, true,
+            options, inTask, outActivity);
+}
+
+```
+
+```java
+//ActivityStarter.java
+private int startActivity(final ActivityRecord r, ActivityRecord sourceRecord,
+        IVoiceInteractionSession voiceSession, IVoiceInteractor voiceInteractor,
+        int startFlags, boolean doResume, ActivityOptions options, TaskRecord inTask,
+        ActivityRecord[] outActivity) 
+```
+
+
+
+```java
+//ActivityStarter.java
+private int startActivity(final ActivityRecord r, ActivityRecord sourceRecord,
+        IVoiceInteractionSession voiceSession, IVoiceInteractor voiceInteractor,
+        int startFlags, boolean doResume, ActivityOptions options, TaskRecord inTask,
+        ActivityRecord[] outActivity) {
+    int result = START_CANCELED;
+    try {
+        mService.mWindowManager.deferSurfaceLayout();
+        result = startActivityUnchecked(r, sourceRecord, voiceSession, voiceInteractor,
+                startFlags, doResume, options, inTask, outActivity);
+    } finally {
+        // If we are not able to proceed, disassociate the activity from the task. Leaving an
+        // activity in an incomplete state can lead to issues, such as performing operations
+        // without a window container.
+        if (!ActivityManager.isStartResultSuccessful(result)
+                && mStartActivity.getTask() != null) {
+            mStartActivity.getTask().removeActivity(mStartActivity);
+        }
+        mService.mWindowManager.continueSurfaceLayout();
+    }
+
+    postStartActivityProcessing(r, result, mSupervisor.getLastStack().mStackId,  mSourceRecord,
+            mTargetStack);
+
+    return result;
+}
+```
+
+### startActivityUnchecked
+下面是startActivityUnchecked函数的解析
+1. 第一步设置设置初始值
+2. 第二步对启动模式,Intent的启动方式进行处理
+3. 获取之前使用过的Activity, 重复利用, 
+4. Activity的启动方式, 是否启动新栈, 是否创建新的Activity, 以及是否onResume, onRestart, onCreate
+```java
+private int startActivityUnchecked(final ActivityRecord r, ActivityRecord sourceRecord,
+       IVoiceInteractionSession voiceSession, IVoiceInteractor voiceInteractor,
+       int startFlags, boolean doResume, ActivityOptions options, TaskRecord inTask) {
+	//设置一系列的初始值
+   setInitialState(r, options, inTask, doResume, startFlags, sourceRecord, voiceSession,
+           voiceInteractor);
+	// 启动模式的处理, activity 的四种启动模式的处理
+   computeLaunchingTaskFlags();
+
+   computeSourceStack();
+
+   /// M: AMS log enhancement @{
+   if (!ActivityManagerService.IS_USER_BUILD || DEBUG_TASKS) {
+       Slog.d(TAG, "launchFlags(update): 0x" + Integer.toHexString(mLaunchFlags));
+   }
+   /// @}
+
+   mIntent.setFlags(mLaunchFlags);
+// 获取之前已经存在的Activity
+   mReusedActivity = getReusableIntentActivity();
+
+   final int preferredLaunchStackId =
+           (mOptions != null) ? mOptions.getLaunchStackId() : INVALID_STACK_ID;
+
+   if (mReusedActivity != null) {
+       // When the flags NEW_TASK and CLEAR_TASK are set, then the task gets reused but
+       // still needs to be a lock task mode violation since the task gets cleared out and
+       // the device would otherwise leave the locked task.
+       if (mSupervisor.isLockTaskModeViolation(mReusedActivity.task,
+               (mLaunchFlags & (FLAG_ACTIVITY_NEW_TASK | FLAG_ACTIVITY_CLEAR_TASK))
+                       == (FLAG_ACTIVITY_NEW_TASK | FLAG_ACTIVITY_CLEAR_TASK))) {
+           mSupervisor.showLockTaskToast();
+           Slog.e(TAG, "startActivityUnchecked: Attempt to violate Lock Task Mode");
+           return START_RETURN_LOCK_TASK_MODE_VIOLATION;
+       }
+
+       if (mStartActivity.task == null) {
+           mStartActivity.task = mReusedActivity.task;
+       }
+       if (mReusedActivity.task.intent == null) {
+           // This task was started because of movement of the activity based on affinity...
+           // Now that we are actually launching it, we can assign the base intent.
+           mReusedActivity.task.setIntent(mStartActivity);
+       }
+
+       // This code path leads to delivering a new intent, we want to make sure we schedule it
+       // as the first operation, in case the activity will be resumed as a result of later
+       // operations.
+       if ((mLaunchFlags & FLAG_ACTIVITY_CLEAR_TOP) != 0
+               || mLaunchSingleInstance || mLaunchSingleTask) {
+           // In this situation we want to remove all activities from the task up to the one
+           // being started. In most cases this means we are resetting the task to its initial
+           // state.
+           final ActivityRecord top = mReusedActivity.task.performClearTaskForReuseLocked(
+                   mStartActivity, mLaunchFlags);
+           if (top != null) {
+               if (top.frontOfTask) {
+                   // Activity aliases may mean we use different intents for the top activity,
+                   // so make sure the task now has the identity of the new intent.
+                   top.task.setIntent(mStartActivity);
+               }
+               ActivityStack.logStartActivity(AM_NEW_INTENT, mStartActivity, top.task);
+
+               /// M: AMS log enhancement @{
+               if (DEBUG_TASKS) {
+                   Slog.d(TAG, "ACT-AM_NEW_INTENT " + mStartActivity + " " + top.task);
+               }
+               /// @}
+
+               top.deliverNewIntentLocked(mCallingUid, mStartActivity.intent,
+                       mStartActivity.launchedFromPackage);
+           }
+       }
+       mReusedActivity = setTargetStackAndMoveToFrontIfNeeded(mReusedActivity);
+
+       if ((mStartFlags & START_FLAG_ONLY_IF_NEEDED) != 0) {
+           // We don't need to start a new activity, and the client said not to do anything
+           // if that is the case, so this is it!  And for paranoia, make sure we have
+           // correctly resumed the top activity.
+           resumeTargetStackIfNeeded();
+
+           /// M: AMS log enhancement @{
+           if (DEBUG_TASKS) {
+               Slog.d(TAG, "START_RETURN_INTENT_TO_CALLER");
+           }
+           /// @}
+
+           return START_RETURN_INTENT_TO_CALLER;
+       }
+       setTaskFromIntentActivity(mReusedActivity);
+
+       if (!mAddingToTask && mReuseTask == null) {
+           // We didn't do anything...  but it was needed (a.k.a., client don't use that
+           // intent!)  And for paranoia, make sure we have correctly resumed the top activity.
+           resumeTargetStackIfNeeded();
+
+           /// M: AMS log enhancement @{
+           if (DEBUG_TASKS) {
+               Slog.d(TAG, "START_TASK_TO_FRONT");
+           }
+           /// @}
+
+           return START_TASK_TO_FRONT;
+       }
+   }
+
+   if (mStartActivity.packageName == null) {
+       if (mStartActivity.resultTo != null && mStartActivity.resultTo.task.stack != null) {
+           mStartActivity.resultTo.task.stack.sendActivityResultLocked(
+                   -1, mStartActivity.resultTo, mStartActivity.resultWho,
+                   mStartActivity.requestCode, RESULT_CANCELED, null);
+       }
+       ActivityOptions.abort(mOptions);
+
+       /// M: AMS log enhancement @{
+       if (DEBUG_TASKS) {
+           Slog.d(TAG, "START_CLASS_NOT_FOUND");
+       }
+       /// @}
+
+       return START_CLASS_NOT_FOUND;
+   }
+
+   // If the activity being launched is the same as the one currently at the top, then
+   // we need to check if it should only be launched once.
+   final ActivityStack topStack = mSupervisor.mFocusedStack;
+   final ActivityRecord top = topStack.topRunningNonDelayedActivityLocked(mNotTop);
+   final boolean dontStart = top != null && mStartActivity.resultTo == null
+           && top.realActivity.equals(mStartActivity.realActivity)
+           && top.userId == mStartActivity.userId
+           && top.app != null && top.app.thread != null
+           && ((mLaunchFlags & FLAG_ACTIVITY_SINGLE_TOP) != 0
+           || mLaunchSingleTop || mLaunchSingleTask);
+   if (dontStart) {
+       ActivityStack.logStartActivity(AM_NEW_INTENT, top, top.task);
+       // For paranoia, make sure we have correctly resumed the top activity.
+       topStack.mLastPausedActivity = null;
+       if (mDoResume) {
+           mSupervisor.resumeFocusedStackTopActivityLocked();
+       }
+       ActivityOptions.abort(mOptions);
+       if ((mStartFlags & START_FLAG_ONLY_IF_NEEDED) != 0) {
+           // We don't need to start a new activity, and the client said not to do
+           // anything if that is the case, so this is it!
+           return START_RETURN_INTENT_TO_CALLER;
+       }
+
+       /// M: AMS log enhancement @{
+       if (DEBUG_TASKS) {
+           Slog.d(TAG, "ACT-AM_NEW_INTENT " + mStartActivity + " " + top.task);
+       }
+       /// @}
+
+       top.deliverNewIntentLocked(
+               mCallingUid, mStartActivity.intent, mStartActivity.launchedFromPackage);
+
+       // Don't use mStartActivity.task to show the toast. We're not starting a new activity
+       // but reusing 'top'. Fields in mStartActivity may not be fully initialized.
+       mSupervisor.handleNonResizableTaskIfNeeded(
+               top.task, preferredLaunchStackId, topStack.mStackId);
+
+       return START_DELIVERED_TO_TOP;
+   }
+
+   boolean newTask = false;
+   final TaskRecord taskToAffiliate = (mLaunchTaskBehind && mSourceRecord != null)
+           ? mSourceRecord.task : null;
+
+   // Should this be considered a new task?
+   if (mStartActivity.resultTo == null && mInTask == null && !mAddingToTask
+           && (mLaunchFlags & FLAG_ACTIVITY_NEW_TASK) != 0) {
+       newTask = true;
+       setTaskFromReuseOrCreateNewTask(taskToAffiliate);
+
+       if (mSupervisor.isLockTaskModeViolation(mStartActivity.task)) {
+           /// M: ALPS02270164, Show lock task toast when in violation
+           mSupervisor.showLockTaskToast();
+
+           Slog.e(TAG, "Attempted Lock Task Mode violation mStartActivity=" + mStartActivity);
+           return START_RETURN_LOCK_TASK_MODE_VIOLATION;
+       }
+       if (!mMovedOtherTask) {
+           updateTaskReturnToType(mStartActivity.task, mLaunchFlags, topStack);
+       }
+   } else if (mSourceRecord != null) {
+       if (mSupervisor.isLockTaskModeViolation(mSourceRecord.task)) {
+           /// M: ALPS02270164, Show lock task toast when in violation
+           mSupervisor.showLockTaskToast();
+
+           Slog.e(TAG, "Attempted Lock Task Mode violation mStartActivity=" + mStartActivity);
+           return START_RETURN_LOCK_TASK_MODE_VIOLATION;
+       }
+
+       final int result = setTaskFromSourceRecord();
+       if (result != START_SUCCESS) {
+           return result;
+       }
+   } else if (mInTask != null) {
+       // The caller is asking that the new activity be started in an explicit
+       // task it has provided to us.
+       if (mSupervisor.isLockTaskModeViolation(mInTask)) {
+           /// M: ALPS02270164, Show lock task toast when in violation
+           mSupervisor.showLockTaskToast();
+
+           Slog.e(TAG, "Attempted Lock Task Mode violation mStartActivity=" + mStartActivity);
+           return START_RETURN_LOCK_TASK_MODE_VIOLATION;
+       }
+
+       final int result = setTaskFromInTask();
+       if (result != START_SUCCESS) {
+           return result;
+       }
+   } else {
+       // This not being started from an existing activity, and not part of a new task...
+       // just put it in the top task, though these days this case should never happen.
+       setTaskToCurrentTopOrCreateNewTask();
+   }
+
+   mService.grantUriPermissionFromIntentLocked(mCallingUid, mStartActivity.packageName,
+           mIntent, mStartActivity.getUriPermissionsLocked(), mStartActivity.userId);
+
+   if (mSourceRecord != null && mSourceRecord.isRecentsActivity()) {
+       mStartActivity.task.setTaskToReturnTo(RECENTS_ACTIVITY_TYPE);
+   }
+   if (newTask) {
+       EventLog.writeEvent(
+               EventLogTags.AM_CREATE_TASK, mStartActivity.userId, mStartActivity.task.taskId);
+
+       /// M: AMS log enhancement @{
+       if (DEBUG_TASKS) {
+           Slog.d(TAG, "ACT-AM_CREATE_TASK " + mStartActivity + " " + mStartActivity.task);
+       }
+       /// @}
+   }
+   ActivityStack.logStartActivity(
+           EventLogTags.AM_CREATE_ACTIVITY, mStartActivity, mStartActivity.task);
+
+   /// M: AMS log enhancement @{
+   if (DEBUG_TASKS) {
+      Slog.d(TAG, "ACT-AM_CREATE_ACTIVITY " + mStartActivity + " " + mStartActivity.task);
+   }
+   /// @}
+
+   mTargetStack.mLastPausedActivity = null;
+   mTargetStack.startActivityLocked(mStartActivity, newTask, mKeepCurTransition, mOptions);
+   if (mDoResume) {
+       if (!mLaunchTaskBehind) {
+           // TODO(b/26381750): Remove this code after verification that all the decision
+           // points above moved targetStack to the front which will also set the focus
+           // activity.
+           mService.setFocusedActivityLocked(mStartActivity, "startedActivity");
+       }
+       final ActivityRecord topTaskActivity = mStartActivity.task.topRunningActivityLocked();
+       if (!mTargetStack.isFocusable()
+               || (topTaskActivity != null && topTaskActivity.mTaskOverlay
+               && mStartActivity != topTaskActivity)) {
+           // If the activity is not focusable, we can't resume it, but still would like to
+           // make sure it becomes visible as it starts (this will also trigger entry
+           // animation). An example of this are PIP activities.
+           // Also, we don't want to resume activities in a task that currently has an overlay
+           // as the starting activity just needs to be in the visible paused state until the
+           // over is removed.
+           mTargetStack.ensureActivitiesVisibleLocked(null, 0, !PRESERVE_WINDOWS);
+           // Go ahead and tell window manager to execute app transition for this activity
+           // since the app transition will not be triggered through the resume channel.
+           mWindowManager.executeAppTransition();
+       } else {
+           mSupervisor.resumeFocusedStackTopActivityLocked(mTargetStack, mStartActivity,
+                   mOptions);
+       }
+   } else {
+       mTargetStack.addRecentActivityLocked(mStartActivity);
+   }
+   mSupervisor.updateUserStackLocked(mStartActivity.userId, mTargetStack);
+
+   mSupervisor.handleNonResizableTaskIfNeeded(
+           mStartActivity.task, preferredLaunchStackId, mTargetStack.mStackId);
+
+   return START_SUCCESS;
+}
+
+
+```
+
+### resumeTopActivityInnerLocked
+
+```java
+private boolean resumeTopActivityInnerLocked(ActivityRecord prev, ActivityOptions options) {
+    if (DEBUG_LOCKSCREEN) mService.logLockScreen("");
+
+    if (!mService.mBooting && !mService.mBooted) {
+        // Not ready yet!
+        return false;
+    }
+
+    ActivityRecord parent = mActivityContainer.mParentActivity;
+    if ((parent != null && parent.state != ActivityState.RESUMED) ||
+            !mActivityContainer.isAttachedLocked()) {
+        // Do not resume this stack if its parent is not resumed.
+        // TODO: If in a loop, make sure that parent stack resumeTopActivity is called 1st.
+        return false;
+    }
+
+    mStackSupervisor.cancelInitializingActivities();
+
+    // Find the first activity that is not finishing.
+    final ActivityRecord next = topRunningActivityLocked();
+
+    // Remember how we'll process this pause/resume situation, and ensure
+    // that the state is reset however we wind up proceeding.
+    final boolean userLeaving = mStackSupervisor.mUserLeaving;
+    mStackSupervisor.mUserLeaving = false;
+
+    final TaskRecord prevTask = prev != null ? prev.task : null;
+    // 获取下一个ActivityRecord
+    if (next == null) {
+        // There are no more activities!
+        final String reason = "noMoreActivities";
+        final int returnTaskType = prevTask == null || !prevTask.isOverHomeStack()
+                ? HOME_ACTIVITY_TYPE : prevTask.getTaskToReturnTo();
+        if (!mFullscreen && adjustFocusToNextFocusableStackLocked(returnTaskType, reason)) {
+            // Try to move focus to the next visible stack with a running activity if this
+            // stack is not covering the entire screen.
+            return mStackSupervisor.resumeFocusedStackTopActivityLocked(
+                    mStackSupervisor.getFocusedStack(), prev, null);
+        }
+
+        // Let's just start up the Launcher...
+        ActivityOptions.abort(options);
+
+        /// M: AMEventHook event @{
+        AMEventHookData.BeforeGoHomeWhenNoActivities eventData =
+            AMEventHookData.BeforeGoHomeWhenNoActivities.createInstance();
+        AMEventHookResult eventResult =
+            mService.getAMEventHook().hook(AMEventHook.Event.AM_BeforeGoHomeWhenNoActivities,
+                eventData);
+        if (AMEventHookResult.hasAction(eventResult,
+            AMEventHookAction.AM_SkipHomeActivityLaunching)) {
+            Slog.v(TAG, "Skip to resume home activity!!");
+            return false;
+        }
+        /// M: AMEventHook event @}
+
+        if (DEBUG_STATES) Slog.d(TAG_STATES,
+                "resumeTopActivityLocked: No more activities go home");
+        if (DEBUG_STACK) mStackSupervisor.validateTopActivitiesLocked();
+        // Only resume home if on home display
+        return isOnHomeDisplay() &&
+                mStackSupervisor.resumeHomeStackTask(returnTaskType, prev, reason);
+    }
+
+    next.delayedResume = false;
+
+    // If the top activity is the resumed one, nothing to do.
+    if (mResumedActivity == next && next.state == ActivityState.RESUMED &&
+                mStackSupervisor.allResumedActivitiesComplete()) {
+        // Make sure we have executed any pending transitions, since there
+        // should be nothing left to do at this point.
+        mWindowManager.executeAppTransition();
+        mNoAnimActivities.clear();
+        ActivityOptions.abort(options);
+        if (DEBUG_STATES) Slog.d(TAG_STATES,
+                "resumeTopActivityLocked: Top activity resumed " + next);
+        if (DEBUG_STACK) mStackSupervisor.validateTopActivitiesLocked();
+        return false;
+    }
+
+    final TaskRecord nextTask = next.task;
+    if (prevTask != null && prevTask.stack == this &&
+            prevTask.isOverHomeStack() && prev.finishing && prev.frontOfTask) {
+        if (DEBUG_STACK)  mStackSupervisor.validateTopActivitiesLocked();
+        if (prevTask == nextTask) {
+            prevTask.setFrontOfTask();
+        } else if (prevTask != topTask()) {
+            // This task is going away but it was supposed to return to the home stack.
+            // Now the task above it has to return to the home task instead.
+            final int taskNdx = mTaskHistory.indexOf(prevTask) + 1;
+            mTaskHistory.get(taskNdx).setTaskToReturnTo(HOME_ACTIVITY_TYPE);
+        } else if (!isOnHomeDisplay()) {
+            return false;
+        } else if (!isHomeStack()){
+            if (DEBUG_STATES) Slog.d(TAG_STATES,
+                    "resumeTopActivityLocked: Launching home next");
+            final int returnTaskType = prevTask == null || !prevTask.isOverHomeStack() ?
+                    HOME_ACTIVITY_TYPE : prevTask.getTaskToReturnTo();
+            return isOnHomeDisplay() &&
+                    mStackSupervisor.resumeHomeStackTask(returnTaskType, prev, "prevFinished");
+        }
+    }
+
+    // If we are sleeping, and there is no resumed activity, and the top
+    // activity is paused, well that is the state we want.
+    if (mService.isSleepingOrShuttingDownLocked()
+            && mLastPausedActivity == next
+            && mStackSupervisor.allPausedActivitiesComplete()) {
+        // Make sure we have executed any pending transitions, since there
+        // should be nothing left to do at this point.
+        mWindowManager.executeAppTransition();
+        mNoAnimActivities.clear();
+        ActivityOptions.abort(options);
+        if (DEBUG_STATES) Slog.d(TAG_STATES,
+                "resumeTopActivityLocked: Going to sleep and all paused");
+        if (DEBUG_STACK) mStackSupervisor.validateTopActivitiesLocked();
+        return false;
+    }
+
+    // Make sure that the user who owns this activity is started.  If not,
+    // we will just leave it as is because someone should be bringing
+    // another user's activities to the top of the stack.
+    if (!mService.mUserController.hasStartedUserState(next.userId)) {
+        Slog.w(TAG, "Skipping resume of top activity " + next
+                + ": user " + next.userId + " is stopped");
+        if (DEBUG_STACK) mStackSupervisor.validateTopActivitiesLocked();
+        return false;
+    }
+
+    // The activity may be waiting for stop, but that is no longer
+    // appropriate for it.
+    mStackSupervisor.mStoppingActivities.remove(next);
+    mStackSupervisor.mGoingToSleepActivities.remove(next);
+    next.sleeping = false;
+    mStackSupervisor.mWaitingVisibleActivities.remove(next);
+
+    if (DEBUG_SWITCH) Slog.v(TAG_SWITCH, "Resuming " + next);
+
+    // If we are currently pausing an activity, then don't do anything until that is done.
+    if (!mStackSupervisor.allPausedActivitiesComplete()) {
+        if (DEBUG_SWITCH || DEBUG_PAUSE || DEBUG_STATES) Slog.v(TAG_PAUSE,
+                "resumeTopActivityLocked: Skip resume: some activity pausing.");
+        if (DEBUG_STACK) mStackSupervisor.validateTopActivitiesLocked();
+        return false;
+    }
+
+    mStackSupervisor.setLaunchSource(next.info.applicationInfo.uid);
+	
+	// 在这里对上一个Activity进行处理, 执行pause动作,
+	// 在这里再次回到上一个Activity所在的进程, 执行Activity的onPause, onStop动作
+    // We need to start pausing the current activity so the top one can be resumed...
+    final boolean dontWaitForPause = (next.info.flags & FLAG_RESUME_WHILE_PAUSING) != 0;
+    boolean pausing = mStackSupervisor.pauseBackStacks(userLeaving, true, dontWaitForPause);
+    if (mResumedActivity != null) {
+        if (DEBUG_STATES) Slog.d(TAG_STATES,
+                "resumeTopActivityLocked: Pausing " + mResumedActivity);
+        pausing |= startPausingLocked(userLeaving, false, true, dontWaitForPause);
+    }
+	
+	// MTK增加的, 为了提高运行速度的, 暂不作分析
+    /// M: AMEventHook event @{
+    if (next.info.packageName != mStackSupervisor.mLastResumedActivity.packageName ||
+            next.info.name != mStackSupervisor.mLastResumedActivity.activityName) {
+        AMEventHookData.BeforeActivitySwitch eventData = null;
+        eventData = AMEventHookData.BeforeActivitySwitch.createInstance();
+        ArrayList<String> taskPkgList = null;
+        if ("1".equals(SystemProperties.get("persist.runningbooster.support")) ||
+                "1".equals(SystemProperties.get("ro.mtk_aws_support"))) {
+            if (!pausing) {
+                if (nextTask != null) {
+                    taskPkgList = new ArrayList<String>();
+                    for (int i = 0; i < nextTask.mActivities.size(); i++) {
+                        ActivityRecord taskActivity = nextTask.mActivities.get(i);
+                        if (taskActivity.packageName != null) {
+                            taskPkgList.add(taskActivity.packageName);
+                        }
+                    }
+                }
+            }
+        }
+        int waitProcessPid = -1;
+        ArrayList<IAWSProcessRecord> runningProcRecords = null;
+        if (SystemProperties.get("ro.mtk_aws_support").equals("1")) {
+            if ((next.resultTo != null) && (next.resultTo.app != null)) {
+                waitProcessPid =  next.resultTo.app.pid;
+            }
+            synchronized (mService.mPidsSelfLocked) {
+                final int size = mService.mPidsSelfLocked.size();
+                if (size != 0) {
+                    for (int i = 0; i < size; i++) {
+                        if (runningProcRecords == null) {
+                            runningProcRecords = new ArrayList<IAWSProcessRecord>();
+                        }
+                        final ProcessRecord proc = mService.mPidsSelfLocked.valueAt(i);
+                        if (proc != null) {
+                            IAWSProcessRecord pr =
+                                ActivityManagerService.convertProcessRecord(proc);
+                            runningProcRecords.add(pr);
+                        }
+                    }
+                }
+            }
+        }
+        eventData.set(mStackSupervisor.mLastResumedActivity.activityName,
+                next.info.name,
+                mStackSupervisor.mLastResumedActivity.packageName,
+                next.info.packageName,
+                mStackSupervisor.mLastResumedActivity.activityType,
+                next.mActivityType,
+                pausing, taskPkgList,
+                waitProcessPid, runningProcRecords);
+        mService.getAMEventHook().hook(AMEventHook.Event.AM_BeforeActivitySwitch, eventData);
+
+        if (!pausing) {
+            mStackSupervisor.mLastResumedActivity.packageName = next.info.packageName;
+            mStackSupervisor.mLastResumedActivity.activityName = next.info.name;
+            mStackSupervisor.mLastResumedActivity.activityType = next.mActivityType;
+        }
+    }
+    /// M: AMEventHook event @}
+
+    if (pausing) {
+        if (DEBUG_SWITCH || DEBUG_STATES) Slog.v(TAG_STATES,
+                "resumeTopActivityLocked: Skip resume: need to start pausing");
+        // At this point we want to put the upcoming activity's process
+        // at the top of the LRU list, since we know we will be needing it
+        // very soon and it would be a waste to let it get killed if it
+        // happens to be sitting towards the end.
+        if (next.app != null && next.app.thread != null) {
+            mService.updateLruProcessLocked(next.app, true, null);
+        }
+        if (DEBUG_STACK) mStackSupervisor.validateTopActivitiesLocked();
+        return true;
+    } else if (mResumedActivity == next && next.state == ActivityState.RESUMED &&
+            mStackSupervisor.allResumedActivitiesComplete()) {
+        // It is possible for the activity to be resumed when we paused back stacks above if the
+        // next activity doesn't have to wait for pause to complete.
+        // So, nothing else to-do except:
+        // Make sure we have executed any pending transitions, since there
+        // should be nothing left to do at this point.
+        mWindowManager.executeAppTransition();
+        mNoAnimActivities.clear();
+        ActivityOptions.abort(options);
+        if (DEBUG_STATES) Slog.d(TAG_STATES,
+                "resumeTopActivityLocked: Top activity resumed (dontWaitForPause) " + next);
+        if (DEBUG_STACK) mStackSupervisor.validateTopActivitiesLocked();
+        return true;
+    }
+
+    // If the most recent activity was noHistory but was only stopped rather
+    // than stopped+finished because the device went to sleep, we need to make
+    // sure to finish it as we're making a new activity topmost.
+    if (mService.isSleepingLocked() && mLastNoHistoryActivity != null &&
+            !mLastNoHistoryActivity.finishing) {
+        if (DEBUG_STATES) Slog.d(TAG_STATES,
+                "no-history finish of " + mLastNoHistoryActivity + " on new resume");
+        requestFinishActivityLocked(mLastNoHistoryActivity.appToken, Activity.RESULT_CANCELED,
+                null, "resume-no-history", false);
+        mLastNoHistoryActivity = null;
+    }
+
+    if (prev != null && prev != next) {
+        if (!mStackSupervisor.mWaitingVisibleActivities.contains(prev)
+                && next != null && !next.nowVisible) {
+            mStackSupervisor.mWaitingVisibleActivities.add(prev);
+            if (DEBUG_SWITCH) Slog.v(TAG_SWITCH,
+                    "Resuming top, waiting visible to hide: " + prev);
+        } else {
+            // The next activity is already visible, so hide the previous
+            // activity's windows right now so we can show the new one ASAP.
+            // We only do this if the previous is finishing, which should mean
+            // it is on top of the one being resumed so hiding it quickly
+            // is good.  Otherwise, we want to do the normal route of allowing
+            // the resumed activity to be shown so we can decide if the
+            // previous should actually be hidden depending on whether the
+            // new one is found to be full-screen or not.
+            if (prev.finishing) {
+                mWindowManager.setAppVisibility(prev.appToken, false);
+                if (DEBUG_SWITCH) Slog.v(TAG_SWITCH,
+                        "Not waiting for visible to hide: " + prev + ", waitingVisible="
+                        + mStackSupervisor.mWaitingVisibleActivities.contains(prev)
+                        + ", nowVisible=" + next.nowVisible);
+            } else {
+                if (DEBUG_SWITCH) Slog.v(TAG_SWITCH,
+                        "Previous already visible but still waiting to hide: " + prev
+                        + ", waitingVisible="
+                        + mStackSupervisor.mWaitingVisibleActivities.contains(prev)
+                        + ", nowVisible=" + next.nowVisible);
+            }
+        }
+    }
+
+    // Launching this app's activity, make sure the app is no longer
+    // considered stopped.
+    try {
+        AppGlobals.getPackageManager().setPackageStoppedState(
+                next.packageName, false, next.userId); /* TODO: Verify if correct userid */
+    } catch (RemoteException e1) {
+    } catch (IllegalArgumentException e) {
+        Slog.w(TAG, "Failed trying to unstop package "
+                + next.packageName + ": " + e);
+    }
+
+    /// M: [process suppression] @{
+    if ("1".equals(SystemProperties.get("persist.runningbooster.support")) ||
+            "1".equals(SystemProperties.get("ro.mtk_aws_support"))) {
+        AMEventHookData.PackageStoppedStatusChanged eventData1 =
+                AMEventHookData.PackageStoppedStatusChanged.createInstance();
+        eventData1.set(next.packageName, mService.SUPPRESS_ACTION_UNSTOP,
+                "resumeTopActivityInnerLocked");
+        mService.getAMEventHook().hook(AMEventHook.Event.AM_PackageStoppedStatusChanged,
+                eventData1);
+    }
+    /// M: [process suppression] @}
+
+    // We are starting up the next activity, so tell the window manager
+    // that the previous one will be hidden soon.  This way it can know
+    // to ignore it when computing the desired screen orientation.
+    // 主要是启动另一个Activity了， 判断是否播放activity转换动画
+    boolean anim = true;
+    if (prev != null) {
+        if (prev.finishing) {
+            if (DEBUG_TRANSITION) Slog.v(TAG_TRANSITION,
+                    "Prepare close transition: prev=" + prev);
+            if (mNoAnimActivities.contains(prev)) {
+                anim = false;
+                mWindowManager.prepareAppTransition(TRANSIT_NONE, false);
+            } else {
+                mWindowManager.prepareAppTransition(prev.task == next.task
+                        ? TRANSIT_ACTIVITY_CLOSE
+                        : TRANSIT_TASK_CLOSE, false);
+            }
+            mWindowManager.setAppVisibility(prev.appToken, false);
+        } else {
+            if (DEBUG_TRANSITION) Slog.v(TAG_TRANSITION,
+                    "Prepare open transition: prev=" + prev);
+            if (mNoAnimActivities.contains(next)) {
+                anim = false;
+                mWindowManager.prepareAppTransition(TRANSIT_NONE, false);
+            } else {
+                mWindowManager.prepareAppTransition(prev.task == next.task
+                        ? TRANSIT_ACTIVITY_OPEN
+                        : next.mLaunchTaskBehind
+                                ? TRANSIT_TASK_OPEN_BEHIND
+                                : TRANSIT_TASK_OPEN, false);
+            }
+        }
+    } else {
+        if (DEBUG_TRANSITION) Slog.v(TAG_TRANSITION, "Prepare open transition: no previous");
+        if (mNoAnimActivities.contains(next)) {
+            anim = false;
+            mWindowManager.prepareAppTransition(TRANSIT_NONE, false);
+        } else {
+            mWindowManager.prepareAppTransition(TRANSIT_ACTIVITY_OPEN, false);
+        }
+    }
+
+    Bundle resumeAnimOptions = null;
+    if (anim) {
+        ActivityOptions opts = next.getOptionsForTargetActivityLocked();
+        if (opts != null) {
+            resumeAnimOptions = opts.toBundle();
+        }
+        next.applyOptionsLocked();
+    } else {
+        next.clearOptionsLocked();
+    }
+
+ // 所要运行的Activity的所在的运行载体(进程)是否存在,
+ // 如果不存在那么启动这个进程,再启动这个Activity, 
+ //如果不存在执行restart操作
+    ActivityStack lastStack = mStackSupervisor.getLastStack();
+    if (next.app != null && next.app.thread != null) {
+        Slog.v(TAG_SWITCH, "Resume running: " + next
+                + " stopped=" + next.stopped + " visible=" + next.visible);
+
+        // If the previous activity is translucent, force a visibility update of
+        // the next activity, so that it's added to WM's opening app list, and
+        // transition animation can be set up properly.
+        // For example, pressing Home button with a translucent activity in focus.
+        // Launcher is already visible in this case. If we don't add it to opening
+        // apps, maybeUpdateTransitToWallpaper() will fail to identify this as a
+        // TRANSIT_WALLPAPER_OPEN animation, and run some funny animation.
+        final boolean lastActivityTranslucent = lastStack != null
+                && (!lastStack.mFullscreen
+                || (lastStack.mLastPausedActivity != null
+                && !lastStack.mLastPausedActivity.fullscreen));
+
+        // This activity is now becoming visible.
+        if (!next.visible || next.stopped || lastActivityTranslucent) {
+            mWindowManager.setAppVisibility(next.appToken, true);
+        }
+
+        // schedule launch ticks to collect information about slow apps.
+        next.startLaunchTickingLocked();
+
+        ActivityRecord lastResumedActivity =
+                lastStack == null ? null :lastStack.mResumedActivity;
+        ActivityState lastState = next.state;
+
+        mService.updateCpuStats();
+
+        if (DEBUG_STATES) Slog.v(TAG_STATES, "Moving to RESUMED: " + next + " (in existing)");
+        next.state = ActivityState.RESUMED;
+
+        /// M: AMEventHook event @{
+        ProcessRecord appProc = next.app;
+        if (appProc != null) {
+            AMEventHookData.AfterActivityResumed aarEventData = null;
+            aarEventData = AMEventHookData.AfterActivityResumed.createInstance();
+            aarEventData.set(appProc.pid, next.info.name, next.info.packageName,
+                    next.mActivityType);
+            mService.getAMEventHook().hook(AMEventHook.Event.AM_AfterActivityResumed,
+                    aarEventData);
+        }
+        /// M: AMEventHook event @}
+
+        mResumedActivity = next;
+        next.task.touchActiveTime();
+        mRecentTasks.addLocked(next.task);
+        mService.updateLruProcessLocked(next.app, true, null);
+        updateLRUListLocked(next);
+        mService.updateOomAdjLocked();
+
+        // Have the window manager re-evaluate the orientation of
+        // the screen based on the new activity order.
+        boolean notUpdated = true;
+        if (mStackSupervisor.isFocusedStack(this)) {
+            Configuration config = mWindowManager.updateOrientationFromAppTokens(
+                    mService.mConfiguration,
+                    next.mayFreezeScreenLocked(next.app) ? next.appToken : null);
+            if (config != null) {
+                next.frozenBeforeDestroy = true;
+            }
+            notUpdated = !mService.updateConfigurationLocked(config, next, false);
+        }
+
+        if (notUpdated) {
+            // The configuration update wasn't able to keep the existing
+            // instance of the activity, and instead started a new one.
+            // We should be all done, but let's just make sure our activity
+            // is still at the top and schedule another run if something
+            // weird happened.
+            ActivityRecord nextNext = topRunningActivityLocked();
+            if (DEBUG_SWITCH || DEBUG_STATES) Slog.i(TAG_STATES,
+                    "Activity config changed during resume: " + next
+                    + ", new next: " + nextNext);
+            if (nextNext != next) {
+                // Do over!
+                mStackSupervisor.scheduleResumeTopActivities();
+            }
+            if (mStackSupervisor.reportResumedActivityLocked(next)) {
+                mNoAnimActivities.clear();
+                if (DEBUG_STACK) mStackSupervisor.validateTopActivitiesLocked();
+                return true;
+            }
+            if (DEBUG_STACK) mStackSupervisor.validateTopActivitiesLocked();
+            return false;
+        }
+
+        try {
+            // Deliver all pending results.
+            ArrayList<ResultInfo> a = next.results;
+            if (a != null) {
+                final int N = a.size();
+                if (!next.finishing && N > 0) {
+                    if (DEBUG_RESULTS) Slog.v(TAG_RESULTS,
+                            "Delivering results to " + next + ": " + a);
+                    next.app.thread.scheduleSendResult(next.appToken, a);
+                }
+            }
+
+            if (next.newIntents != null) {
+                next.app.thread.scheduleNewIntent(next.newIntents, next.appToken);
+            }
+
+            // Well the app will no longer be stopped.
+            // Clear app token stopped state in window manager if needed.
+            mWindowManager.notifyAppStopped(next.appToken, false);
+
+            EventLog.writeEvent(EventLogTags.AM_RESUME_ACTIVITY, next.userId,
+                    System.identityHashCode(next), next.task.taskId, next.shortComponentName);
+
+            /// M: AMS log enhancement @{
+            if (!ActivityManagerService.IS_USER_BUILD || DEBUG_TASKS) {
+                Slog.d(TAG, "ACT-AM_RESUME_ACTIVITY " + next + " task:" + next.task.taskId);
+            }
+            /// @}
+
+            next.sleeping = false;
+            mService.showUnsupportedZoomDialogIfNeededLocked(next);
+            mService.showAskCompatModeDialogLocked(next);
+            next.app.pendingUiClean = true;
+            next.app.forceProcessStateUpTo(mService.mTopProcessState);
+            next.clearOptionsLocked();
+            next.app.thread.scheduleResumeActivity(next.appToken, next.app.repProcState,
+                    mService.isNextTransitionForward(), resumeAnimOptions);
+
+            mStackSupervisor.checkReadyForSleepLocked();
+
+            if (DEBUG_STATES) Slog.d(TAG_STATES, "resumeTopActivityLocked: Resumed " + next);
+        } catch (Exception e) {
+            // Whoops, need to restart this activity!
+            if (DEBUG_STATES) Slog.v(TAG_STATES, "Resume failed; resetting state to "
+                    + lastState + ": " + next);
+            next.state = lastState;
+            if (lastStack != null) {
+                lastStack.mResumedActivity = lastResumedActivity;
+            }
+            Slog.i(TAG, "Restarting because process died: " + next);
+            if (!next.hasBeenLaunched) {
+                next.hasBeenLaunched = true;
+            } else  if (SHOW_APP_STARTING_PREVIEW && lastStack != null &&
+                    mStackSupervisor.isFrontStack(lastStack)) {
+                next.showStartingWindow(null, true);
+            }
+            mStackSupervisor.startSpecificActivityLocked(next, true, false);
+            if (DEBUG_STACK) mStackSupervisor.validateTopActivitiesLocked();
+            return true;
+        }
+
+        // From this point on, if something goes wrong there is no way
+        // to recover the activity.
+        try {
+            completeResumeLocked(next);
+        } catch (Exception e) {
+            // If any exception gets thrown, toss away this
+            // activity and try the next one.
+            Slog.w(TAG, "Exception thrown during resume of " + next, e);
+            requestFinishActivityLocked(next.appToken, Activity.RESULT_CANCELED, null,
+                    "resume-exception", true);
+            if (DEBUG_STACK) mStackSupervisor.validateTopActivitiesLocked();
+            return true;
+        }
+    } else {
+        // Whoops, need to restart this activity!
+        if (!next.hasBeenLaunched) {
+            next.hasBeenLaunched = true;
+        } else {
+            if (SHOW_APP_STARTING_PREVIEW) {
+                next.showStartingWindow(null, true);
+            }
+            if (DEBUG_SWITCH) Slog.v(TAG_SWITCH, "Restarting: " + next);
+        }
+        if (DEBUG_STATES) Slog.d(TAG_STATES, "resumeTopActivityLocked: Restarting " + next);
+        mStackSupervisor.startSpecificActivityLocked(next, true, true);
+    }
+
+    if (DEBUG_STACK) mStackSupervisor.validateTopActivitiesLocked();
+    return true;
+}
+
+```
+
+
+```java
+ mMainThread.getInstrumentation().execStartActivity(
+           getOuterContext(), mMainThread.getApplicationThread(), null,
+                (Activity) null, intent, -1, options)
+
+```
+
+
+### Activity的状态
+```java
+enum ActivityState {
+    INITIALIZING,  //初始化当中
+    RESUMED,   //
+    PAUSING,
+    PAUSED,
+    STOPPING,
+    STOPPED,
+    FINISHING,
+    DESTROYING,
+    DESTROYED
+}
+```
+
+### Activity几个重要的类
+```java
+ActivityInfo  //AndroidManifest文件的Activity信息的封装
+ActivityThread // 主线程, 但是不是线程
+ActivityStack   // 用来管理TaskRecord的类
+ActivityRecord   //记录Activity的运行时信息
+TaskRecord   // 直接管理ActivityRecord的类
+ActivityStackSupervisor  // 管理ActivityDisplay的类
+ActivityMonitor
+ActivityOptions  //构建bundle的一个帮助类. 但是里面大多数都和Activity之间的动画有关的
+ActivityStarter
+ActivityContainer    //对ActivityStack的封装
+ActivityDisplay    // 管理ActivityStack的类
+Instrumentation  // 测试框架
+ActivityTransitionState
+ActivityClientRecord
+ActivityWaiter
+ActivityGoing
+ActivityManagerNative // 在Binder通信当中相当于Stub,
+ActivityManagerInternal
+ActivityManagerProxy // 在Binder通信中是Proxy
+ActivityManagerService // Activity的管理者
+ActivityManagerDebugConfig //AMS的debug开关的类
+ActivityManagerShellCommand
+Instrumentation.ActivityResult
+ActivityResult
+ActivityResources
+PendingActivityLaunch
+ActivityStartInterceptor
+ActivityMetricsLogger
+ActivityResolveInfo
+StackWindowListener
+WindowContainerListener
+ConfigurationContainer
+ActivityLifecycleCallbacks
+ActivityIntentInfo
+```
+
+### Activity类型
+```java
+static final int APPLICATION_ACTIVITY_TYPE = 0;
+static final int HOME_ACTIVITY_TYPE = 1;
+static final int RECENTS_ACTIVITY_TYPE = 2;
+static final int ASSISTANT_ACTIVITY_TYPE = 3;
+int mActivityType;   //Activity的类型， 在ActivityRecord里面
+
+```
+
+#### 相关问题
+
+```
+1. Activity的启动模式
+2. Activity的启动
+3. Activity的重要字段
+4. Activity的与Windows的关系, 以及怎么关联上去的
+5. Activity的Context是怎么赋值的
+6. Activity是如何拿到结果的
+7. Activity
+```
+
+
+### 查看系统里Activity信息
+
+```
+adb shell dumpsys Activity 可以看到activity, service等信息,但是信息不全面, 没有一个个的单个组件的信息全面
+adb shell dumpsys Activity Activities 可以查看任务栈
+
+```
+
+几个相关的概念
+```
+HomeActivity
+RootActivity
+RecentsActivity
+```
+
+```
+Activity的启动
+考虑:
+1. 包名, 类名是否存在,即 Intent找到匹配目标(Intent匹配规则), 
+2. App是否已经启动, Activity是否已经存在, 这里表示是否正在运行当中, 某一个堆栈当中, Intent的设置的参数和清单文件的参数
+3. 是否需要返回结果, 最终都是调用了startActivityForResult, 
+4. 对上一个Activity执行隐藏操作
+5. 调用者权限检查
+6. Activity切换的动画
+7. 告诉App进程, 启动这个Activity, (反射, 类加载)
+8. 
+```
+s
+### 启动流程的不同版本
+
+android 5.0， 6.0， 7.0， 8.0的版本的启动流程
+他们有什么异同点， 在什么地方改进了.
+
+## 参考文献
+
+1. [以Window视角来看startActivity](http://gityuan.com/2017/01/22/start-activity-wms/)
+2. [startActivity启动过程分析](http://gityuan.com/2016/03/12/start-activity/)
+3. [简述Activity生命周期](http://gityuan.com/2016/03/18/start-activity-cycle/)
+4. [Android深入四大组件（一）应用程序启动过程（前篇）](http://liuwangshu.cn/framework/component/1-activity-start-1.html)
+5. [Android深入四大组件（一）应用程序启动过程（后篇）](http://liuwangshu.cn/framework/component/1-activity-start-2.html)
+6. [深入理解Activity启动流程(一)–Activity启动的概要流程](http://www.cloudchou.com/android/post-788.html)
+7. [深入理解Activity启动流程(二)–Activity启动相关类的类图](http://www.cloudchou.com/android/post-793.html)
+8. [深入理解Activity启动流程(三)–Activity启动的详细流程2](http://www.cloudchou.com/android/post-815.html)
+9. [深入理解Activity启动流程(四)–Activity Task的调度算法](http://www.cloudchou.com/android/post-858.html)
+10. [ Android源码解析之（十四）-->Activity启动流程 ](http://blog.csdn.net/qq_23547831/article/details/51224992)
+11. [ Android中启动Activity(startActivity)流程图分析 ](http://blog.csdn.net/qinjuning/article/details/7277225)
+12. [Android源码分析-Activity的启动过程 ](http://blog.csdn.net/singwhatiwanna/article/details/18154335)
+13. [Android Instrumentation源码分析（附Activity启动流程）](http://aspook.com/2017/02/10/Android-Instrumentation%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90%EF%BC%88%E9%99%84Activity%E5%90%AF%E5%8A%A8%E6%B5%81%E7%A8%8B%EF%BC%89/)
+14. [Instrumentation框架分析及其使用](http://www.jianshu.com/p/53976a1bd8cd)
+15. [移动测试基础 Android Instrumentation 框架简单说明 ](https://testerhome.com/topics/6592)
+16. [Android Activity启动源码及其应用](http://www.jianshu.com/p/2e022240a9e5)
+17. [Activity 中mParent 成员变量是如何被赋值的](http://blog.csdn.net/yawinstake/article/details/53955709)
+18. [ android Application Component研究之Activity(一) ](http://blog.csdn.net/windskier/article/details/7096521)
+19. [ android Application Component研究之Activity(二) ](http://blog.csdn.net/windskier/article/details/7172710)
+20. [Android四大组件之Activity--管理方式](http://duanqz.github.io/2016-02-01-Activity-Maintenance)
+21. [Android四大组件之Activity--启动过程(上)](http://duanqz.github.io/2016-07-29-Activity-LaunchProcess-Part1)
+22. [Android四大组件之Activity--启动过程(下)](http://duanqz.github.io/2016-10-23-Activity-LaunchProcess-Part2)
+23. [ActivityManagerService的启动过程](http://duanqz.github.io/2016-07-15-AMS-LaunchProcess)
+24. [ 深入理解Android之AOP](http://blog.csdn.net/innost/article/details/49387395)
+25. [AMS-WMS 部分分析----------------- Activity相关的数据结构关系与启动过程 ](https://github.com/openthos/oto-multiwin-update-analysis/issues/5)
+26. [Android 6.0 Launcher 启动 Activity 过程源码分析（一）](http://www.glumes.com/start-activity-from-launcher-in-android-1/)
+27. [Android 6.0 Launcher 启动 Activity 过程源码分析（二）](http://www.glumes.com/start-activity-from-launcher-in-android-2/)
+28. [Android 6.0 Launcher 启动 Activity 过程源码分析（三）](http://www.glumes.com/start-activity-from-launcher-in-android-3/)
+29. [Android 6.0 Launcher 启动 Activity 过程分析小结（四）](http://www.glumes.com/start-activity-from-launcher-in-android-4/)
+30. [Android 初步之Android组件 Activity](http://tbfungeek.github.io/2016/03/24/Android-%E5%88%9D%E6%AD%A5%E4%B9%8BAndroid%E7%BB%84%E4%BB%B6-Activity/)
+31. [Android Activity的Launch Mode](https://hit-alibaba.github.io/interview/Android/basic/Android-LaunchMode.html)
+32. [使用adb shell dumpsys检测Android的Activity任务栈](http://blog.iderzheng.com/debug-activity-task-stack-with-adb-shell-dumpsys/)
+33. [Android包管理机制](http://duanqz.github.io/2017-01-04-Package-Manage-Mechanism)
+34. []()
+35. []()
+36. []()
+37. []()
+38. []()
+39. []()
+40. []()
+41. []()
+42. []()
+43. []()
+44. []()
+45. []()
+46. []()
+47. []()
+48. []()
+49. []()
+50. []()
+51. []()
+52. []()
+53. []()
